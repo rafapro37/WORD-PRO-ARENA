@@ -410,8 +410,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return null;
     }
     if (state.currentUser.role === UserRole.ADMIN) return null;
+    // Organizer usa o próprio ID como organizadorId
     if (state.currentUser.role === UserRole.ORGANIZER) return state.currentUser.id;
-    return state.currentUser.organizadorId;
+    // Players e Managers usam o organizadorId do organizador que os criou
+    return state.currentUser.organizadorId || null;
   }, [state.currentUser, selectedLeagueId, state.leagues]);
 
   const showMarketFeatures = useMemo(() => {
