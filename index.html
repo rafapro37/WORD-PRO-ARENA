@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRO WORLD ARENA</title>
+    <meta name="description" content="Plataforma profissional de gestão de campeonatos esportivos e de games" />
+    <meta name="theme-color" content="#FF6A00" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="https://i.imgur.com/3tIJK4S.png" />
+    <link rel="icon" type="image/png" href="https://i.imgur.com/3tIJK4S.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PWA" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Open Graph (compartilhamento social) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PRO WORLD ARENA" />
+    <meta property="og:description" content="Plataforma profissional de gestão de campeonatos esportivos e de games" />
+    <meta property="og:image" content="https://i.imgur.com/3tIJK4S.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="PRO WORLD ARENA" />
+    <meta name="twitter:image" content="https://i.imgur.com/3tIJK4S.png" />
+
+    <!-- Tailwind dinâmico via CSS vars (tokens de tema) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                dark:             'var(--theme-bg)',
+                primary:          'var(--theme-primary)',
+                accent:           '#ffffff',
+                danger:           '#ef4444',
+                success:          '#22c55e',
+                surface:          'var(--theme-surface)',
+                surfaceHighlight: 'var(--theme-surface-highlight)',
+                border:           'var(--theme-border)',
+                text:             'var(--theme-text-main)',
+                textMuted:        'var(--theme-text-muted)',
+              }
+            }
+          }
+        }
+      }
+    </script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "react/":       "https://aistudiocdn.com/react@^19.2.1/",
+        "react":        "https://aistudiocdn.com/react@^19.2.1",
+        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+        "react-dom/":   "https://aistudiocdn.com/react-dom@^19.2.1/",
+        "jszip":        "https://aistudiocdn.com/jszip@3.10.1",
+        "html2canvas":  "https://aistudiocdn.com/html2canvas@1.4.1"
+      }
+    }
+    </script>
+
+    <link rel="stylesheet" href="/index.css" />
+    <style>
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(12px) scale(0.96); }
+        to   { opacity: 1; transform: translateY(0)    scale(1); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+
+    <!-- Registro do Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(reg => console.log('[PWA] Service Worker registrado:', reg.scope))
+            .catch(err => console.warn('[PWA] Falha no registro do SW:', err));
+        });
+      }
+    </script>
+  </body>
+</html>

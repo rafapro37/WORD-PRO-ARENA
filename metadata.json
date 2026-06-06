@@ -1,0 +1,6 @@
+{
+  "name": "RF-PRO ARENA",
+  "description": "Plataforma completa para gestão de campeonatos profissionais com suporte a planos FREE, PRO e ELITE. Inclui geração automática de partidas, tabelas de classificação, estatísticas de jogadores e controle administrativo total com suporte a rotas dinâmicas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,285 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-main: #2f3136; /* Cinza grafite suave */
+  --bg-card: #3a3d42; /* Cinza médio */
+  --bg-highlight: #45484d; /* Versão mais clara do card */
+  --primary: #ff7a00; /* Laranja forte */
+  --cor-primaria: #ff7a00;
+  --cor-secundaria: #3a3d42;
+  --bg-global: #2f3136;
+  --texto-global: #f2f2f2; /* Branco suave */
+  --text-main: #f2f2f2;
+  --text-secondary: #bdbdbd; /* Cinza claro */
+  --success: #10B981; /* Verde premium */
+  --border: #4d5156; /* Borda suave */
+  --global-font-size: 16px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  font-size: var(--global-font-size);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.logo-time {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  image-rendering: crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  border-radius: 8px;
+  background: var(--bg-main);
+  padding: 2px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.classificacao-wrapper {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.jogos-container {
+  width: 25%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tabela-container {
+  width: 75%;
+}
+
+/* Novo layout de jogos */
+.grupo-jogos {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.grupo-header {
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.grupo-header:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.grupo-conteudo {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.jogo-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 40%;
+}
+
+.placar {
+  width: 70px;
+  text-align: center;
+  font-weight: bold;
+  font-family: monospace;
+  color: var(--primary);
+}
+
+.match-card-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.match-card-horizontal:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 8px rgba(255, 106, 0, 0.2);
+}
+
+.team-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logo-match {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .classificacao-wrapper {
+    flex-direction: column;
+  }
+  .jogos-container, .tabela-container {
+    width: 100%;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in-from-top-4 {
+  from { transform: translateY(-1rem); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slide-in-from-bottom-4 {
+  from { transform: translateY(1rem); }
+  to { transform: translateY(0); }
+}
+
+.animate-in {
+  animation-duration: 300ms;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fade-in;
+}
+
+.slide-in-from-top-4 {
+  animation-name: slide-in-from-top-4;
+}
+
+.slide-in-from-bottom-4 {
+  animation-name: slide-in-from-bottom-4;
+}
+
+/* =========================================
+   SISTEMA DE DESIGN GLOBAL RF-PRO
+   ========================================= 
+   Fundo principal: #2f3136 (Cinza grafite suave)
+   Cards: #3a3d42 (Cinza médio)
+   Arredondamento Padrão de Cards/Bordas: 16px (rounded-2xl)
+   Arredondamento Padrão de Inputs/Buttons: 12px (rounded-xl)
+   Cor Destaque: #ff7a00 (Laranja forte)
+   Texto principal: #f2f2f2 (Branco suave)
+   Texto secundário: #bdbdbd (Cinza claro)
+*/
+
+/* Inputs Padronizados */
+.rf-input,
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="tel"],
+input[type="search"],
+input[type="url"],
+input:not([type]),
+textarea,
+select {
+  background-color: #3a3d42 !important;
+  border: 1px solid #4d5156 !important;
+  color: #f2f2f2 !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.rf-input:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
+input:not([type]):focus,
+textarea:focus,
+select:focus {
+  border-color: #ff7a00 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.25) !important;
+}
+
+/* Botões Padronizados - Estilo Laranja RF-PRO */
+.rf-button,
+.rf-btn-primary,
+button.bg-brand-primary,
+button.bg-\[var\(--primary\)\],
+button.bg-\[var\(--cor-primaria\)\] {
+  background-color: #ff7a00 !important;
+  color: #f2f2f2 !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-radius: 12px !important;
+  transition: all 0.2s ease-in-out !important;
+  border: none !important;
+}
+
+.rf-button:hover,
+.rf-btn-primary:hover,
+button.bg-brand-primary:hover,
+button.bg-\[var\(--primary\)\]:hover,
+button.bg-\[var\(--cor-primaria\)\]:hover {
+  background-color: #ee7200 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(255, 122, 0, 0.25) !important;
+}
+
+/* Cards Padronizados */
+.rf-card,
+.bg-brand-surface {
+  background-color: #3a3d42 !important;
+  border: 1px solid #4d5156 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+

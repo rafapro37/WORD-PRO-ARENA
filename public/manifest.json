@@ -1,0 +1,41 @@
+{
+  "name": "PRO WORLD ARENA",
+  "short_name": "PWA",
+  "description": "Gerenciador de campeonatos profissional",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#000000",
+  "theme_color": "#FF6A00",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "https://i.imgur.com/3tIJK4S.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Meus Campeonatos",
+      "url": "/dashboard",
+      "icons": [{ "src": "https://i.imgur.com/3tIJK4S.png", "sizes": "any" }]
+    },
+    {
+      "name": "Estatísticas",
+      "url": "/estatisticas",
+      "icons": [{ "src": "https://i.imgur.com/3tIJK4S.png", "sizes": "any" }]
+    }
+  ]
+}
