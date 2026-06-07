@@ -2168,6 +2168,7 @@ const App: React.FC = () => {
                 }}
                 themeColor={themeColor}
                 bracketStyle={state.settings.bracketStyle}
+                leagues={filteredLeagues}
                 onRequestRegistration={inscreverMeuTime}
                 onUpdateTournament={(id, updates) =>
                   setState((prev) => ({
