@@ -509,6 +509,47 @@ const App: React.FC = () => {
     );
     if (!tournament) return;
 
+    // ── Converter participantes manuais em times se existirem ────────────────
+    const manualParticipants = (tournament as any).manualParticipants || [];
+    if (manualParticipants.length > 0) {
+      const existingTeamNames = state.teams
+        .filter(t => t.tournamentId === tournament.id)
+        .map(t => t.name.toLowerCase());
+
+      const newTeams = manualParticipants
+        .filter((p: any) => !existingTeamNames.includes(p.name.toLowerCase()))
+        .map((p: any) => ({
+          id: generateId(),
+          name: p.name,
+          tournamentId: tournament.id,
+          organizadorId: tournament.organizadorId,
+          ligaId: tournament.ligaId,
+          groupId: tournament.groups?.[0]?.id || 'NONE',
+          ownerId: tournament.organizadorId,
+          roster: [],
+          played: 0, won: 0, drawn: 0, lost: 0,
+          goalsFor: 0, goalsAgainst: 0, points: 0,
+        }));
+
+      if (newTeams.length > 0) {
+        setState(prev => ({
+          ...prev,
+          teams: [...prev.teams, ...newTeams],
+        }));
+        showToast(`${newTeams.length} times adicionados ao campeonato.`, 'success');
+        // Aguardar state atualizar antes de gerar jogos
+        setTimeout(() => handleGenerateMatchesInternal(tournament.id), 100);
+        return;
+      }
+    }
+
+    handleGenerateMatchesInternal(tournament.id);
+  };
+
+  const handleGenerateMatchesInternal = (tournamentId: string) => {
+    const tournament = state.tournaments.find(t => t.id === tournamentId);
+    if (!tournament) return;
+
     const newMatches: Match[] = [];
     const teams = state.teams.filter((t) => t.tournamentId === tournament.id);
 
@@ -1737,10 +1778,13 @@ const App: React.FC = () => {
     const ownerProfile = state.playerProfiles.find(
       (p) => p.userId === state.currentUser!.id,
     );
-    if (!ownerProfile || !ownerProfile.teamName) {
-      showToast("Configure seu time antes.", "error");
+    if (!ownerProfile) {
+      showToast("Complete seu perfil antes de se inscrever.", "error");
       return;
     }
+
+    // Em X1, usa o nickname como nome do time se não tiver teamName
+    const teamNameForReg = ownerProfile.teamName || ownerProfile.nickname || state.currentUser!.name || state.currentUser!.username;
 
     const jaInscrito = state.registrations.some(
       (r) =>
@@ -1758,8 +1802,8 @@ const App: React.FC = () => {
         organizadorId: tournament.organizadorId,
         tournamentId: tournament.id,
         teamOwnerId: state.currentUser!.id,
-        teamName: ownerProfile.teamName,
-        teamLogoUrl: ownerProfile.teamLogoUrl,
+        teamName: teamNameForReg,
+        teamLogoUrl: ownerProfile.photoUrl || ownerProfile.teamLogoUrl,
         status: "PENDING",
         timestamp: Date.now(),
         roster: ownerProfile.clubData?.roster || [],
@@ -1926,6 +1970,7 @@ const App: React.FC = () => {
                 (i) => (i.jogadorId === state.currentUser!.id || i.email === state.currentUser!.email) && i.status === 'pendente'
               ).length}
               showMarket={showMarketFeatures}
+              showStats={globalExperience === 'X11' || state.currentUser?.role === 'ORGANIZER' as any || state.currentUser?.role === 'ADMIN' as any}
             />
           )}
 
