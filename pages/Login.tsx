@@ -4,6 +4,82 @@ import { User, UserRole, UserStatus, PlanType, Advertisement, SocialLink, Player
 import { ADMIN_CREDENTIALS, POSITIONS, PLAN_LIMITS } from '../constants';
 import { generateId } from '../services/dataService';
 import { hashPassword } from '../services/authService';
+
+const EDGE_URL = 'https://osrbkyvnrsihxwpuqpkq.supabase.co/functions/v1/reset-password';
+
+// ─── Componente de Esqueci Senha ──────────────────────────────────────────────
+const ForgotPasswordForm: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [email, setEmail] = React.useState('');
+  const [sent, setSent] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) { setError('Digite seu e-mail.'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      await fetch(EDGE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'request', email: email.trim() }),
+      });
+      setSent(true);
+    } catch {
+      setError('Erro ao enviar. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (sent) return (
+    <div className="text-center space-y-6 animate-in fade-in">
+      <div className="text-5xl">📧</div>
+      <h3 className="text-xl font-black text-white uppercase">Email Enviado!</h3>
+      <p className="text-sm text-[var(--text-secondary)]">
+        Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.
+        <br /><span className="text-xs opacity-60">Verifique também a caixa de spam.</span>
+      </p>
+      <button onClick={onBack} className="text-[10px] font-black uppercase tracking-widest text-[var(--primary)] hover:opacity-80 transition-opacity">
+        ← Voltar ao login
+      </button>
+    </div>
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6 animate-in slide-in-from-bottom-4">
+      <div>
+        <h3 className="text-xl font-black text-white uppercase tracking-tight mb-1">Esqueci minha senha</h3>
+        <p className="text-sm text-[var(--text-secondary)]">Digite seu e-mail para receber o link de redefinição.</p>
+      </div>
+      <div>
+        <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1 mb-2 block">Seu E-mail</label>
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="seu@email.com"
+          className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:border-[var(--primary)] outline-none transition-colors"
+          autoFocus
+        />
+        {error && <p className="text-red-400 text-xs mt-1 ml-1">{error}</p>}
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-[var(--primary)] text-black font-black py-4 rounded-xl uppercase tracking-widest transition-all hover:opacity-90 disabled:opacity-50"
+      >
+        {loading ? 'Enviando...' : 'Enviar link de redefinição'}
+      </button>
+      <div className="text-center">
+        <button type="button" onClick={onBack} className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">
+          ← Voltar ao login
+        </button>
+      </div>
+    </form>
+  );
+};
 import { useLocale } from '../src/contexts/LocaleContext';
 import LanguageSelector from '../components/LanguageSelector';
 import { Shield, Trophy, Eye, Lock, Briefcase, Users, Upload, Camera, Check, LogIn, ChevronLeft, ChevronRight, Star, X, Info, FileText, Smartphone, MessageSquare, EyeOff, RefreshCw, Zap, Crown, Trash2, UserPlus, Play, Instagram, Facebook, Twitter, Youtube, Gamepad2, LinkIcon, Globe, Tag, Twitch, Music } from '../components/Icons';
@@ -438,7 +514,9 @@ const Login: React.FC<LoginProps> = ({
                 )}
 
                 {/* LOGIN FORM */}
-                {mode === 'LOGIN' ? (
+                {mode === 'FORGOT_PASSWORD' ? (
+                    <ForgotPasswordForm onBack={() => setMode('LOGIN')} />
+                ) : mode === 'LOGIN' ? (
                     <form onSubmit={handleLoginSubmit} className="space-y-6 animate-in slide-in-from-bottom-4">
                         <div className="space-y-4">
                             <div className="relative">
@@ -474,7 +552,7 @@ const Login: React.FC<LoginProps> = ({
                             <button type="button" onClick={()=>setIsAdminLogin(!isAdminLogin)} className={`text-[10px] font-black uppercase tracking-widest transition-colors ${isAdminLogin ? 'text-[var(--primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--primary)]'}`}>
                                 {isAdminLogin ? T.auth.adminMode : T.auth.adminAccess}
                             </button>
-                            <button type="button" className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Esqueci minha senha</button>
+                            <button type="button" onClick={() => setMode('FORGOT_PASSWORD')} className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors">Esqueci minha senha</button>
                         </div>
 
                         <button type="submit" className="w-full bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-[var(--text-main)] font-bold py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest flex items-center justify-center gap-3">
