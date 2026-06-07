@@ -969,57 +969,6 @@ const Landing: React.FC<LandingProps> = ({
                         </section>
                         )}
 
-                        {/* 9. MERCADO DA LIGA */}
-                        {(activeView === 'inicio' || activeView === 'market') && (
-                        <section id="market">
-                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-xl font-black italic uppercase tracking-tight flex items-center gap-3">
-                                    <Briefcase className="text-brand-primary" size={20}/> Mercado da Liga
-                                </h3>
-                                <button onClick={() => onNavigate('login')} className="text-[9px] font-black uppercase tracking-widest text-brand-primary">Ver Vitrine</button>
-                            </div>
-
-                            <div className="space-y-4">
-                                {marketHighlights.length > 0 ? marketHighlights.map((p, i) => (
-                                    <div 
-                                        key={p.id}
-                                        onClick={() => onNavigate('login')}
-                                        className="bg-brand-surface p-6 rounded-3xl border border-brand-border hover:border-brand-primary/30 transition-all cursor-pointer group flex items-center justify-between"
-                                    >
-                                        <div className="flex items-center gap-5">
-                                            <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center border border-brand-primary/20 group-hover:bg-brand-primary transition-all">
-                                                <span className="text-xl font-black italic text-brand-primary group-hover:text-black">{p.overall}</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-black italic uppercase leading-none group-hover:text-white transition-colors">{p.name}</p>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="text-[8px] font-black text-white/30 uppercase tracking-widest">{p.position}</span>
-                                                    <div className="w-1 h-1 bg-white/20 rounded-full"></div>
-                                                    <span className="text-[8px] font-black text-brand-primary uppercase tracking-widest">Disponível</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-black italic text-white whitespace-nowrap">R$ {p.valorTransferencia.toLocaleString()}</p>
-                                            <button className="text-[8px] font-black uppercase tracking-widest text-brand-primary hover:underline mt-1">Proposta</button>
-                                        </div>
-                                    </div>
-                                )) : (
-                                    <div className="py-12 bg-white/5 rounded-3xl border border-dashed border-white/10 flex flex-col items-center justify-center text-white/20 italic text-xs">
-                                        Janela fechada.
-                                    </div>
-                                )}
-
-                                <button 
-                                    onClick={() => isLeagueView && onViewMarket ? onViewMarket() : onNavigate('login')}
-                                    className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-white/5 text-white/40 hover:text-white"
-                                >
-                                    {isLeagueView ? 'Abrir Mercado da Liga' : 'Abrir Mercado Profissional'}
-                                </button>
-                            </div>
-                        </section>
-                        )}
-
                         {/* ANÚNCIOS DA LIGA */}
                         {isLeagueView && leagueAds.length > 0 && (
                         <section>
