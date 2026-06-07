@@ -798,6 +798,13 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                       <Trophy size={16}/> Chaveamento
                   </button>
               )}
+
+              {/* Aba Artilheiros/Assistências para X1 */}
+              {tournament.tournamentType === 'X1' && (
+                  <button onClick={() => setActiveTab('scorers' as any)} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === ('scorers' as any) ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                      <Award size={16}/> Artilheiros
+                  </button>
+              )}
               
               {isTeamManager && myTeamInTournament && (
                   <button onClick={() => setActiveTab('my-roster')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'my-roster' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
@@ -838,6 +845,82 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           <div className="bg-brand-surface/90 backdrop-blur rounded-xl border border-brand-border min-h-[400px] shadow-2xl relative overflow-hidden">
               
               {/* --- APPEARANCE TAB --- */}
+              {activeTab === ('scorers' as any) && tournament.tournamentType === 'X1' && (
+                  <div className="p-6 animate-in fade-in space-y-6">
+                      <h3 className="text-xl font-bold text-brand-text flex items-center gap-2"><Award className="text-brand-primary"/> Artilheiros & Assistências</h3>
+
+                      {/* Artilheiros */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <h4 className="text-sm font-black text-brand-text uppercase tracking-wider mb-4 flex items-center gap-2">
+                              ⚽ Artilheiros
+                          </h4>
+                          {(() => {
+                              const scorers = players
+                                  .filter(p => p.tournamentId === tournament.id && (p.goals || 0) > 0)
+                                  .sort((a, b) => (b.goals || 0) - (a.goals || 0))
+                                  .slice(0, 10);
+                              return scorers.length > 0 ? (
+                                  <div className="space-y-2">
+                                      {scorers.map((p, i) => (
+                                          <div key={p.id} className="flex items-center gap-3 p-3 bg-brand-surface rounded-lg">
+                                              <span className={`text-sm font-black w-6 text-center ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : 'text-brand-textMuted'}`}>{i + 1}</span>
+                                              <div className="w-8 h-8 rounded-full bg-brand-primary/20 border border-brand-primary/30 flex items-center justify-center text-xs font-black text-brand-primary">
+                                                  {p.name?.charAt(0)}
+                                              </div>
+                                              <div className="flex-1">
+                                                  <p className="text-sm font-bold text-brand-text">{p.name}</p>
+                                                  <p className="text-xs text-brand-textMuted">{teams.find(t => t.id === p.teamId)?.name || '-'}</p>
+                                              </div>
+                                              <div className="text-right">
+                                                  <span className="text-lg font-black text-brand-primary">{p.goals || 0}</span>
+                                                  <p className="text-[10px] text-brand-textMuted">gols</p>
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                              ) : (
+                                  <p className="text-brand-textMuted text-sm italic text-center py-4">Nenhum gol registrado ainda.</p>
+                              );
+                          })()}
+                      </div>
+
+                      {/* Assistências */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <h4 className="text-sm font-black text-brand-text uppercase tracking-wider mb-4 flex items-center gap-2">
+                              🎯 Líderes em Assistências
+                          </h4>
+                          {(() => {
+                              const assisters = players
+                                  .filter(p => p.tournamentId === tournament.id && (p.assists || 0) > 0)
+                                  .sort((a, b) => (b.assists || 0) - (a.assists || 0))
+                                  .slice(0, 10);
+                              return assisters.length > 0 ? (
+                                  <div className="space-y-2">
+                                      {assisters.map((p, i) => (
+                                          <div key={p.id} className="flex items-center gap-3 p-3 bg-brand-surface rounded-lg">
+                                              <span className={`text-sm font-black w-6 text-center ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : 'text-brand-textMuted'}`}>{i + 1}</span>
+                                              <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-xs font-black text-blue-400">
+                                                  {p.name?.charAt(0)}
+                                              </div>
+                                              <div className="flex-1">
+                                                  <p className="text-sm font-bold text-brand-text">{p.name}</p>
+                                                  <p className="text-xs text-brand-textMuted">{teams.find(t => t.id === p.teamId)?.name || '-'}</p>
+                                              </div>
+                                              <div className="text-right">
+                                                  <span className="text-lg font-black text-blue-400">{p.assists || 0}</span>
+                                                  <p className="text-[10px] text-brand-textMuted">assists</p>
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                              ) : (
+                                  <p className="text-brand-textMuted text-sm italic text-center py-4">Nenhuma assistência registrada ainda.</p>
+                              );
+                          })()}
+                      </div>
+                  </div>
+              )}
+
               {activeTab === 'appearance' && isOrganizer && (
                   <div className="p-6 animate-in fade-in space-y-8">
                       <div>
@@ -902,6 +985,39 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                           </div>
                           <p className="text-[11px] text-brand-textMuted mt-2 italic">Afeta botões e destaques apenas neste campeonato.</p>
                       </div>
+
+                      {/* Banner do Mata-Mata */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Fundo do Chaveamento (Mata-Mata)</label>
+                          <div className="flex gap-4 items-start">
+                              <div className="w-32 h-20 rounded-lg overflow-hidden bg-brand-surface border border-brand-border flex-shrink-0 flex items-center justify-center">
+                                  {tournament.knockoutBackground
+                                      ? <img src={tournament.knockoutBackground} className="w-full h-full object-cover" />
+                                      : <span className="text-brand-textMuted text-xs">Sem fundo</span>
+                                  }
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                  <input
+                                      type="text"
+                                      value={tournament.knockoutBackground || ''}
+                                      onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutBackground: e.target.value })}
+                                      placeholder="https://url-da-imagem.com/fundo.jpg"
+                                      className="w-full bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text text-sm focus:border-brand-primary outline-none"
+                                  />
+                                  <label className="inline-flex items-center gap-2 bg-brand-surface border border-brand-border hover:border-brand-primary px-4 py-2 rounded-lg cursor-pointer text-[11px] font-bold text-brand-textMuted hover:text-brand-text transition-all uppercase tracking-widest">
+                                      <Upload size={13}/> Enviar imagem
+                                      <input type="file" hidden accept="image/*" onChange={async e => {
+                                          const file = e.target.files?.[0];
+                                          if (!file || !onUpdateTournament) return;
+                                          const reader = new FileReader();
+                                          reader.onloadend = () => onUpdateTournament(tournament.id, { knockoutBackground: reader.result as string });
+                                          reader.readAsDataURL(file);
+                                      }} />
+                                  </label>
+                              </div>
+                          </div>
+                          <p className="text-[11px] text-brand-textMuted mt-2 italic">Aparece como fundo na tela do chaveamento.</p>
+                      </div>
                   </div>
               )}
 
@@ -912,6 +1028,73 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                       <p className="text-sm text-brand-textMuted mb-6">Edite as informações fundamentais do seu campeonato.</p>
                       
                       <div className="space-y-6 max-w-2xl">
+
+                          {/* MODO EDIÇÃO LIVRE */}
+                          <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                              <div className="flex items-center justify-between">
+                                  <div>
+                                      <p className="font-black text-brand-text text-sm">Modo Edição Livre</p>
+                                      <p className="text-xs text-brand-textMuted mt-0.5">Permite alterar formato, adicionar jogadores manualmente e editar dados mesmo após finalizar.</p>
+                                  </div>
+                                  <button
+                                      onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { freeEditMode: !tournament.freeEditMode } as any)}
+                                      className={`relative w-12 h-6 rounded-full transition-colors ${tournament.freeEditMode ? 'bg-brand-primary' : 'bg-brand-border'}`}
+                                  >
+                                      <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${tournament.freeEditMode ? 'translate-x-6' : 'translate-x-0.5'}`}/>
+                                  </button>
+                              </div>
+                              {tournament.freeEditMode && (
+                                  <div className="mt-4 pt-4 border-t border-brand-border space-y-4">
+                                      <p className="text-xs text-yellow-400 font-bold">⚠️ Modo ativo — alterações podem afetar dados existentes.</p>
+                                      
+                                      {/* Alterar formato */}
+                                      <div>
+                                          <label className="block text-xs font-bold text-brand-textMuted uppercase mb-2">Alterar Formato</label>
+                                          <select
+                                              value={tournament.format}
+                                              onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { format: e.target.value as any })}
+                                              className="w-full bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text focus:border-brand-primary outline-none"
+                                          >
+                                              <option value="GROUPS">Fase de Grupos + Mata-Mata</option>
+                                              <option value="KNOCKOUT">Mata-Mata Direto</option>
+                                              <option value="PONTOS_CORRIDOS">Pontos Corridos</option>
+                                              <option value="SWISS">Sistema Suíço</option>
+                                              <option value="LEAGUE">Liga (Pontos Corridos simples)</option>
+                                          </select>
+                                      </div>
+
+                                      {/* Tipo X1 ou X11 */}
+                                      <div>
+                                          <label className="block text-xs font-bold text-brand-textMuted uppercase mb-2">Tipo de Jogo</label>
+                                          <div className="flex gap-3">
+                                              <button
+                                                  onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { tournamentType: 'X1' } as any)}
+                                                  className={`flex-1 py-2 rounded-lg font-black text-sm transition-all ${tournament.tournamentType === 'X1' ? 'bg-brand-primary text-black' : 'bg-brand-surface border border-brand-border text-brand-textMuted'}`}
+                                              >X1</button>
+                                              <button
+                                                  onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { tournamentType: 'X11' } as any)}
+                                                  className={`flex-1 py-2 rounded-lg font-black text-sm transition-all ${tournament.tournamentType === 'X11' ? 'bg-brand-primary text-black' : 'bg-brand-surface border border-brand-border text-brand-textMuted'}`}
+                                              >X11</button>
+                                          </div>
+                                      </div>
+
+                                      {/* Status do campeonato */}
+                                      <div>
+                                          <label className="block text-xs font-bold text-brand-textMuted uppercase mb-2">Status</label>
+                                          <select
+                                              value={tournament.status}
+                                              onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { status: e.target.value as any })}
+                                              className="w-full bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text focus:border-brand-primary outline-none"
+                                          >
+                                              <option value="DRAFT">Rascunho</option>
+                                              <option value="REGISTRATION">Inscrições Abertas</option>
+                                              <option value="ACTIVE">Em Andamento</option>
+                                              <option value="FINISHED">Finalizado</option>
+                                          </select>
+                                      </div>
+                                  </div>
+                              )}
+                          </div>
                           <div>
                               <label className="block text-xs font-bold text-brand-textMuted uppercase mb-1">Nome do Campeonato</label>
                               <input 
@@ -1773,6 +1956,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                                  );
                                                })()}
                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-yellow-400/80">Campeão</span>
+                                               <span className="text-[10px] font-black text-white/60 text-center max-w-[120px] leading-tight">{tournament.name}</span>
                                              </div>
                                              
                                              {/* Card da final */}
