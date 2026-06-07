@@ -1840,6 +1840,82 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
               {activeTab === 'teams' && (
                   <div className="flex flex-col h-full min-h-[500px]">
+
+                      {/* MODO EDIÇÃO LIVRE — Adicionar participantes manualmente */}
+                      {isOrganizer && (tournament as any).freeEditMode && (
+                          <div className="p-4 border-b border-brand-border bg-yellow-900/10">
+                              <p className="text-[10px] font-black text-yellow-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                  ⚡ Modo Relâmpago — Adicionar Participante Manual
+                              </p>
+                              <div className="flex gap-2">
+                                  <input
+                                      id="manual-participant-input"
+                                      type="text"
+                                      placeholder={tournament.tournamentType === 'X11' ? 'Nome do time (ex: Palmeiras)' : 'Nome do jogador (ex: RafaelPro)'}
+                                      className="flex-1 bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text text-sm focus:border-yellow-400 outline-none"
+                                      onKeyDown={e => {
+                                          if (e.key === 'Enter') {
+                                              const input = e.currentTarget;
+                                              const name = input.value.trim();
+                                              if (!name) return;
+                                              if (onUpdateTournament) {
+                                                  const existing = (tournament as any).manualParticipants || [];
+                                                  onUpdateTournament(tournament.id, {
+                                                      manualParticipants: [...existing, { id: Date.now().toString(), name, createdAt: Date.now() }]
+                                                  } as any);
+                                              }
+                                              input.value = '';
+                                          }
+                                      }}
+                                  />
+                                  <button
+                                      onClick={() => {
+                                          const input = document.getElementById('manual-participant-input') as HTMLInputElement;
+                                          const name = input?.value.trim();
+                                          if (!name) return;
+                                          if (onUpdateTournament) {
+                                              const existing = (tournament as any).manualParticipants || [];
+                                              onUpdateTournament(tournament.id, {
+                                                  manualParticipants: [...existing, { id: Date.now().toString(), name, createdAt: Date.now() }]
+                                              } as any);
+                                          }
+                                          if (input) input.value = '';
+                                      }}
+                                      className="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-4 py-2 rounded-lg transition-all"
+                                  >
+                                      + Adicionar
+                                  </button>
+                              </div>
+                              <p className="text-[10px] text-brand-textMuted mt-1">Pressione Enter ou clique em Adicionar. Esses participantes não precisam de cadastro.</p>
+
+                              {/* Lista de participantes manuais */}
+                              {((tournament as any).manualParticipants || []).length > 0 && (
+                                  <div className="mt-3 space-y-1 max-h-40 overflow-y-auto">
+                                      {((tournament as any).manualParticipants || []).map((p: any, i: number) => (
+                                          <div key={p.id} className="flex items-center justify-between bg-brand-surface rounded-lg px-3 py-2">
+                                              <div className="flex items-center gap-2">
+                                                  <span className="text-yellow-400 text-xs font-black">{i + 1}</span>
+                                                  <span className="text-sm text-brand-text font-bold">{p.name}</span>
+                                              </div>
+                                              <button
+                                                  onClick={() => {
+                                                      if (onUpdateTournament) {
+                                                          const existing = (tournament as any).manualParticipants || [];
+                                                          onUpdateTournament(tournament.id, {
+                                                              manualParticipants: existing.filter((x: any) => x.id !== p.id)
+                                                          } as any);
+                                                      }
+                                                  }}
+                                                  className="text-red-400 hover:text-red-300 transition-colors"
+                                              >
+                                                  <X size={14}/>
+                                              </button>
+                                          </div>
+                                      ))}
+                                  </div>
+                              )}
+                          </div>
+                      )}
                       <div className="flex overflow-x-auto gap-2 p-4 border-b border-brand-border bg-black/20"> {teams.map(t => ( <button key={t.id} onClick={() => setActiveRosterTeamId(t.id)} className={`px-4 py-2 rounded-lg font-bold whitespace-nowrap text-sm flex items-center gap-2 transition-all ${activeRosterTeamId === t.id ? 'bg-brand-primary text-white shadow-lg' : 'bg-brand-surfaceHighlight text-brand-textMuted hover:bg-brand-border'}`}> {t.logoUrl ? <img src={t.logoUrl} className="w-4 h-4 rounded-full"/> : <Shield size={12}/>} {t.name} </button> ))} </div>
                       <div className="p-4 bg-brand-surfaceHighlight border-b border-brand-border">
                                                                 {isOrganizer && (
