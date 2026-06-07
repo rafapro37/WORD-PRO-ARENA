@@ -17,16 +17,22 @@ export function useSync(state: AppState) {
 
       const user = state.currentUser;
       const isOrganizer = user.role === UserRole.ORGANIZER || user.role === UserRole.ADMIN;
+      const isAdmin = user.role === UserRole.ADMIN;
       const userId = user.id;
 
-      // Sempre sincronizar o próprio usuário
-      await syncToSupabase('usuarios', [user]);
+      // Admin sincroniza todos os usuários
+      if (isAdmin) {
+        await syncToSupabase('usuarios', state.users);
+      } else {
+        // Outros usuários sincronizam só o próprio perfil
+        await syncToSupabase('usuarios', [user]);
+      }
 
       // Perfil
       const myProfile = state.playerProfiles.filter(p => p.userId === userId);
       if (myProfile.length > 0) await syncToSupabase('perfis', myProfile);
 
-      if (isOrganizer) {
+      if (isOrganizer || isAdmin) {
         const myTournaments   = state.tournaments.filter(t => t.organizadorId === userId);
         const myTeams         = state.teams.filter(t => t.organizadorId === userId);
         const myMatches       = state.matches.filter(m => m.organizadorId === userId);
