@@ -1857,13 +1857,6 @@ const App: React.FC = () => {
       className="flex min-h-screen font-sans" 
       style={{ backgroundColor: 'var(--bg-global)', color: 'var(--texto-global)' }}
     >
-      {isLoading && (
-        <div className="fixed inset-0 z-[300] bg-brand-dark flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-16 h-16 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mb-8"></div>
-            <h2 className="text-2xl font-black italic text-white uppercase tracking-tighter mb-2">Sincronizando ARENA...</h2>
-            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">Aguarde enquanto carregamos a Arena.</p>
-        </div>
-      )}
             {/* EXPERIENCE SELECTION OVERLAY */}
             {state.currentUser && !state.currentUser.experiencePreference && !globalExperience && currentPage !== 'landing' && (
               <ExperienceSelection onSelect={handleSelectExperience} />
