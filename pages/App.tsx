@@ -2039,7 +2039,8 @@ const App: React.FC = () => {
                 />
               )}
 
-            {currentPage === "tournament-details" && selectedTournamentId && (
+            {currentPage === "tournament-details" && selectedTournamentId && 
+             (state.tournaments.find((t) => t.id === selectedTournamentId) || filteredTournaments.find((t) => t.id === selectedTournamentId)) && (
               <TournamentDetails
                 tournament={
                   state.tournaments.find((t) => t.id === selectedTournamentId) || 
