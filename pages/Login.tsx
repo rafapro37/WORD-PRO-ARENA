@@ -351,11 +351,7 @@ const Login: React.FC<LoginProps> = ({
                     <div className="relative">
                         <div className="absolute inset-0 bg-[var(--primary)] blur-[40px] opacity-30 rounded-full"></div>
                         <div className="w-36 h-36 md:w-48 md:h-48 flex items-center justify-center hover:scale-105 transition-transform duration-500">
-                            {customLogoUrl ? (
-                                <img src={customLogoUrl} className="w-full h-full object-contain drop-shadow-[0_0_20px_rgba(255,106,0,0.4)]" alt="Logo" />
-                            ) : (
-                                <Shield size={90} className="text-[var(--primary)] drop-shadow-[0_0_15px_rgba(255,106,0,0.5)]" />
-                            )}
+                            <img src={customLogoUrl || 'https://i.imgur.com/3tIJK4S.png'} className="w-full h-full object-contain drop-shadow-[0_0_20px_rgba(255,106,0,0.4)]" alt="Logo" />
                         </div>
                     </div>
                     <div>
