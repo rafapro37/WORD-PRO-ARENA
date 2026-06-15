@@ -52,11 +52,45 @@ export const fetchAllFromSupabase = async (): Promise<Partial<AppState>> => {
 };
 
 // ─── Sincronizar tabela para o Supabase ──────────────────────────────────────
+// Colunas válidas por tabela — só esses campos são enviados ao Supabase
+const TABLE_COLUMNS: Record<string, string[]> = {
+  usuarios: ['id','name','username','email','password','role','plan','planStatus','status','organizadorId','ligaId','experiencePreference','organization','createdAt','emailVerified','whatsapp','verified'],
+  perfis: ['id','userId','nickname','photoUrl','teamName','teamLogoUrl','ligaId','clubData','position','overall','stats','createdAt'],
+  campeonatos: ['id','name','format','sport','experienceType','status','createdAt','organizadorId','ligaId','freeEditMode','manualParticipants','primaryColor','knockoutBackground','leagueLogoUrl','tournamentType','groups','swissRounds','currentRound','phase','awards','socialLinks','maxTeams','groupCount','bannerUrl','bannerSize','isPaid','entryFee','groupStageBackground','knockoutOpacity','classificacaoRules','classificados_por_grupo'],
+  times: ['id','name','organizadorId','tournamentId','ligaId','groupId','ownerId','managerId','roster','played','won','drawn','lost','goalsFor','goalsAgainst','points','logoUrl'],
+  partidas: ['id','organizadorId','tournamentId','homeTeamId','awayTeamId','homeScore','awayScore','isFinished','stage','groupId','round','scheduledAt','createdAt'],
+  jogadores: ['id','organizadorId','tournamentId','teamId','name','position','goals','assists','yellowCards','redCards','photoUrl'],
+  participantes: ['id','organizadorId','tournamentId','teamOwnerId','teamName','teamLogoUrl','status','timestamp','userId'],
+  federacoes: ['id','organizadorId','name','slug','logoUrl','bannerUrl','entranceType','type','experienceType','primaryColor','createdAt'],
+  noticias: ['id','organizadorId','title','content','imageUrl','createdAt'],
+  anuncios: ['id','organizadorId','title','imageUrl','linkUrl','createdAt'],
+  convites_liga: ['id','organizadorId','ligaId','senderId','receiverId','status','createdAt'],
+};
+
+// Remove campos que não existem na tabela e valores undefined
+const sanitizeForTable = (table: string, row: any): any => {
+  const cols = TABLE_COLUMNS[table];
+  if (!cols) return row;
+  const clean: any = {};
+  for (const key of cols) {
+    if (row[key] !== undefined) clean[key] = row[key];
+  }
+  return clean;
+};
+
 export const syncToSupabase = async (table: string, data: any[]) => {
   if (!data || data.length === 0) return;
   try {
-    const { error } = await supabase.from(table).upsert(data, { onConflict: 'id' });
-    if (error) console.warn(`[Sync] Aviso em ${table}:`, error.message);
+    const sanitized = data.map(row => sanitizeForTable(table, row));
+    const { error } = await supabase.from(table).upsert(sanitized, { onConflict: 'id' });
+    if (error) {
+      console.warn(`[Sync] Aviso em ${table}:`, error.message);
+      // Se falhar em lote, tenta linha por linha para não perder tudo
+      for (const row of sanitized) {
+        const { error: rowError } = await supabase.from(table).upsert([row], { onConflict: 'id' });
+        if (rowError) console.warn(`[Sync] Linha rejeitada em ${table} (id=${row.id}):`, rowError.message);
+      }
+    }
   } catch (error) {
     console.error(`[Sync] Falha em ${table}:`, error);
   }
