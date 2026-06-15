@@ -349,12 +349,12 @@ const Login: React.FC<LoginProps> = ({
             <div className="relative z-10 animate-in slide-in-from-left duration-700">
                 <div className="flex items-center gap-6 mb-12">
                     <div className="relative">
-                        <div className="absolute inset-0 bg-[var(--primary)] blur-[30px] opacity-20 rounded-full"></div>
-                        <div className="w-24 h-24 md:w-32 md:h-32 bg-[var(--bg-card)]/80 backdrop-blur-md rounded-3xl border-2 border-[var(--primary)]/30 p-4 flex items-center justify-center shadow-[0_0_40px_rgba(255,106,0,0.2)] hover:scale-105 transition-transform duration-500 overflow-hidden">
+                        <div className="absolute inset-0 bg-[var(--primary)] blur-[40px] opacity-30 rounded-full"></div>
+                        <div className="w-36 h-36 md:w-48 md:h-48 flex items-center justify-center hover:scale-105 transition-transform duration-500">
                             {customLogoUrl ? (
-                                <img src={customLogoUrl} className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" alt="Logo" />
+                                <img src={customLogoUrl} className="w-full h-full object-contain drop-shadow-[0_0_20px_rgba(255,106,0,0.4)]" alt="Logo" />
                             ) : (
-                                <Shield size={60} className="text-[var(--primary)] drop-shadow-[0_0_15px_rgba(255,106,0,0.5)]" />
+                                <Shield size={90} className="text-[var(--primary)] drop-shadow-[0_0_15px_rgba(255,106,0,0.5)]" />
                             )}
                         </div>
                     </div>
