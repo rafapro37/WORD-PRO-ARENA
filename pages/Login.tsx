@@ -154,6 +154,7 @@ const Login: React.FC<LoginProps> = ({
   // Shared Team Info
   const [regTeamName, setRegTeamName] = useState('');
   const [regTeamId, setRegTeamId] = useState('');
+  const [regTeamLogo, setRegTeamLogo] = useState('');
   const [teamSearchQuery, setTeamSearchQuery] = useState('');
 
   const [currentPlanIndex, setCurrentPlanIndex] = useState(1); 
@@ -306,7 +307,7 @@ const Login: React.FC<LoginProps> = ({
             mode: regExperience === ExperienceType.PRO_CLUBS ? 'VIRTUAL' : 'REAL', 
             teamName: regTeamName, 
             teamId: regTeamId,
-            teamLogoUrl: regPhotoUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(regNick || regUser)}`,
+            teamLogoUrl: regTeamLogo || regPhotoUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(regNick || regUser)}`,
             trophies: [],
             ligaId: selectedLigaId || undefined
         } 
@@ -674,47 +675,74 @@ const Login: React.FC<LoginProps> = ({
 
                                 {regExperience === ExperienceType.X1 ? (
                                     <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1 block">Escolha seu Time</label>
-                                        <div className="relative">
+                                        <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1 block">Crie seu Time</label>
+                                        
+                                        {/* Nome do time */}
+                                        <div>
                                             <input 
                                                 type="text" 
-                                                placeholder="🔍 Pesquisar time..." 
-                                                value={teamSearchQuery}
-                                                onChange={e => setTeamSearchQuery(e.target.value)}
+                                                placeholder="Nome do seu time (ex: Os Invencíveis)" 
+                                                value={regTeamName}
+                                                onChange={e => { setRegTeamName(e.target.value); setRegTeamId('custom-' + e.target.value); }}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white outline-none focus:border-brand-primary"
                                             />
+                                            {regTeamName && (
+                                                <div className="flex items-center gap-2 mt-2 ml-1">
+                                                    {(() => {
+                                                        const nameOccupied = playerProfiles.some(p => 
+                                                            p.teamName?.toLowerCase().trim() === regTeamName.toLowerCase().trim()
+                                                        );
+                                                        return (
+                                                            <>
+                                                                <div className={`w-1.5 h-1.5 rounded-full ${nameOccupied ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                                                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                                                                    {nameOccupied ? '🔴 Nome já em uso' : '🟢 Disponível'}
+                                                                </span>
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3 max-h-[30vh] overflow-y-auto pr-2 custom-scrollbar">
-                                            {filteredTeamsForSearch.map(team => {
-                                                const occupied = isTeamOccupied(team.id);
-                                                return (
-                                                    <button 
-                                                        key={team.id}
-                                                        type="button"
-                                                        disabled={occupied}
-                                                        onClick={() => { setRegTeamId(team.id); setRegTeamName(team.name); }}
-                                                        className={`p-4 rounded-2xl border transition-all text-left flex items-center gap-3 ${
-                                                            regTeamId === team.id 
-                                                            ? 'bg-brand-primary border-brand-primary shadow-lg' 
-                                                            : occupied 
-                                                                ? 'opacity-40 grayscale cursor-not-allowed bg-black/20 border-white/5' 
-                                                                : 'bg-white/5 border-white/10 hover:border-brand-primary'
-                                                        }`}
-                                                    >
-                                                        <div className="w-10 h-10 bg-black rounded-lg p-1">
-                                                            <img src={team.logo} className="w-full h-full object-contain" alt={team.name} />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <p className={`text-[10px] font-black uppercase truncate ${regTeamId === team.id ? 'text-white' : 'text-slate-300'}`}>{team.name}</p>
-                                                            <div className="flex items-center gap-1 mt-1">
-                                                                <div className={`w-1.5 h-1.5 rounded-full ${occupied ? 'bg-red-500' : 'bg-green-500'}`}></div>
-                                                                <span className="text-[8px] font-bold uppercase tracking-widest text-slate-500">{occupied ? '🔴 Ocupado' : '🟢 Disponível'}</span>
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                );
-                                            })}
+
+                                        {/* Logo do time */}
+                                        <div>
+                                            <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1 mb-2 block">Logo do Time</label>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                                                    {regTeamLogo ? (
+                                                        <img src={regTeamLogo} className="w-full h-full object-contain" alt="Logo" />
+                                                    ) : (
+                                                        <Shield size={28} className="text-white/20" />
+                                                    )}
+                                                </div>
+                                                <label className="flex-1 cursor-pointer bg-white/5 hover:bg-white/10 border border-dashed border-white/20 rounded-xl p-4 text-center transition-all">
+                                                    <Upload size={18} className="mx-auto mb-1 text-brand-primary" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Enviar logo</span>
+                                                    <input type="file" hidden accept="image/*" onChange={e => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        if (file.size > 2 * 1024 * 1024) { setError('Imagem muito grande. Máximo 2MB.'); return; }
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => setRegTeamLogo(reader.result as string);
+                                                        reader.readAsDataURL(file);
+                                                    }} />
+                                                </label>
+                                            </div>
                                         </div>
+
+                                        {/* Preview: nick + nome do time */}
+                                        {regTeamName && (
+                                            <div className="bg-white/5 border border-brand-primary/30 rounded-xl p-3 flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center overflow-hidden">
+                                                    {regTeamLogo ? <img src={regTeamLogo} className="w-full h-full object-contain"/> : <Shield size={18} className="text-brand-primary"/>}
+                                                </div>
+                                                <div>
+                                                    <p className="text-[11px] font-black text-white uppercase">{regTeamName}</p>
+                                                    <p className="text-[9px] text-slate-400">{regNick || 'Seu nick aparecerá aqui'}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
