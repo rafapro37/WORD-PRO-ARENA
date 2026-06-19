@@ -635,6 +635,62 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
   const shapeClass = customization.shape === 'circle' ? 'rounded-full' : customization.shape === 'square' ? 'rounded-none' : 'rounded-2xl';
 
+  // ─── COMPUTAR TROFÉUS DA GALERIA (automático dos campeonatos finalizados) ──
+  const playerTrophies = React.useMemo(() => {
+    const trophies: { type: 'champion' | 'topScorer' | 'topAssist'; tournamentName: string; tournamentId: string; }[] = [];
+    const finishedTournaments = allTournaments.filter(t => t.status === 'FINISHED');
+
+    finishedTournaments.forEach(t => {
+      const tournamentPlayers = playersData.filter(p => p.tournamentId === t.id);
+      const tournamentTeams = allTeams.filter(tm => tm.tournamentId === t.id);
+
+      // Identificar nome/registro do jogador atual neste torneio (X1 usa nickname)
+      const myName = (profile.nickname || user.name || user.username || '').toLowerCase();
+
+      // CAMPEÃO: time vencedor da final
+      const finalMatch = (allTournaments.find(at => at.id === t.id) as any);
+      const champion = tournamentTeams.find(tm => 
+        tm.name?.toLowerCase() === myName || tm.ownerId === user.id
+      );
+      // Verifica se o time do jogador foi campeão (maior pontuação ou venceu final)
+      if (champion) {
+        const sortedTeams = [...tournamentTeams].sort((a, b) => 
+          (b.points || 0) - (a.points || 0) || 
+          ((b.goalsFor||0)-(b.goalsAgainst||0)) - ((a.goalsFor||0)-(a.goalsAgainst||0))
+        );
+        if (sortedTeams[0]?.id === champion.id) {
+          trophies.push({ type: 'champion', tournamentName: t.name, tournamentId: t.id });
+        }
+      }
+
+      // ARTILHEIRO: jogador com mais gols
+      if (tournamentPlayers.length > 0) {
+        const topScorer = [...tournamentPlayers].sort((a, b) => (b.goals || 0) - (a.goals || 0))[0];
+        if (topScorer && (topScorer.goals || 0) > 0 && 
+            (topScorer.name?.toLowerCase() === myName)) {
+          trophies.push({ type: 'topScorer', tournamentName: t.name, tournamentId: t.id });
+        }
+
+        // LÍDER EM ASSISTÊNCIAS
+        const topAssist = [...tournamentPlayers].sort((a, b) => (b.assists || 0) - (a.assists || 0))[0];
+        if (topAssist && (topAssist.assists || 0) > 0 && 
+            (topAssist.name?.toLowerCase() === myName)) {
+          trophies.push({ type: 'topAssist', tournamentName: t.name, tournamentId: t.id });
+        }
+      }
+    });
+
+    // Agrupar por tipo+campeonato e contar
+    const grouped: Record<string, { type: string; tournamentName: string; count: number; }> = {};
+    trophies.forEach(tr => {
+      const key = `${tr.type}-${tr.tournamentName}`;
+      if (grouped[key]) grouped[key].count++;
+      else grouped[key] = { type: tr.type, tournamentName: tr.tournamentName, count: 1 };
+    });
+
+    return Object.values(grouped);
+  }, [allTournaments, playersData, allTeams, profile, user]);
+
   return (
     <div className="flex flex-col h-full bg-brand-dark overflow-hidden font-sans">
       
@@ -1612,6 +1668,52 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                       </div>
                     ))}
                   </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'gallery' && (
+            <div className="animate-in fade-in">
+              <div className="mb-8">
+                <h2 className="text-2xl font-black italic uppercase flex items-center gap-3">
+                  <Crown className="text-yellow-400"/> Galeria de Conquistas
+                </h2>
+                <p className="text-brand-textMuted text-sm mt-1">Troféus conquistados nos campeonatos finalizados.</p>
+              </div>
+
+              {playerTrophies.length === 0 ? (
+                <div className="bg-brand-surface rounded-2xl border border-dashed border-brand-border p-16 flex flex-col items-center justify-center text-center">
+                  <Crown size={64} className="text-brand-textMuted/30 mb-4"/>
+                  <p className="text-brand-textMuted font-bold uppercase tracking-widest text-sm">Nenhum troféu ainda</p>
+                  <p className="text-brand-textMuted/60 text-xs mt-2 max-w-xs">Participe de campeonatos e seja campeão, artilheiro ou líder em assistências para conquistar troféus.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {playerTrophies.map((trophy, i) => {
+                    const config = {
+                      champion:  { icon: '🏆', label: 'Campeão',       color: 'from-yellow-500/20 to-yellow-700/10', border: 'border-yellow-500/40', text: 'text-yellow-400', glow: 'shadow-[0_0_25px_rgba(250,204,21,0.25)]' },
+                      topScorer: { icon: '⚽', label: 'Artilheiro',     color: 'from-orange-500/20 to-red-700/10',   border: 'border-orange-500/40', text: 'text-orange-400', glow: 'shadow-[0_0_25px_rgba(249,115,22,0.2)]' },
+                      topAssist: { icon: '🎯', label: 'Líder Assist.',  color: 'from-blue-500/20 to-blue-700/10',    border: 'border-blue-500/40',  text: 'text-blue-400',   glow: 'shadow-[0_0_25px_rgba(59,130,246,0.2)]' },
+                    }[trophy.type] || { icon: '🏅', label: 'Prêmio', color: 'from-gray-500/20 to-gray-700/10', border: 'border-gray-500/40', text: 'text-gray-400', glow: '' };
+
+                    return (
+                      <div key={i} className={`relative bg-gradient-to-b ${config.color} rounded-2xl border ${config.border} ${config.glow} p-6 flex flex-col items-center text-center hover:scale-105 transition-transform`}>
+                        {/* Contador de multiplicação */}
+                        {trophy.count > 1 && (
+                          <div className={`absolute top-3 right-3 ${config.text} bg-black/40 rounded-full w-8 h-8 flex items-center justify-center text-sm font-black border ${config.border}`}>
+                            ×{trophy.count}
+                          </div>
+                        )}
+                        <div className="text-5xl mb-3 drop-shadow-lg">{config.icon}</div>
+                        <p className={`text-sm font-black uppercase tracking-wider ${config.text}`}>{config.label}</p>
+                        <p className="text-brand-text text-xs font-bold mt-1 leading-tight">{trophy.tournamentName}</p>
+                        {trophy.count > 1 && (
+                          <p className="text-brand-textMuted text-[10px] mt-2 uppercase tracking-widest">Conquistado {trophy.count}x</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
