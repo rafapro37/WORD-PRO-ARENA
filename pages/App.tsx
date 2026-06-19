@@ -2414,6 +2414,7 @@ const App: React.FC = () => {
                   onResponderProposta={handleResponderProposta}
                   teamData={playerTeamData}
                   allTournaments={filteredTournaments}
+                  allMatches={state.matches}
                   allTeams={filteredTeams}
                   registrations={state.registrations}
                   onRequestRegistration={inscreverMeuTime}

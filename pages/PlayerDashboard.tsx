@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { toast } from '../src/lib/toast';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, PlayerProfile, Player, TrophyItem, UserRole, ClubPlayer, ClubData, Tournament, TournamentRegistration, Team, ContractInvitation, AppSettings, PlayerCustomization, Proposal, LeagueInvitation, League } from '../types';
+import { User, PlayerProfile, Player, TrophyItem, UserRole, ClubPlayer, ClubData, Tournament, TournamentRegistration, Team, Match, ContractInvitation, AppSettings, PlayerCustomization, Proposal, LeagueInvitation, League } from '../types';
 import { Shield, Trophy, Award, Upload, Trash2, Plus, Calendar, Edit, Save, Check, Camera, Lock, Download, PenTool, X, Users, Briefcase, Target, ListPlus, Crown, RefreshCw, ChevronRight, ChevronLeft, Menu, LayoutDashboard, User as UserIcon, Star, BarChart, Clock, Filter, Info, Zap, Smartphone, Gamepad2, Globe, Brain, ArrowUp, ArrowDown, Image as ImageIcon, Palette, Eye, ChevronUp, ChevronDown, Send, Search } from '../components/Icons';
 import { uploadFile } from '../services/supabase';
 import { POSITIONS_ALL, POSITIONS_VIRTUAL, POSITIONS_REAL } from '../constants';
@@ -27,6 +27,7 @@ interface PlayerDashboardProps {
   onResponderProposta: (id: string, acao: 'aceitar' | 'recusar') => void;
   teamData?: ClubData;
   allTournaments: Tournament[];
+  allMatches?: Match[];
   allTeams: Team[];
   registrations: TournamentRegistration[];
   onRequestRegistration: (tournament: Tournament) => void;
@@ -113,7 +114,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
     onUpdateProfile, onUpdatePassword, themeColor, invitations = [], 
     onRespondInvite, leagueInvitations = [], onRespondLeagueInvitation, 
     allLeagues = [], propostas = [], onResponderProposta, teamData, 
-    allTournaments = [], allTeams, registrations = [], 
+    allTournaments = [], allTeams, registrations = [], allMatches = [],
     onRequestRegistration, onKickPlayer, onViewTournament, onTransferirManual,
     showMarket = true 
 }) => {
@@ -638,49 +639,55 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
   // ─── COMPUTAR TROFÉUS DA GALERIA (automático dos campeonatos finalizados) ──
   const playerTrophies = React.useMemo(() => {
     const trophies: { type: 'champion' | 'topScorer' | 'topAssist'; tournamentName: string; tournamentId: string; }[] = [];
-    const finishedTournaments = allTournaments.filter(t => t.status === 'FINISHED');
+    // Considera finalizados OU com a final já decidida
+    const eligibleTournaments = allTournaments.filter(t => t.status === 'FINISHED' || (t as any).champion || t.status === 'ACTIVE');
 
-    finishedTournaments.forEach(t => {
+    const myName = (profile.nickname || user.name || user.username || '').toLowerCase().trim();
+
+    eligibleTournaments.forEach(t => {
       const tournamentPlayers = playersData.filter(p => p.tournamentId === t.id);
       const tournamentTeams = allTeams.filter(tm => tm.tournamentId === t.id);
+      const tournamentMatches = (allMatches || []).filter((m: any) => m.tournamentId === t.id);
 
-      // Identificar nome/registro do jogador atual neste torneio (X1 usa nickname)
-      const myName = (profile.nickname || user.name || user.username || '').toLowerCase();
-
-      // CAMPEÃO: time vencedor da final
-      const finalMatch = (allTournaments.find(at => at.id === t.id) as any);
-      const champion = tournamentTeams.find(tm => 
-        tm.name?.toLowerCase() === myName || tm.ownerId === user.id
+      // Identifica o time do jogador (por nome OU por ownerId)
+      const myTeam = tournamentTeams.find(tm => 
+        tm.name?.toLowerCase().trim() === myName || 
+        tm.ownerId === user.id ||
+        tm.managerId === user.id
       );
-      // Verifica se o time do jogador foi campeão (maior pontuação ou venceu final)
-      if (champion) {
+
+      // CAMPEÃO: verifica a partida FINAL
+      const finalMatch = tournamentMatches.find((m: any) => m.stage === 'FINAL' && m.isFinished);
+      if (finalMatch && myTeam) {
+        const homeWon = (finalMatch.homeScore ?? 0) > (finalMatch.awayScore ?? 0);
+        const winnerId = homeWon ? finalMatch.homeTeamId : finalMatch.awayTeamId;
+        if (winnerId === myTeam.id) {
+          trophies.push({ type: 'champion', tournamentName: t.name, tournamentId: t.id });
+        }
+      } else if (myTeam && t.status === 'FINISHED') {
+        // Fallback: campeão por classificação (pontos corridos)
         const sortedTeams = [...tournamentTeams].sort((a, b) => 
           (b.points || 0) - (a.points || 0) || 
           ((b.goalsFor||0)-(b.goalsAgainst||0)) - ((a.goalsFor||0)-(a.goalsAgainst||0))
         );
-        if (sortedTeams[0]?.id === champion.id) {
+        if (sortedTeams[0]?.id === myTeam.id) {
           trophies.push({ type: 'champion', tournamentName: t.name, tournamentId: t.id });
         }
       }
 
-      // ARTILHEIRO: jogador com mais gols
+      // ARTILHEIRO
       if (tournamentPlayers.length > 0) {
         const topScorer = [...tournamentPlayers].sort((a, b) => (b.goals || 0) - (a.goals || 0))[0];
-        if (topScorer && (topScorer.goals || 0) > 0 && 
-            (topScorer.name?.toLowerCase() === myName)) {
+        if (topScorer && (topScorer.goals || 0) > 0 && topScorer.name?.toLowerCase().trim() === myName) {
           trophies.push({ type: 'topScorer', tournamentName: t.name, tournamentId: t.id });
         }
-
-        // LÍDER EM ASSISTÊNCIAS
         const topAssist = [...tournamentPlayers].sort((a, b) => (b.assists || 0) - (a.assists || 0))[0];
-        if (topAssist && (topAssist.assists || 0) > 0 && 
-            (topAssist.name?.toLowerCase() === myName)) {
+        if (topAssist && (topAssist.assists || 0) > 0 && topAssist.name?.toLowerCase().trim() === myName) {
           trophies.push({ type: 'topAssist', tournamentName: t.name, tournamentId: t.id });
         }
       }
     });
 
-    // Agrupar por tipo+campeonato e contar
     const grouped: Record<string, { type: string; tournamentName: string; count: number; }> = {};
     trophies.forEach(tr => {
       const key = `${tr.type}-${tr.tournamentName}`;

@@ -72,18 +72,23 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   const [matchTurnFilter, setMatchTurnFilter] = useState<number>(1); // Match List View Mode (Turn 1 or 2)
 
   const getTeamNameAndEscudo = (team: Team | undefined) => {
-    if (!team) return { name: '-', logoUrl: '' };
-    if (tournament.experienceType === 'X1') {
+    if (!team) return { name: '-', logoUrl: '', subName: '' };
+    if (tournament.experienceType === 'X1' || tournament.tournamentType === 'X1') {
       const profile = playerProfiles?.find(p => p.userId === team.ownerId);
       if (profile) {
+        // Em X1: nome do time como principal, nickname do jogador como subtítulo
+        const teamName = profile.teamName || team.name;
+        const playerName = profile.nickname || team.name;
         return {
-          name: profile.nickname || team.name,
-          logoUrl: profile.photoUrl || team.logoUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(profile.nickname || team.name)}`
+          name: teamName,
+          subName: playerName !== teamName ? playerName : '',
+          logoUrl: profile.teamLogoUrl || profile.photoUrl || team.logoUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(playerName)}`
         };
       }
     }
     return {
       name: team.name,
+      subName: '',
       logoUrl: team.logoUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(team.name)}`
     };
   };
@@ -627,7 +632,10 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                   <div className={`flex items-center justify-between gap-2 h-5 rounded px-0.5 ${homeWon ? 'bg-green-900/30' : ''}`}> 
                       <div className="flex items-center gap-2 min-w-0 flex-1"> 
                           <div className="w-4 h-4 flex items-center justify-center shrink-0"> {hasHome ? (hVisual.logoUrl ? <img src={hVisual.logoUrl} className="w-full h-full object-contain" /> : <Shield size={10} className="text-brand-textMuted"/>) : <div className="w-4"/>} </div> 
-                          <span className={`text-[10px] font-bold truncate leading-tight block ${homeWon ? 'text-green-400' : 'text-brand-text'}`}>{hasHome ? hVisual.name : <span className="text-white/20">A definir</span>}</span> 
+                          <div className="flex flex-col min-w-0">
+                            <span className={`text-[10px] font-bold truncate leading-tight block ${homeWon ? 'text-green-400' : 'text-brand-text'}`}>{hasHome ? hVisual.name : <span className="text-white/20">A definir</span>}</span>
+                            {hasHome && hVisual.subName && <span className="text-[8px] text-brand-textMuted truncate leading-tight">{hVisual.subName}</span>}
+                          </div>
                           {homeWon && <span className="text-green-400 text-[8px] font-black">✓</span>}
                       </div> 
                       <span className={`font-mono font-black text-xs w-5 text-center shrink-0 rounded ${homeWon ? 'text-green-400 bg-green-900/40' : 'text-brand-primary bg-black/20'}`}>{match.homeScore ?? '-'}</span> 
@@ -635,7 +643,10 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                   <div className={`flex items-center justify-between gap-2 h-5 rounded px-0.5 ${awayWon ? 'bg-green-900/30' : ''}`}> 
                       <div className="flex items-center gap-2 min-w-0 flex-1"> 
                           <div className="w-4 h-4 flex items-center justify-center shrink-0"> {hasAway ? (aVisual.logoUrl ? <img src={aVisual.logoUrl} className="w-full h-full object-contain" /> : <Shield size={10} className="text-brand-textMuted"/>) : <div className="w-4"/>} </div> 
-                          <span className={`text-[10px] font-bold truncate leading-tight block ${awayWon ? 'text-green-400' : 'text-brand-text'}`}>{hasAway ? aVisual.name : <span className="text-white/20">A definir</span>}</span> 
+                          <div className="flex flex-col min-w-0">
+                            <span className={`text-[10px] font-bold truncate leading-tight block ${awayWon ? 'text-green-400' : 'text-brand-text'}`}>{hasAway ? aVisual.name : <span className="text-white/20">A definir</span>}</span>
+                            {hasAway && aVisual.subName && <span className="text-[8px] text-brand-textMuted truncate leading-tight">{aVisual.subName}</span>}
+                          </div>
                           {awayWon && <span className="text-green-400 text-[8px] font-black">✓</span>}
                       </div> 
                       <span className={`font-mono font-black text-xs w-5 text-center shrink-0 rounded ${awayWon ? 'text-green-400 bg-green-900/40' : 'text-brand-primary bg-black/20'}`}>{match.awayScore ?? '-'}</span> 
