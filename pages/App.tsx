@@ -129,10 +129,12 @@ const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; i
               {x1Image && (
                 <img src={x1Image} className="absolute object-contain pointer-events-none drop-shadow-2xl"
                   style={{
-                    height: `${images.experienceX1Zoom || 85}%`,
+                    width: `${images.experienceX1Zoom || 85}%`,
                     left: `${images.experienceX1PosX ?? 70}%`,
                     top: `${images.experienceX1PosY ?? 100}%`,
-                    transform: 'translate(-50%, -50%)'
+                    transform: 'translate(-50%, -50%)',
+                    maxWidth: 'none',
+                    maxHeight: 'none',
                   }} alt="" />
               )}
 
@@ -168,10 +170,12 @@ const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; i
               {clubsImage && (
                 <img src={clubsImage} className="absolute object-contain pointer-events-none drop-shadow-2xl"
                   style={{
-                    height: `${images.experienceClubsZoom || 85}%`,
+                    width: `${images.experienceClubsZoom || 85}%`,
                     left: `${images.experienceClubsPosX ?? 70}%`,
                     top: `${images.experienceClubsPosY ?? 100}%`,
-                    transform: 'translate(-50%, -50%)'
+                    transform: 'translate(-50%, -50%)',
+                    maxWidth: 'none',
+                    maxHeight: 'none',
                   }} alt="" />
               )}
 

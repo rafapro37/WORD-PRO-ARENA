@@ -223,11 +223,12 @@ const CardImageAdjuster: React.FC<{
         </div>
         <img src={image} draggable={false} className="absolute pointer-events-none drop-shadow-2xl"
           style={{
-            height: `${zoom}%`,
+            width: `${zoom}%`,
             left: `${posX}%`,
             top: `${posY}%`,
             transform: 'translate(-50%, -50%)',
-            objectFit: 'contain'
+            maxWidth: 'none',
+            maxHeight: 'none',
           }} />
         {/* Faixa inferior como no card real */}
         <div className="absolute bottom-0 inset-x-0 bg-black/40 py-1.5 text-center pointer-events-none">
