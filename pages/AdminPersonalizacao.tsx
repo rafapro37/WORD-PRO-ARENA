@@ -236,7 +236,11 @@ const CardImageAdjuster: React.FC<{
       </div>
 
       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Zoom: {zoom}%</label>
-      <input type="range" min="40" max="220" value={zoom} onChange={e => onChange({ zoom: +e.target.value })} className="w-full" style={{ accentColor }} />
+      <input type="range" min="20" max="500" value={zoom} onChange={e => onChange({ zoom: +e.target.value })} className="w-full" style={{ accentColor }} />
+      <div className="flex gap-2 mt-2">
+        <button onClick={() => onChange({ zoom: Math.max(20, zoom - 10) })} className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded py-1.5 text-xs font-bold text-slate-300">− Diminuir</button>
+        <button onClick={() => onChange({ zoom: zoom + 10 })} className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded py-1.5 text-xs font-bold text-slate-300">+ Aumentar</button>
+      </div>
     </div>
   );
 };
