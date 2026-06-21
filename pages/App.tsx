@@ -79,51 +79,106 @@ import { NotificationCenter } from "../src/components/NotificationCenter";
 import { usePaymentGateway } from "../src/components/PaymentGateway";
 import { Gamepad2, Menu, X } from "../components/Icons";
 
-const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void }> = ({ onSelect }) => {
+const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; images?: any }> = ({ onSelect, images = {} }) => {
   const { T } = useLocale();
+  const LOGO = images.logo || 'https://i.imgur.com/3tIJK4S.png';
+  const bgImage = images.experienceBg;
+  const x1Image = images.experienceX1;
+  const clubsImage = images.experienceClubs;
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[var(--bg-main)] p-6 overflow-y-auto">
-       <div className="max-w-4xl w-full text-center py-10">
-          {/* Seletor de idioma no topo direito */}
-          <div className="absolute top-4 right-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-6 overflow-y-auto"
+         style={bgImage
+           ? { backgroundImage: `linear-gradient(rgba(13,14,18,0.85), rgba(13,14,18,0.92)), url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+           : { background: 'radial-gradient(ellipse at top, #2A2D38 0%, #15171D 60%, #0D0E12 100%)' }}>
+       {/* Textura de estádio ao fundo */}
+       {!bgImage && <div className="absolute inset-0 opacity-[0.07] pointer-events-none"
+            style={{ backgroundImage: 'repeating-linear-gradient(90deg, #fff 0px, #fff 1px, transparent 1px, transparent 40px)' }} />}
+
+       <div className="max-w-5xl w-full text-center py-8 relative z-10">
+          <div className="absolute top-0 right-0">
             <LanguageSelector variant="full" dropDirection="down" />
           </div>
 
-          <div className="w-20 h-20 bg-[var(--primary)]/20 rounded-2xl mx-auto flex items-center justify-center mb-8 rotate-3 border border-[var(--primary)]/30">
-             <Trophy size={40} className="text-[var(--primary)]" />
+          {/* Logo do projeto */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="relative mb-4">
+              <div className="absolute inset-0 bg-[var(--primary)] blur-[50px] opacity-40 rounded-full"></div>
+              <img src={LOGO} className="relative w-28 h-28 md:w-36 md:h-36 object-contain drop-shadow-[0_0_25px_rgba(255,106,0,0.5)]" alt="WORD PRO ARENA" />
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black italic text-white uppercase tracking-tighter">{T.auth.chooseExperience}</h1>
+            <p className="text-slate-400 text-[10px] md:text-sm mt-2 uppercase tracking-[0.3em] font-bold">{T.auth.chooseExperienceDesc}</p>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black italic text-white uppercase tracking-tighter mb-4">{T.auth.chooseExperience}</h1>
-          <p className="text-slate-400 text-sm md:text-lg mb-12 uppercase tracking-[0.3em] font-bold">{T.auth.chooseExperienceDesc}</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <button 
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 md:gap-8 max-w-3xl mx-auto">
+            {/* CARD X1 */}
+            <button
               onClick={() => onSelect(ExperienceType.X1)}
-              className="bg-white/5 border border-white/10 p-8 md:p-12 rounded-[40px] group hover:bg-[var(--primary)] hover:border-[var(--primary)] transition-all duration-500 flex flex-col items-center gap-6"
+              className="group relative h-72 md:h-96 rounded-3xl overflow-hidden border-2 border-white/10 hover:border-[var(--primary)] transition-all duration-500 hover:scale-[1.02]"
+              style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #0f4c75 50%, #1a1a2e 100%)' }}
             >
-              <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-500">
-                <Gamepad2 size={48} className="text-white group-hover:text-black" />
+              {/* Diagonais decorativas */}
+              <div className="absolute inset-0 opacity-30">
+                <div className="absolute -right-10 top-10 w-40 h-2 bg-cyan-400 rotate-45"></div>
+                <div className="absolute -right-6 top-16 w-32 h-1.5 bg-pink-500 rotate-45"></div>
+                <div className="absolute -left-10 bottom-20 w-40 h-2 bg-yellow-400 -rotate-45"></div>
               </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-black italic text-white uppercase group-hover:text-black">⚽ {T.sports.x1}</h2>
-                <p className="text-slate-500 text-[10px] md:text-xs mt-2 uppercase tracking-widest font-black group-hover:text-black/60">{T.sports.x1}</p>
+              {/* Brilho estádio */}
+              <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"></div>
+
+              {/* Imagem do jogador (personalizada pelo admin) */}
+              {x1Image && (
+                <img src={x1Image} className="absolute bottom-0 right-0 h-[85%] object-contain object-bottom drop-shadow-2xl pointer-events-none" alt="" />
+              )}
+
+              <div className={`relative h-full flex flex-col ${x1Image ? 'items-start justify-end pb-16 pl-6' : 'items-center justify-center'} gap-4 p-6`}>
+                <div className="w-20 h-20 md:w-24 md:h-24 bg-white/15 backdrop-blur rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-500 shadow-2xl">
+                  <Gamepad2 size={42} className="text-white group-hover:text-[#0f4c75]" />
+                </div>
+                <div className={x1Image ? 'text-left' : ''}>
+                  <h2 className="text-2xl md:text-4xl font-black italic text-white uppercase tracking-tight drop-shadow-lg">⚽ X1</h2>
+                  <p className="text-cyan-200 text-[9px] md:text-[11px] mt-2 uppercase tracking-widest font-black">Competição direta entre players</p>
+                </div>
+              </div>
+              {/* Faixa inferior estilo "reward" */}
+              <div className="absolute bottom-0 inset-x-0 bg-black/40 backdrop-blur py-2.5 border-t border-white/10">
+                <span className="text-white font-black text-xs uppercase tracking-widest">▸ Jogar X1</span>
               </div>
             </button>
 
-            <button 
+            {/* CARD PRO CLUBS */}
+            <button
               onClick={() => onSelect(ExperienceType.PRO_CLUBS)}
-              className="bg-white/5 border border-white/10 p-8 md:p-12 rounded-[40px] group hover:bg-[var(--primary)] hover:border-[var(--primary)] transition-all duration-500 flex flex-col items-center gap-6"
+              className="group relative h-72 md:h-96 rounded-3xl overflow-hidden border-2 border-white/10 hover:border-[var(--primary)] transition-all duration-500 hover:scale-[1.02]"
+              style={{ background: 'linear-gradient(135deg, #4a148c 0%, #6a1b9a 50%, #1a1a2e 100%)' }}
             >
-              <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-500">
-                <Users size={48} className="text-white group-hover:text-black" />
+              <div className="absolute inset-0 opacity-30">
+                <div className="absolute -right-10 top-12 w-40 h-2 bg-lime-400 rotate-45"></div>
+                <div className="absolute -right-6 top-20 w-32 h-1.5 bg-cyan-400 rotate-45"></div>
+                <div className="absolute -left-10 bottom-24 w-40 h-2 bg-pink-500 -rotate-45"></div>
               </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl font-black italic text-white uppercase group-hover:text-black">⚽ {T.sports.proClubs}</h2>
-                <p className="text-slate-500 text-[10px] md:text-xs mt-2 uppercase tracking-widest font-black group-hover:text-black/60">{T.sports.proClubs}</p>
+              <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent"></div>
+
+              {/* Imagem do jogador (personalizada pelo admin) */}
+              {clubsImage && (
+                <img src={clubsImage} className="absolute bottom-0 right-0 h-[85%] object-contain object-bottom drop-shadow-2xl pointer-events-none" alt="" />
+              )}
+
+              <div className={`relative h-full flex flex-col ${clubsImage ? 'items-start justify-end pb-16 pl-6' : 'items-center justify-center'} gap-4 p-6`}>
+                <div className="w-20 h-20 md:w-24 md:h-24 bg-white/15 backdrop-blur rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-500 shadow-2xl">
+                  <Users size={42} className="text-white group-hover:text-[#6a1b9a]" />
+                </div>
+                <div className={clubsImage ? 'text-left' : ''}>
+                  <h2 className="text-2xl md:text-4xl font-black italic text-white uppercase tracking-tight drop-shadow-lg">⚽ PRO CLUBS</h2>
+                  <p className="text-purple-200 text-[9px] md:text-[11px] mt-2 uppercase tracking-widest font-black">Gestão de elenco e federações (11x11)</p>
+                </div>
+              </div>
+              <div className="absolute bottom-0 inset-x-0 bg-black/40 backdrop-blur py-2.5 border-t border-white/10">
+                <span className="text-white font-black text-xs uppercase tracking-widest">▸ Jogar Pro Clubs</span>
               </div>
             </button>
           </div>
-          
-          <p className="mt-12 text-[10px] font-bold text-slate-600 uppercase tracking-widest">PRO WORLD ARENA | {T.landing.tagline}</p>
+
+          <p className="mt-8 text-[10px] font-bold text-slate-600 uppercase tracking-widest">WORD PRO ARENA | {T.landing.tagline}</p>
        </div>
     </div>
   );
@@ -1864,7 +1919,7 @@ const App: React.FC = () => {
     >
             {/* EXPERIENCE SELECTION OVERLAY */}
             {state.currentUser && !state.currentUser.experiencePreference && !globalExperience && currentPage !== 'landing' && (
-              <ExperienceSelection onSelect={handleSelectExperience} />
+              <ExperienceSelection onSelect={handleSelectExperience} images={state.settings.globalImages || {}} />
             )}
 
             {currentPage === "landing" && (

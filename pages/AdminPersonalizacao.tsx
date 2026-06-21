@@ -191,6 +191,9 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
     loginBg: '',
     homeBg:  '',
     favicon: '',
+    experienceBg:    '',
+    experienceX1:    '',
+    experienceClubs: '',
     ...(state.settings.globalImages || {}),
   });
 
@@ -485,6 +488,27 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
                     value={imagens.homeBg}
                     onChange={v => setImagens(p => ({ ...p, homeBg: v }))}
                     onUpload={f => handleUpload('homeBg', f)}
+                  />
+                  <ImageUploadBox
+                    label="Fundo 'Como Deseja Jogar'"
+                    desc="Imagem de fundo da tela de seleção de experiência"
+                    value={imagens.experienceBg}
+                    onChange={v => setImagens(p => ({ ...p, experienceBg: v }))}
+                    onUpload={f => handleUpload('experienceBg', f)}
+                  />
+                  <ImageUploadBox
+                    label="Imagem Card X1"
+                    desc="Jogador/imagem em destaque no card X1"
+                    value={imagens.experienceX1}
+                    onChange={v => setImagens(p => ({ ...p, experienceX1: v }))}
+                    onUpload={f => handleUpload('experienceX1', f)}
+                  />
+                  <ImageUploadBox
+                    label="Imagem Card Pro Clubs"
+                    desc="Jogador/imagem em destaque no card Pro Clubs (11x11)"
+                    value={imagens.experienceClubs}
+                    onChange={v => setImagens(p => ({ ...p, experienceClubs: v }))}
+                    onUpload={f => handleUpload('experienceClubs', f)}
                   />
                 </div>
               </motion.div>
