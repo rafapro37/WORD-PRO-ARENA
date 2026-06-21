@@ -830,12 +830,10 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                   </button>
               )}
 
-              {/* Aba Artilheiros/Assistências para X1 */}
-              {tournament.tournamentType === 'X1' && (
-                  <button onClick={() => setActiveTab('scorers' as any)} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === ('scorers' as any) ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
-                      <Award size={16}/> Artilheiros
-                  </button>
-              )}
+              {/* Aba Artilheiros/Assistências (todos os campeonatos) */}
+              <button onClick={() => setActiveTab('scorers' as any)} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === ('scorers' as any) ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <Award size={16}/> Artilheiros
+              </button>
               
               {isTeamManager && myTeamInTournament && (
                   <button onClick={() => setActiveTab('my-roster')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'my-roster' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
@@ -876,7 +874,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           <div className="bg-brand-surface/90 backdrop-blur rounded-xl border border-brand-border min-h-[400px] shadow-2xl relative overflow-hidden">
               
               {/* --- APPEARANCE TAB --- */}
-              {activeTab === ('scorers' as any) && tournament.tournamentType === 'X1' && (
+              {activeTab === ('scorers' as any) && (
                   <div className="p-6 animate-in fade-in space-y-6">
                       <h3 className="text-xl font-bold text-brand-text flex items-center gap-2"><Award className="text-brand-primary"/> Artilheiros & Assistências</h3>
 

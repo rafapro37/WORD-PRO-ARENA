@@ -112,7 +112,10 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
 
   // ── Gráfico: partidas por rodada (último torneio ativo) ─────────────────
   const matchChartData = useMemo(() => {
-    const activeTournament = tournaments.find(t => t.status === 'ACTIVE') || tournaments[0];
+    // Pega o torneio com mais partidas (não depende de estar ACTIVE)
+    const activeTournament = tournaments.find(t => t.status === 'ACTIVE') 
+      || [...tournaments].sort((a, b) => matches.filter(m => m.tournamentId === b.id).length - matches.filter(m => m.tournamentId === a.id).length)[0]
+      || tournaments[0];
     if (!activeTournament) return [];
 
     const tourneyMatches = matches.filter(m => m.tournamentId === activeTournament.id);
@@ -157,12 +160,12 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
       });
   }, [players, teams, playerProfiles]);
 
-  // ── Atividade recente (últimas partidas finalizadas) ─────────────────────
+  // ── Atividade recente (partidas com placar lançado) ─────────────────────
   const recentMatches = useMemo(() =>
     [...matches]
-      .filter(m => m.isFinished)
+      .filter(m => m.isFinished || m.homeScore != null || m.awayScore != null)
       .sort((a, b) => (b.scheduledAt || b.createdAt || 0) - (a.scheduledAt || a.createdAt || 0))
-      .slice(0, 6)
+      .slice(0, 8)
       .map(m => {
         const teamA = teams.find(t => t.id === m.homeTeamId);
         const teamB = teams.find(t => t.id === m.awayTeamId);
