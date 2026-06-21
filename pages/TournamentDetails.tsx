@@ -389,10 +389,28 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
   const matchPlayers = useMemo(() => {
       if (!selectedMatch) return { home: [], away: [], all: [] };
-      const homeP = players.filter(p => p.teamId === selectedMatch.homeTeamId);
-      const awayP = players.filter(p => p.teamId === selectedMatch.awayTeamId);
+      let homeP = players.filter(p => p.teamId === selectedMatch.homeTeamId);
+      let awayP = players.filter(p => p.teamId === selectedMatch.awayTeamId);
+
+      // Em X1 (ou quando o time não tem elenco), o próprio time é o "jogador"
+      const isX1 = tournament.tournamentType === 'X1' || tournament.experienceType === 'X1';
+      if (isX1 || homeP.length === 0) {
+          const homeTeam = teams.find(t => t.id === selectedMatch.homeTeamId);
+          if (homeTeam) {
+              // Procura jogador já existente ligado ao time, senão usa um pseudo-jogador com o id do time
+              const existing = players.find(p => p.teamId === homeTeam.id || p.id === `x1-${homeTeam.id}`);
+              homeP = [existing || ({ id: `x1-${homeTeam.id}`, name: getTeamNameAndEscudo(homeTeam).name, teamId: homeTeam.id, tournamentId: tournament.id, goals: 0, assists: 0, position: 'X1' } as any)];
+          }
+      }
+      if (isX1 || awayP.length === 0) {
+          const awayTeam = teams.find(t => t.id === selectedMatch.awayTeamId);
+          if (awayTeam) {
+              const existing = players.find(p => p.teamId === awayTeam.id || p.id === `x1-${awayTeam.id}`);
+              awayP = [existing || ({ id: `x1-${awayTeam.id}`, name: getTeamNameAndEscudo(awayTeam).name, teamId: awayTeam.id, tournamentId: tournament.id, goals: 0, assists: 0, position: 'X1' } as any)];
+          }
+      }
       return { home: homeP, away: awayP, all: [...homeP, ...awayP] };
-  }, [selectedMatch, players]);
+  }, [selectedMatch, players, teams, tournament]);
 
   const md3Stats = useMemo(() => {
       if (!isMD3 || teams.length !== 2) return null;

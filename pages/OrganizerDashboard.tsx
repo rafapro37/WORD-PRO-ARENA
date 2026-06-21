@@ -94,7 +94,7 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
     const totalRegistrations = registrations.length;
     const approvedReg       = registrations.filter(r => r.status === 'APPROVED').length;
     const pendingReg        = registrations.filter(r => r.status === 'PENDING').length;
-    const totalGoals        = matches.reduce((sum, m) => sum + (m.scoreA || 0) + (m.scoreB || 0), 0);
+    const totalGoals        = matches.reduce((sum, m) => sum + (m.homeScore || 0) + (m.awayScore || 0), 0);
 
     return {
       activeTournaments: activeTournaments.length,
@@ -144,15 +144,28 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
       });
   }, [players, teams, playerProfiles]);
 
+  // ── Ranking assistências (top 8) ─────────────────────────────────────────
+  const topAssists = useMemo(() => {
+    return [...players]
+      .filter(p => (p.assists || 0) > 0)
+      .sort((a, b) => (b.assists || 0) - (a.assists || 0))
+      .slice(0, 8)
+      .map(p => {
+        const team = teams.find(t => t.id === p.teamId);
+        const profile = playerProfiles.find(pr => pr.userId === p.userId);
+        return { ...p, teamName: team?.name || '—', photoUrl: profile?.photoUrl };
+      });
+  }, [players, teams, playerProfiles]);
+
   // ── Atividade recente (últimas partidas finalizadas) ─────────────────────
   const recentMatches = useMemo(() =>
     [...matches]
       .filter(m => m.isFinished)
-      .sort((a, b) => (b.date || 0) - (a.date || 0))
+      .sort((a, b) => (b.scheduledAt || b.createdAt || 0) - (a.scheduledAt || a.createdAt || 0))
       .slice(0, 6)
       .map(m => {
-        const teamA = teams.find(t => t.id === m.teamAId);
-        const teamB = teams.find(t => t.id === m.teamBId);
+        const teamA = teams.find(t => t.id === m.homeTeamId);
+        const teamB = teams.find(t => t.id === m.awayTeamId);
         const tourney = tournaments.find(t => t.id === m.tournamentId);
         return { ...m, teamAName: teamA?.name || '?', teamBName: teamB?.name || '?', tourneyName: tourney?.name };
       }),
@@ -448,7 +461,7 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
                     <span className="truncate">{m.teamAName}</span>
                     <span className="flex-shrink-0 px-2 py-0.5 rounded font-black text-[12px]"
                           style={{ background: 'var(--theme-primary)', color: 'black' }}>
-                      {m.scoreA ?? '—'} × {m.scoreB ?? '—'}
+                      {m.homeScore ?? '—'} × {m.awayScore ?? '—'}
                     </span>
                     <span className="truncate">{m.teamBName}</span>
                   </div>
@@ -486,10 +499,16 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
 
       {/* ── ABA: ARTILHEIROS ── */}
       {activeTab === 'artilheiros' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
-          {topScorers.length === 0 && (
-            <EmptyState icon="⚽" title="Nenhum gol registrado" description="Os artilheiros aparecem aqui conforme os resultados são lançados." />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+          {topScorers.length === 0 && topAssists.length === 0 && (
+            <EmptyState icon="⚽" title="Nenhum dado registrado" description="Artilheiros e assistências aparecem aqui conforme os resultados são lançados." />
           )}
+
+          {/* ARTILHEIROS */}
+          {topScorers.length > 0 && (
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-widest mb-3 flex items-center gap-2">⚽ Artilheiros</h3>
+              <div className="space-y-3">
           {topScorers.map((p, i) => (
             <motion.div
               key={p.id}
@@ -538,6 +557,57 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
               </div>
             </motion.div>
           ))}
+              </div>
+            </div>
+          )}
+
+          {/* ASSISTÊNCIAS */}
+          {topAssists.length > 0 && (
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-widest mb-3 flex items-center gap-2">🎯 Líderes em Assistências</h3>
+              <div className="space-y-3">
+                {topAssists.map((p, i) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.06 }}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-[var(--theme-border)] transition-all hover:border-blue-500/40"
+                    style={{ background: 'var(--theme-surface)' }}
+                  >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0 ${
+                      i === 0 ? 'bg-blue-500 text-white' :
+                      i === 1 ? 'bg-slate-400 text-black' :
+                      i === 2 ? 'bg-amber-700 text-white' :
+                      'bg-[var(--theme-bg)] text-[var(--theme-text-muted)]'
+                    }`}>
+                      {i + 1}
+                    </div>
+                    <PlayerAvatar name={p.name} photoUrl={p.photoUrl} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-white text-sm truncate">{p.name}</p>
+                      <p className="text-[11px] text-[var(--theme-text-muted)] truncate">{p.teamName} • {p.position}</p>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0 text-right">
+                      <div>
+                        <p className="text-xl font-black text-blue-400">{p.assists || 0}</p>
+                        <p className="text-[10px] text-[var(--theme-text-muted)] font-bold">Assis.</p>
+                      </div>
+                      {(p.goals || 0) > 0 && (
+                        <div>
+                          <p className="text-lg font-black text-[var(--theme-text-muted)]">{p.goals}</p>
+                          <p className="text-[10px] text-[var(--theme-text-muted)] font-bold">Gols</p>
+                        </div>
+                      )}
+                      {i < 3 && (
+                        <span className="text-lg">{['🥇', '🥈', '🥉'][i]}</span>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
     </div>

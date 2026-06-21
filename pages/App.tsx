@@ -1056,10 +1056,32 @@ const App: React.FC = () => {
           const newTeams = prev.teams.map((t) => teamsMap.get(t.id) || t);
 
           // --- RECALCULATE PLAYER STATS (CENTRAL DE ESTATÍSTICAS) ---
-          const tourneyPlayers = prev.players.filter((p) => {
+          // --- CRIAR JOGADORES VIRTUAIS X1 (id começa com 'x1-') que aparecem nos events ---
+          const virtualPlayers: Player[] = [];
+          tourneyMatches.forEach((m) => {
+            m.events?.forEach((event) => {
+              if (event.playerId?.startsWith('x1-') && !prev.players.some(p => p.id === event.playerId) && !virtualPlayers.some(p => p.id === event.playerId)) {
+                const teamId = event.playerId.replace('x1-', '');
+                const team = prev.teams.find(t => t.id === teamId);
+                if (team) {
+                  virtualPlayers.push({
+                    id: event.playerId,
+                    name: team.name,
+                    teamId: team.id,
+                    tournamentId: match.tournamentId,
+                    organizadorId: team.organizadorId,
+                    position: 'X1',
+                    goals: 0, assists: 0, mvps: 0, playedMatches: 0, rating: 0, totalRating: 0,
+                  } as any);
+                }
+              }
+            });
+          });
+
+          const tourneyPlayers = [...prev.players.filter((p) => {
             const team = prev.teams.find((t) => t.id === p.teamId);
             return team && team.tournamentId === match.tournamentId;
-          });
+          }), ...virtualPlayers];
 
           const playersMap = new Map<string, Player>();
           tourneyPlayers.forEach((p) => {
@@ -1148,7 +1170,11 @@ const App: React.FC = () => {
             }
           });
 
-          const newPlayers = prev.players.map((p) => playersMap.get(p.id) || p);
+          // Inclui jogadores existentes atualizados + novos jogadores virtuais X1
+          const newPlayers = [
+            ...prev.players.map((p) => playersMap.get(p.id) || p),
+            ...virtualPlayers.map(vp => playersMap.get(vp.id)).filter(Boolean) as Player[],
+          ];
 
           // 4. LOGIC FOR KNOCKOUT PROGRESSION (MATA-MATA TREE)
           if (
