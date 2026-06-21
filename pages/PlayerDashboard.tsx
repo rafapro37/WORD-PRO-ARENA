@@ -638,8 +638,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
   // ─── COMPUTAR TROFÉUS DA GALERIA (automático dos campeonatos finalizados) ──
   const playerTrophies = React.useMemo(() => {
-    const trophies: { type: 'champion' | 'topScorer' | 'topAssist'; tournamentName: string; tournamentId: string; }[] = [];
-    // Considera finalizados OU com a final já decidida
+    const trophies: { type: string; tournamentName: string; tournamentId: string; customImage?: string; label?: string; }[] = [];
     const eligibleTournaments = allTournaments.filter(t => t.status === 'FINISHED' || (t as any).champion || t.status === 'ACTIVE');
 
     const myName = (profile.nickname || user.name || user.username || '').toLowerCase().trim();
@@ -648,55 +647,57 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
       const tournamentPlayers = playersData.filter(p => p.tournamentId === t.id);
       const tournamentTeams = allTeams.filter(tm => tm.tournamentId === t.id);
       const tournamentMatches = (allMatches || []).filter((m: any) => m.tournamentId === t.id);
+      const awards = (t as any).awards || {};
+      const trophyImages = awards.trophyImages || {};
 
-      // Identifica o time do jogador (por nome OU por ownerId)
       const myTeam = tournamentTeams.find(tm => 
-        tm.name?.toLowerCase().trim() === myName || 
-        tm.ownerId === user.id ||
-        tm.managerId === user.id
+        tm.name?.toLowerCase().trim() === myName || tm.ownerId === user.id || tm.managerId === user.id
       );
+      const myPlayerIds = tournamentPlayers.filter(p => p.name?.toLowerCase().trim() === myName).map(p => p.id);
 
-      // CAMPEÃO: verifica a partida FINAL
+      // CAMPEÃO — pela final ou por prêmio atribuído
       const finalMatch = tournamentMatches.find((m: any) => m.stage === 'FINAL' && m.isFinished);
+      let isChampion = false;
       if (finalMatch && myTeam) {
-        const homeWon = (finalMatch.homeScore ?? 0) > (finalMatch.awayScore ?? 0);
-        const winnerId = homeWon ? finalMatch.homeTeamId : finalMatch.awayTeamId;
-        if (winnerId === myTeam.id) {
-          trophies.push({ type: 'champion', tournamentName: t.name, tournamentId: t.id });
-        }
-      } else if (myTeam && t.status === 'FINISHED') {
-        // Fallback: campeão por classificação (pontos corridos)
-        const sortedTeams = [...tournamentTeams].sort((a, b) => 
-          (b.points || 0) - (a.points || 0) || 
-          ((b.goalsFor||0)-(b.goalsAgainst||0)) - ((a.goalsFor||0)-(a.goalsAgainst||0))
-        );
-        if (sortedTeams[0]?.id === myTeam.id) {
-          trophies.push({ type: 'champion', tournamentName: t.name, tournamentId: t.id });
-        }
+        const winnerId = (finalMatch.homeScore ?? 0) > (finalMatch.awayScore ?? 0) ? finalMatch.homeTeamId : finalMatch.awayTeamId;
+        isChampion = winnerId === myTeam.id;
       }
+      if (awards.championId && myTeam && awards.championId === myTeam.id) isChampion = true;
+      if (isChampion) trophies.push({ type: 'champion', tournamentName: t.name, tournamentId: t.id, customImage: trophyImages.champion, label: 'Campeão' });
 
-      // ARTILHEIRO
-      if (tournamentPlayers.length > 0) {
+      // PRÊMIOS INDIVIDUAIS — atribuídos pelo organizador (id do player OU do time em X1)
+      const matchesMe = (id?: string) => id && (myPlayerIds.includes(id) || (myTeam && id === myTeam.id));
+      if (matchesMe(awards.bestStrikerId))    trophies.push({ type: 'topScorer',  tournamentName: t.name, tournamentId: t.id, customImage: trophyImages.bestStriker, label: 'Artilheiro' });
+      if (matchesMe(awards.bestAssistantId))  trophies.push({ type: 'topAssist',  tournamentName: t.name, tournamentId: t.id, customImage: trophyImages.bestAssistant, label: 'Líder Assist.' });
+      if (matchesMe(awards.mvpId))            trophies.push({ type: 'mvp',        tournamentName: t.name, tournamentId: t.id, customImage: trophyImages.mvp, label: 'MVP' });
+      if (matchesMe(awards.bestMidfielderId)) trophies.push({ type: 'midfielder', tournamentName: t.name, tournamentId: t.id, customImage: trophyImages.bestMidfielder, label: 'Melhor Meio' });
+      if (matchesMe(awards.bestDefenderId))   trophies.push({ type: 'defender',   tournamentName: t.name, tournamentId: t.id, customImage: trophyImages.bestDefender, label: 'Melhor Zaga' });
+      if (matchesMe(awards.goldenGloveId))    trophies.push({ type: 'goalkeeper', tournamentName: t.name, tournamentId: t.id, customImage: trophyImages.goldenGlove, label: 'Luva de Ouro' });
+
+      // ARTILHEIRO/ASSIST automático (se não houver prêmio manual)
+      if (!awards.bestStrikerId && tournamentPlayers.length > 0) {
         const topScorer = [...tournamentPlayers].sort((a, b) => (b.goals || 0) - (a.goals || 0))[0];
         if (topScorer && (topScorer.goals || 0) > 0 && topScorer.name?.toLowerCase().trim() === myName) {
-          trophies.push({ type: 'topScorer', tournamentName: t.name, tournamentId: t.id });
+          trophies.push({ type: 'topScorer', tournamentName: t.name, tournamentId: t.id, label: 'Artilheiro' });
         }
+      }
+      if (!awards.bestAssistantId && tournamentPlayers.length > 0) {
         const topAssist = [...tournamentPlayers].sort((a, b) => (b.assists || 0) - (a.assists || 0))[0];
         if (topAssist && (topAssist.assists || 0) > 0 && topAssist.name?.toLowerCase().trim() === myName) {
-          trophies.push({ type: 'topAssist', tournamentName: t.name, tournamentId: t.id });
+          trophies.push({ type: 'topAssist', tournamentName: t.name, tournamentId: t.id, label: 'Líder Assist.' });
         }
       }
     });
 
-    const grouped: Record<string, { type: string; tournamentName: string; count: number; }> = {};
+    const grouped: Record<string, { type: string; tournamentName: string; count: number; customImage?: string; label?: string; }> = {};
     trophies.forEach(tr => {
       const key = `${tr.type}-${tr.tournamentName}`;
       if (grouped[key]) grouped[key].count++;
-      else grouped[key] = { type: tr.type, tournamentName: tr.tournamentName, count: 1 };
+      else grouped[key] = { type: tr.type, tournamentName: tr.tournamentName, count: 1, customImage: tr.customImage, label: tr.label };
     });
 
     return Object.values(grouped);
-  }, [allTournaments, playersData, allTeams, profile, user]);
+  }, [allTournaments, playersData, allTeams, allMatches, profile, user]);
 
   return (
     <div className="flex flex-col h-full bg-brand-dark overflow-hidden font-sans">

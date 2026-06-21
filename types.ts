@@ -490,6 +490,17 @@ export interface TournamentAwards {
     goldenGloveId?: string;
     bestAssistantId?: string;
     revelationId?: string;
+    championId?: string;
+    // Imagens personalizadas dos troféus (upload do organizador)
+    trophyImages?: {
+        champion?: string;
+        mvp?: string;
+        bestStriker?: string;
+        bestMidfielder?: string;
+        bestDefender?: string;
+        goldenGlove?: string;
+        bestAssistant?: string;
+    };
 }
 
 export interface QualificationRule {
