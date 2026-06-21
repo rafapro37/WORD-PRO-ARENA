@@ -194,6 +194,12 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
     experienceBg:    '',
     experienceX1:    '',
     experienceClubs: '',
+    experienceX1Zoom:    100,
+    experienceX1PosX:    50,
+    experienceX1PosY:    100,
+    experienceClubsZoom: 100,
+    experienceClubsPosX: 50,
+    experienceClubsPosY: 100,
     ...(state.settings.globalImages || {}),
   });
 
@@ -510,6 +516,54 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
                     onChange={v => setImagens(p => ({ ...p, experienceClubs: v }))}
                     onUpload={f => handleUpload('experienceClubs', f)}
                   />
+                </div>
+
+                {/* AJUSTES DE POSIÇÃO E ZOOM DAS IMAGENS DOS CARDS */}
+                {(imagens.experienceX1 || imagens.experienceClubs) && (
+                  <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {imagens.experienceX1 && (
+                      <div className="bg-black/20 rounded-2xl p-5 border border-white/10">
+                        <p className="text-xs font-black text-cyan-400 uppercase tracking-widest mb-4">Ajustar Imagem Card X1</p>
+                        {/* Preview */}
+                        <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4 border border-white/10" style={{ background: 'linear-gradient(135deg, #1e3a5f, #0f4c75)' }}>
+                          <img src={imagens.experienceX1} className="absolute"
+                            style={{
+                              height: `${imagens.experienceX1Zoom}%`,
+                              left: `${imagens.experienceX1PosX}%`,
+                              top: `${imagens.experienceX1PosY}%`,
+                              transform: 'translate(-50%, -50%)',
+                              objectFit: 'contain'
+                            }} />
+                        </div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Zoom: {imagens.experienceX1Zoom}%</label>
+                        <input type="range" min="40" max="200" value={imagens.experienceX1Zoom} onChange={e => setImagens(p => ({ ...p, experienceX1Zoom: +e.target.value }))} className="w-full mb-3 accent-cyan-400" />
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Horizontal: {imagens.experienceX1PosX}%</label>
+                        <input type="range" min="0" max="100" value={imagens.experienceX1PosX} onChange={e => setImagens(p => ({ ...p, experienceX1PosX: +e.target.value }))} className="w-full mb-3 accent-cyan-400" />
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vertical: {imagens.experienceX1PosY}%</label>
+                        <input type="range" min="0" max="100" value={imagens.experienceX1PosY} onChange={e => setImagens(p => ({ ...p, experienceX1PosY: +e.target.value }))} className="w-full accent-cyan-400" />
+                      </div>
+                    )}
+                    {imagens.experienceClubs && (
+                      <div className="bg-black/20 rounded-2xl p-5 border border-white/10">
+                        <p className="text-xs font-black text-purple-400 uppercase tracking-widest mb-4">Ajustar Imagem Card Pro Clubs</p>
+                        <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4 border border-white/10" style={{ background: 'linear-gradient(135deg, #4a148c, #6a1b9a)' }}>
+                          <img src={imagens.experienceClubs} className="absolute"
+                            style={{
+                              height: `${imagens.experienceClubsZoom}%`,
+                              left: `${imagens.experienceClubsPosX}%`,
+                              top: `${imagens.experienceClubsPosY}%`,
+                              transform: 'translate(-50%, -50%)',
+                              objectFit: 'contain'
+                            }} />
+                        </div>
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Zoom: {imagens.experienceClubsZoom}%</label>
+                        <input type="range" min="40" max="200" value={imagens.experienceClubsZoom} onChange={e => setImagens(p => ({ ...p, experienceClubsZoom: +e.target.value }))} className="w-full mb-3 accent-purple-400" />
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Horizontal: {imagens.experienceClubsPosX}%</label>
+                        <input type="range" min="0" max="100" value={imagens.experienceClubsPosX} onChange={e => setImagens(p => ({ ...p, experienceClubsPosX: +e.target.value }))} className="w-full mb-3 accent-purple-400" />
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vertical: {imagens.experienceClubsPosY}%</label>
+                        <input type="range" min="0" max="100" value={imagens.experienceClubsPosY} onChange={e => setImagens(p => ({ ...p, experienceClubsPosY: +e.target.value }))} className="w-full accent-purple-400" />
+                      </div>
+                    )}
                 </div>
               </motion.div>
             )}

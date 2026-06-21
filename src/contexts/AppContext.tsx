@@ -87,7 +87,9 @@ const AppContext = createContext<AppContextValue | null>(null);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   // ── UI state ──────────────────────────────────────────────────────────────
-  const [currentPage,          setCurrentPageRaw]   = useState('landing');
+  const [currentPage,          setCurrentPageRaw]   = useState(() => {
+    try { return localStorage.getItem('pwa_current_page') || 'landing'; } catch { return 'landing'; }
+  });
   const [isLoading,            setIsLoading]         = useState(true);
   const [globalExperience,     setGlobalExperience]  = useState<ExperienceType | null>(null);
   const [loginMode,            setLoginMode]         = useState<'LOGIN' | 'REGISTER'>('LOGIN');
@@ -270,6 +272,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ── Navegação ─────────────────────────────────────────────────────────────
   const setCurrentPage = useCallback((page: string) => {
     setCurrentPageRaw(page);
+    try { localStorage.setItem('pwa_current_page', page); } catch {}
   }, []);
 
   // navigateTo mantido para compatibilidade — React Router sincroniza via useNavigateSync
@@ -298,10 +301,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Organizer, Manager e Player têm acesso às páginas comuns
       return true;
     };
-    if (!canAccess(currentPage, state.currentUser)) {
+    if (!isLoading && !canAccess(currentPage, state.currentUser)) {
       setCurrentPageRaw('landing');
     }
-  }, [currentPage, state.currentUser]);
+  }, [currentPage, state.currentUser, isLoading]);
 
   // ── Log de sistema ────────────────────────────────────────────────────────
   const logSystemAction = useCallback((module: string, description: string, isRequested = true) => {
@@ -337,6 +340,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setState(prev => ({ ...prev, currentUser: null }));
     setCurrentPageRaw('login');
     clearSession();
+    try { localStorage.removeItem('pwa_current_page'); } catch {}
   }, []);
 
   const handleRegister = useCallback((newUser: User, newProfile?: PlayerProfile) => {

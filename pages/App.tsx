@@ -79,7 +79,7 @@ import { NotificationCenter } from "../src/components/NotificationCenter";
 import { usePaymentGateway } from "../src/components/PaymentGateway";
 import { Gamepad2, Menu, X } from "../components/Icons";
 
-const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; images?: any }> = ({ onSelect, images = {} }) => {
+const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; images?: any; lastExperience?: ExperienceType | null; onContinue?: () => void }> = ({ onSelect, images = {}, lastExperience, onContinue }) => {
   const { T } = useLocale();
   const LOGO = images.logo || 'https://i.imgur.com/3tIJK4S.png';
   const bgImage = images.experienceBg;
@@ -127,7 +127,13 @@ const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; i
 
               {/* Imagem do jogador (personalizada pelo admin) */}
               {x1Image && (
-                <img src={x1Image} className="absolute bottom-0 right-0 h-[85%] object-contain object-bottom drop-shadow-2xl pointer-events-none" alt="" />
+                <img src={x1Image} className="absolute object-contain pointer-events-none drop-shadow-2xl"
+                  style={{
+                    height: `${images.experienceX1Zoom || 85}%`,
+                    left: `${images.experienceX1PosX ?? 70}%`,
+                    top: `${images.experienceX1PosY ?? 100}%`,
+                    transform: 'translate(-50%, -50%)'
+                  }} alt="" />
               )}
 
               <div className={`relative h-full flex flex-col ${x1Image ? 'items-start justify-end pb-16 pl-6' : 'items-center justify-center'} gap-4 p-6`}>
@@ -160,7 +166,13 @@ const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; i
 
               {/* Imagem do jogador (personalizada pelo admin) */}
               {clubsImage && (
-                <img src={clubsImage} className="absolute bottom-0 right-0 h-[85%] object-contain object-bottom drop-shadow-2xl pointer-events-none" alt="" />
+                <img src={clubsImage} className="absolute object-contain pointer-events-none drop-shadow-2xl"
+                  style={{
+                    height: `${images.experienceClubsZoom || 85}%`,
+                    left: `${images.experienceClubsPosX ?? 70}%`,
+                    top: `${images.experienceClubsPosY ?? 100}%`,
+                    transform: 'translate(-50%, -50%)'
+                  }} alt="" />
               )}
 
               <div className={`relative h-full flex flex-col ${clubsImage ? 'items-start justify-end pb-16 pl-6' : 'items-center justify-center'} gap-4 p-6`}>
@@ -179,6 +191,16 @@ const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; i
           </div>
 
           <p className="mt-8 text-[10px] font-bold text-slate-600 uppercase tracking-widest">WORD PRO ARENA | {T.landing.tagline}</p>
+
+          {/* Botão continuar — se já escolheu antes */}
+          {lastExperience && onContinue && (
+            <button
+              onClick={onContinue}
+              className="mt-6 inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[var(--primary)] hover:opacity-90 text-white font-black uppercase tracking-widest text-sm transition-all shadow-lg"
+            >
+              ▸ Continuar como {lastExperience === ExperienceType.X1 ? 'X1' : 'Pro Clubs'}
+            </button>
+          )}
        </div>
     </div>
   );
@@ -213,6 +235,16 @@ const App: React.FC = () => {
     handleUpdateSettings, logSystemAction,
     showToast,
   } = useApp();
+
+  // Tela de seleção de modo — aparece ao abrir o app (uma vez por sessão do navegador)
+  const [showExperienceGate, setShowExperienceGate] = React.useState(() => {
+    try { return !sessionStorage.getItem('pwa_experience_gate_seen'); } catch { return true; }
+  });
+  React.useEffect(() => {
+    if (!showExperienceGate) {
+      try { sessionStorage.setItem('pwa_experience_gate_seen', '1'); } catch {}
+    }
+  }, [showExperienceGate]);
 
 
   const handleUpdateLogStatus = (
@@ -1925,9 +1957,14 @@ const App: React.FC = () => {
       className="flex min-h-screen font-sans" 
       style={{ backgroundColor: 'var(--bg-global)', color: 'var(--texto-global)' }}
     >
-            {/* EXPERIENCE SELECTION OVERLAY */}
-            {state.currentUser && !state.currentUser.experiencePreference && !globalExperience && currentPage !== 'landing' && (
-              <ExperienceSelection onSelect={handleSelectExperience} images={state.settings.globalImages || {}} />
+            {/* EXPERIENCE SELECTION OVERLAY — aparece ao abrir o app */}
+            {showExperienceGate && (
+              <ExperienceSelection 
+                onSelect={(exp) => { handleSelectExperience(exp); setShowExperienceGate(false); }} 
+                images={state.settings.globalImages || {}}
+                lastExperience={state.currentUser?.experiencePreference || globalExperience}
+                onContinue={() => setShowExperienceGate(false)}
+              />
             )}
 
             {currentPage === "landing" && (
