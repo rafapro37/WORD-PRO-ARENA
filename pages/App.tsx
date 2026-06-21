@@ -41,6 +41,8 @@ import {
 import {
   generateId,
   generateTestScenario,
+  deleteFromSupabase,
+  deleteWhereFromSupabase,
 } from "../services/dataService";
 import { BASE_PLAYERS_X1, MARKET_KEY } from "../constants";
 import { REAL_PLAYER_NAMES } from "../src/constants/realPlayers";
@@ -75,7 +77,7 @@ import FederationPublic from "./FederationPublic";
 import OrganizerDashboard from "./OrganizerDashboard";
 import { NotificationCenter } from "../src/components/NotificationCenter";
 import { usePaymentGateway } from "../src/components/PaymentGateway";
-import { Gamepad2 } from "../components/Icons";
+import { Gamepad2, Menu, X } from "../components/Icons";
 
 const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void }> = ({ onSelect }) => {
   const { T } = useLocale();
@@ -849,7 +851,10 @@ const App: React.FC = () => {
 
     setState((prev) => ({
       ...prev,
-      matches: [...prev.matches, ...newMatches],
+      matches: [
+        ...prev.matches.filter(m => m.tournamentId !== tournament.id),
+        ...newMatches,
+      ],
     }));
 
     logSystemAction(
@@ -1949,10 +1954,29 @@ const App: React.FC = () => {
       {/* Public/Guest Pages and Main Content Area */}
       {currentPage !== "login" && currentPage !== "landing" && currentPage !== "federation-public" && (
         <>
+          {/* Botão hambúrguer — só mobile */}
+          {state.currentUser && currentProfile && (
+            <button
+              onClick={() => setIsSidebarRetracted(!isSidebarRetracted)}
+              className="md:hidden fixed top-4 left-4 z-[60] w-11 h-11 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center shadow-lg"
+              style={{ color: themeColor }}
+            >
+              {isSidebarRetracted ? <Menu size={22} /> : <X size={22} />}
+            </button>
+          )}
+
+          {/* Overlay escuro mobile quando sidebar aberto */}
+          {state.currentUser && currentProfile && !isSidebarRetracted && (
+            <div
+              className="md:hidden fixed inset-0 bg-black/60 z-40"
+              onClick={() => setIsSidebarRetracted(true)}
+            />
+          )}
+
           {state.currentUser && currentProfile && (
             <Sidebar
               role={state.currentUser.role}
-              onNavigate={setCurrentPage}
+              onNavigate={(page) => { setCurrentPage(page); if (window.innerWidth < 768) setIsSidebarRetracted(true); }}
               currentPage={currentPage}
               onLogout={handleLogout}
               isRetracted={isSidebarRetracted}
@@ -2091,10 +2115,20 @@ const App: React.FC = () => {
                 }}
                 onGenerateMatches={handleGenerateMatches}
                 onDeleteTournament={(id) => {
+                  // Remove do estado local
                   setState((prev) => ({
                     ...prev,
                     tournaments: prev.tournaments.filter((t) => t.id !== id),
+                    matches: prev.matches.filter((m) => m.tournamentId !== id),
+                    teams: prev.teams.filter((t) => t.tournamentId !== id),
+                    players: prev.players.filter((p) => p.tournamentId !== id),
                   }));
+                  // Remove do Supabase (senão volta no F5)
+                  deleteFromSupabase('campeonatos', id);
+                  deleteWhereFromSupabase('partidas', 'tournamentId', id);
+                  deleteWhereFromSupabase('times', 'tournamentId', id);
+                  deleteWhereFromSupabase('jogadores', 'tournamentId', id);
+                  deleteWhereFromSupabase('participantes', 'tournamentId', id);
                   logSystemAction(
                     "Campeonatos",
                     "Torneio excluído permanentemente",
@@ -2264,12 +2298,14 @@ const App: React.FC = () => {
                   onAddUser={(u) =>
                     setState((prev) => ({ ...prev, users: [...prev.users, u] }))
                   }
-                  onDeleteUser={(id) =>
+                  onDeleteUser={(id) => {
                     setState((prev) => ({
                       ...prev,
                       users: prev.users.filter((u) => u.id !== id),
-                    }))
-                  }
+                    }));
+                    deleteFromSupabase('usuarios', id);
+                    deleteWhereFromSupabase('perfis', 'userId', id);
+                  }}
                   onUpdatePlan={(type, cfg) =>
                     setState((prev) => ({
                       ...prev,
@@ -2294,12 +2330,20 @@ const App: React.FC = () => {
                       ),
                     }))
                   }
-                  onDeleteTournament={(id) =>
+                  onDeleteTournament={(id) => {
                     setState((prev) => ({
                       ...prev,
                       tournaments: prev.tournaments.filter((t) => t.id !== id),
-                    }))
-                  }
+                      matches: prev.matches.filter((m) => m.tournamentId !== id),
+                      teams: prev.teams.filter((t) => t.tournamentId !== id),
+                      players: prev.players.filter((p) => p.tournamentId !== id),
+                    }));
+                    deleteFromSupabase('campeonatos', id);
+                    deleteWhereFromSupabase('partidas', 'tournamentId', id);
+                    deleteWhereFromSupabase('times', 'tournamentId', id);
+                    deleteWhereFromSupabase('jogadores', 'tournamentId', id);
+                    deleteWhereFromSupabase('participantes', 'tournamentId', id);
+                  }}
                   onDeleteNews={(id) =>
                     setState((prev) => ({
                       ...prev,
@@ -2331,6 +2375,29 @@ const App: React.FC = () => {
                   onRejectUpgrade={handleRejectUpgrade}
                   onUpdatePlanManually={handleUpdatePlanManually}
                   onUpdateUserStatus={handleUpdateUserStatus}
+                  onResetCampeonatos={async () => {
+                    // Deleta todos os campeonatos do organizador atual do Supabase
+                    const myTournaments = state.tournaments.filter(t => t.organizadorId === state.currentUser!.id || state.currentUser!.role === 'ADMIN');
+                    for (const t of myTournaments) {
+                      await deleteFromSupabase('campeonatos', t.id);
+                      await deleteWhereFromSupabase('partidas', 'tournamentId', t.id);
+                      await deleteWhereFromSupabase('times', 'tournamentId', t.id);
+                      await deleteWhereFromSupabase('jogadores', 'tournamentId', t.id);
+                      await deleteWhereFromSupabase('participantes', 'tournamentId', t.id);
+                    }
+                    setState(prev => ({ ...prev, tournaments: [], matches: [], teams: [], players: [], registrations: [] }));
+                    logSystemAction("Admin", "Campeonatos resetados", true);
+                  }}
+                  onResetUsuarios={async () => {
+                    // Deleta todos os usuários exceto o admin atual
+                    const usersToDelete = state.users.filter(u => u.role !== 'ADMIN' && u.id !== state.currentUser!.id);
+                    for (const u of usersToDelete) {
+                      await deleteFromSupabase('usuarios', u.id);
+                      await deleteWhereFromSupabase('perfis', 'userId', u.id);
+                    }
+                    setState(prev => ({ ...prev, users: prev.users.filter(u => u.role === 'ADMIN' || u.id === prev.currentUser!.id), playerProfiles: [] }));
+                    logSystemAction("Admin", "Usuários resetados", true);
+                  }}
                   onSeedData={() => {
                     const { tournaments, teams, players, matches } =
                       generateTestScenario(state.currentUser!.id);

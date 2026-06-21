@@ -25,6 +25,8 @@ interface AdminDashboardProps {
   onDeleteNews: (id: string) => void; 
   onSeedData?: () => void;
   onClearLogs?: () => void;
+  onResetCampeonatos?: () => void;
+  onResetUsuarios?: () => void;
   onClearScreenshots?: () => void;
   onImportAdminPlayers: (players: MarketPlayer[]) => void;
   onLimparElencos?: () => void;
@@ -39,7 +41,7 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ 
   state, onApproveOrganizer, onRejectOrganizer, onUpdateSettings, onLogoUpload,
   onAddUser, onDeleteUser, onUpdatePlan, onAddAd, onDeleteAd, onToggleOfficialTournament,
-  onDeleteTournament, onResetTournament, onAddNews, onDeleteNews, onSeedData, onClearLogs, onClearScreenshots, onImportAdminPlayers, onLimparElencos,
+  onDeleteTournament, onResetTournament, onAddNews, onDeleteNews, onSeedData, onClearLogs, onClearScreenshots, onImportAdminPlayers, onLimparElencos, onResetCampeonatos, onResetUsuarios,
   onUpdateMarketStatus, onNavigate,
   onApproveUpgrade, onRejectUpgrade, onUpdatePlanManually, onUpdateUserStatus
 }) => {
@@ -679,6 +681,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div className="mt-8 pt-8 border-t border-brand-border">
                     <h3 className="text-red-500 font-bold mb-2">Zona de Perigo</h3>
+                    <div className="flex gap-4 mb-4 flex-wrap">
+                        <button 
+                            onClick={() => {
+                                if(window.confirm('Resetar TODOS os campeonatos? Apaga campeonatos, times, jogos e participantes do banco. Ação irreversível.')) {
+                                    if (onResetCampeonatos) onResetCampeonatos();
+                                }
+                            }}
+                            className="bg-red-900/50 hover:bg-red-700 text-red-200 border border-red-800 px-4 py-3 rounded flex items-center gap-2 flex-1"
+                        >
+                            <Trophy size={18} /> Resetar Campeonatos
+                        </button>
+                        <button 
+                            onClick={() => {
+                                if(window.confirm('Resetar TODOS os usuários (exceto admin)? Apaga jogadores e organizadores do banco. Ação irreversível.')) {
+                                    if (onResetUsuarios) onResetUsuarios();
+                                }
+                            }}
+                            className="bg-red-900/50 hover:bg-red-700 text-red-200 border border-red-800 px-4 py-3 rounded flex items-center gap-2 flex-1"
+                        >
+                            <Users size={18} /> Resetar Usuários
+                        </button>
+                    </div>
                     <div className="flex gap-4 mb-4 flex-wrap">
                         <button 
                             onClick={() => {

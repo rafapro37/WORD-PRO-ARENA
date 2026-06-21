@@ -33,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, onNavigate, currentPage, onLogo
   const orgLogo = organization?.logo;
 
   return (
-    <div className={`h-screen bg-[var(--bg-main)] border-r border-[var(--border)] flex flex-col transition-all duration-300 ${isRetracted ? 'w-20' : 'w-64'}`}>
+    <div className={`fixed md:relative z-50 h-screen bg-[var(--bg-main)] border-r border-[var(--border)] flex flex-col transition-all duration-300 ${isRetracted ? 'w-20 -translate-x-full md:translate-x-0' : 'w-64 translate-x-0'}`}>
       
       {/* Header */}
       <div className="p-4 flex items-center justify-between border-b border-[var(--border)]">

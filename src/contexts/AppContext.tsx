@@ -93,7 +93,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loginMode,            setLoginMode]         = useState<'LOGIN' | 'REGISTER'>('LOGIN');
   const [selectedLeagueId,     setSelectedLeagueId]  = useState<string | null>(null);
   const [landingView,          setLandingView]       = useState('inicio');
-  const [isSidebarRetracted,   setIsSidebarRetracted] = useState(false);
+  const [isSidebarRetracted,   setIsSidebarRetracted] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
   const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
   const [publicMarketView,     setPublicMarketView]  = useState(false);
 

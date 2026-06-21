@@ -98,6 +98,26 @@ export const syncToSupabase = async (table: string, data: any[]) => {
 
 export const generateId = () => Date.now().toString() + Math.floor(Math.random() * 10000).toString();
 
+// ─── Deletar registro do Supabase ─────────────────────────────────────────────
+export const deleteFromSupabase = async (table: string, id: string) => {
+  try {
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) console.warn(`[Delete] Aviso em ${table}:`, error.message);
+  } catch (error) {
+    console.error(`[Delete] Falha em ${table}:`, error);
+  }
+};
+
+// ─── Deletar vários registros por campo ───────────────────────────────────────
+export const deleteWhereFromSupabase = async (table: string, field: string, value: string) => {
+  try {
+    const { error } = await supabase.from(table).delete().eq(field, value);
+    if (error) console.warn(`[Delete] Aviso em ${table}:`, error.message);
+  } catch (error) {
+    console.error(`[Delete] Falha em ${table}:`, error);
+  }
+};
+
 // ─── Estado inicial ───────────────────────────────────────────────────────────
 const INITIAL_STATE: AppState = {
   currentUser: null,
