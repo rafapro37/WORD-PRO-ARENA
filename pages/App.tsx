@@ -113,8 +113,8 @@ const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; i
             {/* CARD X1 */}
             <button
               onClick={() => onSelect(ExperienceType.X1)}
-              className="group relative h-72 md:h-96 rounded-3xl overflow-hidden border-2 border-white/10 hover:border-[var(--primary)] transition-all duration-500 hover:scale-[1.02]"
-              style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #0f4c75 50%, #1a1a2e 100%)' }}
+              className="group relative w-full rounded-3xl overflow-hidden border-2 border-white/10 hover:border-[var(--primary)] transition-all duration-500 hover:scale-[1.02]"
+              style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #0f4c75 50%, #1a1a2e 100%)', aspectRatio: '360 / 384' }}
             >
               {/* Diagonais decorativas */}
               <div className="absolute inset-0 opacity-30">
@@ -156,8 +156,8 @@ const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; i
             {/* CARD PRO CLUBS */}
             <button
               onClick={() => onSelect(ExperienceType.PRO_CLUBS)}
-              className="group relative h-72 md:h-96 rounded-3xl overflow-hidden border-2 border-white/10 hover:border-[var(--primary)] transition-all duration-500 hover:scale-[1.02]"
-              style={{ background: 'linear-gradient(135deg, #4a148c 0%, #6a1b9a 50%, #1a1a2e 100%)' }}
+              className="group relative w-full rounded-3xl overflow-hidden border-2 border-white/10 hover:border-[var(--primary)] transition-all duration-500 hover:scale-[1.02]"
+              style={{ background: 'linear-gradient(135deg, #4a148c 0%, #6a1b9a 50%, #1a1a2e 100%)', aspectRatio: '360 / 384' }}
             >
               <div className="absolute inset-0 opacity-30">
                 <div className="absolute -right-10 top-12 w-40 h-2 bg-lime-400 rotate-45"></div>

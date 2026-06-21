@@ -213,8 +213,8 @@ const CardImageAdjuster: React.FC<{
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className="relative w-44 h-64 mx-auto rounded-3xl overflow-hidden mb-4 border-2 border-white/10 cursor-move select-none touch-none"
-        style={{ background: bgGradient }}
+        className="relative w-56 mx-auto rounded-3xl overflow-hidden mb-4 border-2 border-white/10 cursor-move select-none touch-none"
+        style={{ background: bgGradient, aspectRatio: '360 / 384' }}
       >
         {/* Diagonais decorativas iguais ao card real */}
         <div className="absolute inset-0 opacity-30 pointer-events-none">
