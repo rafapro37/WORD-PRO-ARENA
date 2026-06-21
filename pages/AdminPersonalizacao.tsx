@@ -564,7 +564,8 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
                         <input type="range" min="0" max="100" value={imagens.experienceClubsPosY} onChange={e => setImagens(p => ({ ...p, experienceClubsPosY: +e.target.value }))} className="w-full accent-purple-400" />
                       </div>
                     )}
-                </div>
+                  </div>
+                )}
               </motion.div>
             )}
 
