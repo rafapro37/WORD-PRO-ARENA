@@ -252,50 +252,6 @@ const Landing: React.FC<LandingProps> = ({
 
     const currentExperience = league?.experienceType || globalExperience;
 
-    if (!leagueId && !globalExperience && onSelectExperience) {
-        return (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-brand-dark p-6 overflow-y-auto">
-               <div className="max-w-4xl w-full text-center py-10">
-                  <div className="w-20 h-20 bg-brand-primary/20 rounded-2xl mx-auto flex items-center justify-center mb-8 rotate-3 border border-brand-primary/30">
-                     <Shield size={40} className="text-brand-primary" />
-                  </div>
-                  <h1 className="text-4xl md:text-6xl font-black italic text-white uppercase tracking-tighter mb-4">Como deseja jogar?</h1>
-                  <p className="text-slate-400 text-sm md:text-lg mb-12 uppercase tracking-[0.3em] font-bold">Escolha sua experiência para começar</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <button 
-                      onClick={() => onSelectExperience(ExperienceType.X1)}
-                      className="bg-white/5 border border-white/10 p-8 md:p-12 rounded-[40px] group hover:bg-brand-primary hover:border-brand-primary transition-all duration-500 flex flex-col items-center gap-6"
-                    >
-                      <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-500">
-                        <Gamepad2 size={48} className="text-white group-hover:text-black" />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl md:text-3xl font-black italic text-white uppercase group-hover:text-black">⚽ X1</h2>
-                        <p className="text-slate-500 text-[10px] md:text-xs mt-2 uppercase tracking-widest font-black group-hover:text-black/60">Competição direta entre pro players</p>
-                      </div>
-                    </button>
-        
-                    <button 
-                      onClick={() => onSelectExperience(ExperienceType.PRO_CLUBS)}
-                      className="bg-white/5 border border-white/10 p-8 md:p-12 rounded-[40px] group hover:bg-brand-primary hover:border-brand-primary transition-all duration-500 flex flex-col items-center gap-6"
-                    >
-                      <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-500">
-                        <Users size={48} className="text-white group-hover:text-black" />
-                      </div>
-                      <div>
-                        <h2 className="text-2xl md:text-3xl font-black italic text-white uppercase group-hover:text-black">⚽ Pro Clubs (11x11)</h2>
-                        <p className="text-slate-500 text-[10px] md:text-xs mt-2 uppercase tracking-widest font-black group-hover:text-black/60">Gestão de elenco, mercado e federações</p>
-                      </div>
-                    </button>
-                  </div>
-                  
-                  <p className="mt-12 text-[10px] font-bold text-slate-600 uppercase tracking-widest">PRO WORLD ARENA | GESTÃO ESPORTIVA PROFISSIONAL</p>
-               </div>
-            </div>
-        );
-    }
-
     const navigateToView = (view: string) => {
         if (onNavigateView) {
             onNavigateView(view);
