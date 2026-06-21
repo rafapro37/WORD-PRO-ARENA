@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Trophy, BarChart, Users, Settings, LogOut, Menu, ChevronLeft, Shield, ShoppingBag, Briefcase, Mail, Palette } from './Icons';
+import { LayoutDashboard, Trophy, BarChart, Users, Settings, LogOut, Menu, ChevronLeft, Shield, ShoppingBag, Briefcase, Mail, Palette, RefreshCw } from './Icons';
 import { UserRole } from '../types';
 
 interface SidebarProps {
@@ -8,15 +8,17 @@ interface SidebarProps {
   onNavigate: (page: string) => void;
   currentPage: string;
   onLogout: () => void;
+  onChangeExperience?: () => void;
   isRetracted: boolean;
   toggleRetract: () => void;
   themeColor: string; // New prop for dynamic theme color
   organization?: { nome: string, logo: string };
   pendingLeaguesCount?: number;
   showMarket?: boolean;
+  showStats?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ role, onNavigate, currentPage, onLogout, isRetracted, toggleRetract, themeColor, organization, pendingLeaguesCount = 0, showMarket = true }) => {
+const Sidebar: React.FC<SidebarProps> = ({ role, onNavigate, currentPage, onLogout, onChangeExperience, isRetracted, toggleRetract, themeColor, organization, pendingLeaguesCount = 0, showMarket = true, showStats = true }) => {
   
   // Dynamic style for active items
   const activeStyle = {
@@ -128,7 +130,8 @@ const Sidebar: React.FC<SidebarProps> = ({ role, onNavigate, currentPage, onLogo
            </div>
         )}
         
-        {/* CENTRAL DE ESTATÍSTICAS - Visible to everyone */}
+        {/* CENTRAL DE ESTATÍSTICAS - Só para X11 */}
+        {showStats && (
         <div 
             onClick={() => onNavigate('stats')} 
             className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors border-l-4 text-[var(--text-secondary)] hover:bg-[var(--bg-card)] hover:text-[var(--text-main)]"
@@ -137,6 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, onNavigate, currentPage, onLogo
           <BarChart size={20} />
           {!isRetracted && <span>Central de Estatísticas</span>}
         </div>
+        )}
 
         {role === UserRole.ADMIN && (
           <div 
@@ -174,7 +178,16 @@ const Sidebar: React.FC<SidebarProps> = ({ role, onNavigate, currentPage, onLogo
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-[var(--border)]">
+      <div className="p-4 border-t border-[var(--border)] space-y-2">
+        {onChangeExperience && (
+          <button 
+              onClick={onChangeExperience} 
+              className="flex items-center gap-3 w-full p-3 text-[var(--text-main)] rounded-lg transition-colors hover:bg-[var(--bg-card)] border border-[var(--border)]"
+          >
+            <RefreshCw size={20} style={{ color: themeColor }} />
+            {!isRetracted && <span className="text-[var(--text-main)] font-bold text-sm">Trocar Modo de Jogo</span>}
+          </button>
+        )}
         <button 
             onClick={onLogout} 
             className="flex items-center gap-3 w-full p-3 text-[var(--text-main)] rounded-lg transition-colors hover:opacity-90 bg-[var(--primary)]"

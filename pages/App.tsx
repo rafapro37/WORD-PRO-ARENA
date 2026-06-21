@@ -281,6 +281,14 @@ const App: React.FC = () => {
     }
   };
 
+  const handleChangeExperience = () => {
+    // Reseta a experiência para fazer a tela de seleção reaparecer
+    setGlobalExperience(null);
+    if (state.currentUser) {
+      handleUpdateUser(state.currentUser.id, { experiencePreference: undefined as any });
+    }
+  };
+
   const handleJoinLeague = (leagueId: string) => {
     if (!state.currentUser) { setCurrentPage('login'); return; }
     const already = state.leagueMembers?.some(m => m.leagueId === leagueId && m.userId === state.currentUser!.id);
@@ -2034,6 +2042,7 @@ const App: React.FC = () => {
               onNavigate={(page) => { setCurrentPage(page); if (window.innerWidth < 768) setIsSidebarRetracted(true); }}
               currentPage={currentPage}
               onLogout={handleLogout}
+              onChangeExperience={handleChangeExperience}
               isRetracted={isSidebarRetracted}
               toggleRetract={() => setIsSidebarRetracted(!isSidebarRetracted)}
               themeColor={themeColor}
@@ -2043,6 +2052,7 @@ const App: React.FC = () => {
               ).length}
               showMarket={showMarketFeatures}
               showStats={globalExperience === 'X11' || state.currentUser?.role === 'ORGANIZER' as any || state.currentUser?.role === 'ADMIN' as any}
+              onChangeExperience={handleChangeExperience}
             />
           )}
 
