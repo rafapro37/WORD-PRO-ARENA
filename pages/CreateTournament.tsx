@@ -60,6 +60,7 @@ const CreateTournament: React.FC<CreateTournamentProps> = ({ userPlan, planLimit
   const [manualAssignments, setManualAssignments] = useState<Record<string, number>>({});
 
   const [doubleRoundRobin, setDoubleRoundRobin] = useState(false);
+  const [freeEditMode, setFreeEditMode] = useState(false);
   const [hasBestThird, setHasBestThird] = useState(false);
   const [finalFormat, setFinalFormat] = useState<FinalFormat>(FinalFormat.SINGLE);
 
@@ -225,6 +226,7 @@ const CreateTournament: React.FC<CreateTournamentProps> = ({ userPlan, planLimit
       tournamentType,
       format,
       theme,
+      freeEditMode,
       groupCount: format === TournamentFormat.GROUPS ? groupCount : 1, 
       swissRounds: format === TournamentFormat.SWISS ? swissRounds : undefined,
       distributionMode: 'AUTO',
@@ -343,6 +345,23 @@ const CreateTournament: React.FC<CreateTournamentProps> = ({ userPlan, planLimit
                   onChange={e => setName(e.target.value)}
                   className="w-full bg-[#1A1E26] border border-brand-border rounded-2xl p-4 text-white font-black italic uppercase focus:border-brand-primary outline-none shadow-inner"
                 />
+              </div>
+
+              {/* MODO EDIÇÃO LIVRE / TORNEIO RÁPIDO */}
+              <div className="bg-yellow-900/10 border border-yellow-700/30 rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 pr-3">
+                    <p className="text-sm font-black text-yellow-400 uppercase tracking-wide flex items-center gap-2">⚡ Torneio Rápido (Edição Livre)</p>
+                    <p className="text-[11px] text-brand-textMuted mt-1">Ative para adicionar jogadores/times manualmente pelo nome, alterar formato e editar tudo depois — sem depender de cadastro dos jogadores.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFreeEditMode(!freeEditMode)}
+                    className={`relative w-14 h-7 rounded-full transition-colors flex-shrink-0 ${freeEditMode ? 'bg-yellow-500' : 'bg-brand-border'}`}
+                  >
+                    <span className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${freeEditMode ? 'translate-x-7' : 'translate-x-0.5'}`}/>
+                  </button>
+                </div>
               </div>
               
               <div>

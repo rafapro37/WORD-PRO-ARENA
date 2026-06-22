@@ -1945,6 +1945,47 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                       ))}
                                   </div>
                               )}
+
+                              {/* Botões de Sorteio */}
+                              {((tournament as any).manualParticipants || []).length > 1 && (
+                                  <div className="mt-4 pt-4 border-t border-yellow-700/30 flex flex-col sm:flex-row gap-2">
+                                      <button
+                                          onClick={() => {
+                                              if (!onUpdateTournament) return;
+                                              const list = [...((tournament as any).manualParticipants || [])];
+                                              // Embaralha (Fisher-Yates)
+                                              for (let i = list.length - 1; i > 0; i--) {
+                                                  const j = Math.floor(Math.random() * (i + 1));
+                                                  [list[i], list[j]] = [list[j], list[i]];
+                                              }
+                                              onUpdateTournament(tournament.id, { manualParticipants: list } as any);
+                                              showToast('Participantes sorteados! A ordem foi embaralhada.', 'success');
+                                          }}
+                                          className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-black font-black py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wide transition-all"
+                                      >
+                                          🎲 Sortear Ordem
+                                      </button>
+                                      <button
+                                          onClick={() => {
+                                              if (window.confirm('Sortear e gerar os jogos agora? Os participantes serão distribuídos aleatoriamente.')) {
+                                                  // Embaralha antes de gerar
+                                                  if (onUpdateTournament) {
+                                                      const list = [...((tournament as any).manualParticipants || [])];
+                                                      for (let i = list.length - 1; i > 0; i--) {
+                                                          const j = Math.floor(Math.random() * (i + 1));
+                                                          [list[i], list[j]] = [list[j], list[i]];
+                                                      }
+                                                      onUpdateTournament(tournament.id, { manualParticipants: list } as any);
+                                                  }
+                                                  setTimeout(() => onGenerateMatches(), 150);
+                                              }
+                                          }}
+                                          className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wide transition-all"
+                                      >
+                                          🎲 Sortear e Gerar Jogos
+                                      </button>
+                                  </div>
+                              )}
                           </div>
                       )}
                       <div className="flex overflow-x-auto gap-2 p-4 border-b border-brand-border bg-black/20"> {teams.map(t => ( <button key={t.id} onClick={() => setActiveRosterTeamId(t.id)} className={`px-4 py-2 rounded-lg font-bold whitespace-nowrap text-sm flex items-center gap-2 transition-all ${activeRosterTeamId === t.id ? 'bg-brand-primary text-white shadow-lg' : 'bg-brand-surfaceHighlight text-brand-textMuted hover:bg-brand-border'}`}> {t.logoUrl ? <img src={t.logoUrl} className="w-4 h-4 rounded-full"/> : <Shield size={12}/>} {t.name} </button> ))} </div>
