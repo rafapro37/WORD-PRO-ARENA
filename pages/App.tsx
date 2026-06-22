@@ -58,6 +58,7 @@ import {
   Settings,
   Trophy,
   Users,
+  Shirt,
   Plus,
   BarChart,
   LayoutDashboard,
@@ -138,18 +139,18 @@ const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; i
                   }} alt="" />
               )}
 
-              <div className={`relative h-full flex flex-col ${x1Image ? 'items-start justify-end pb-16 pl-6' : 'items-center justify-center'} gap-4 p-6`}>
+              <div className={`relative h-full flex flex-col ${x1Image ? 'items-start justify-end pb-20 pl-6' : 'items-center justify-center'} gap-4 p-6`}>
                 <div className="w-20 h-20 md:w-24 md:h-24 bg-white/15 backdrop-blur rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-500 shadow-2xl">
                   <Gamepad2 size={42} className="text-white group-hover:text-[#0f4c75]" />
                 </div>
                 <div className={x1Image ? 'text-left' : ''}>
                   <h2 className="text-2xl md:text-4xl font-black italic text-white uppercase tracking-tight drop-shadow-lg">⚽ X1</h2>
-                  <p className="text-cyan-200 text-[9px] md:text-[11px] mt-2 uppercase tracking-widest font-black">Competição direta entre players</p>
                 </div>
               </div>
-              {/* Faixa inferior estilo "reward" */}
-              <div className="absolute bottom-0 inset-x-0 bg-black/40 backdrop-blur py-2.5 border-t border-white/10">
-                <span className="text-white font-black text-xs uppercase tracking-widest">▸ Jogar X1</span>
+              {/* Faixa inferior branca translúcida com descrição */}
+              <div className="absolute bottom-0 inset-x-0 bg-white/20 backdrop-blur-md py-2.5 border-t border-white/30 px-3">
+                <span className="block text-white font-black text-xs uppercase tracking-widest">▸ Jogar X1</span>
+                <span className="block text-white/90 text-[9px] md:text-[10px] uppercase tracking-wide font-bold mt-0.5">Competição direta entre players</span>
               </div>
             </button>
 
@@ -179,17 +180,18 @@ const ExperienceSelection: React.FC<{ onSelect: (exp: ExperienceType) => void; i
                   }} alt="" />
               )}
 
-              <div className={`relative h-full flex flex-col ${clubsImage ? 'items-start justify-end pb-16 pl-6' : 'items-center justify-center'} gap-4 p-6`}>
+              <div className={`relative h-full flex flex-col ${clubsImage ? 'items-start justify-end pb-20 pl-6' : 'items-center justify-center'} gap-4 p-6`}>
                 <div className="w-20 h-20 md:w-24 md:h-24 bg-white/15 backdrop-blur rounded-full flex items-center justify-center group-hover:bg-white group-hover:scale-110 transition-all duration-500 shadow-2xl">
-                  <Users size={42} className="text-white group-hover:text-[#6a1b9a]" />
+                  <Shirt size={42} className="text-white group-hover:text-[#6a1b9a]" />
                 </div>
                 <div className={clubsImage ? 'text-left' : ''}>
                   <h2 className="text-2xl md:text-4xl font-black italic text-white uppercase tracking-tight drop-shadow-lg">⚽ PRO CLUBS</h2>
-                  <p className="text-purple-200 text-[9px] md:text-[11px] mt-2 uppercase tracking-widest font-black">Gestão de elenco e federações (11x11)</p>
                 </div>
               </div>
-              <div className="absolute bottom-0 inset-x-0 bg-black/40 backdrop-blur py-2.5 border-t border-white/10">
-                <span className="text-white font-black text-xs uppercase tracking-widest">▸ Jogar Pro Clubs</span>
+              {/* Faixa inferior branca translúcida com descrição */}
+              <div className="absolute bottom-0 inset-x-0 bg-white/20 backdrop-blur-md py-2.5 border-t border-white/30 px-3">
+                <span className="block text-white font-black text-xs uppercase tracking-widest">▸ Jogar Pro Clubs (11x11)</span>
+                <span className="block text-white/90 text-[9px] md:text-[10px] uppercase tracking-wide font-bold mt-0.5">Gestão de elenco e federações</span>
               </div>
             </button>
           </div>
