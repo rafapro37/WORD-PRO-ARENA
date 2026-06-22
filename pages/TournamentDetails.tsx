@@ -4,6 +4,7 @@ import { Tournament, Team, Match, Player, MatchEvent, TournamentFormat, Tourname
 import { POSITIONS, AWARD_LABELS, POSITIONS_VIRTUAL, POSITIONS_REAL } from '../constants';
 import { Calendar, Users, BarChart, Trophy, Shirt, Plus, Save, Edit, UserPlus, Check, X, Trash2, Award, Shield, RefreshCw, Crown, ListPlus, Search, Filter, LayoutList, ChevronRight, Zap, ChevronLeft, Image, Upload, Hand, Lock, Info, Clock, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Globe, Instagram, Facebook, Twitter, Youtube, Gamepad2, MessageSquare, LinkIcon, Palette, Settings, Sparkles, CreditCard, Target } from '../components/Icons';
 import { extractStatsFromImage, ExtractedPlayerStats } from '../services/ocrService';
+import GroupDraw from '../components/GroupDraw';
 
 interface TournamentDetailsProps {
   tournament: Tournament;
@@ -98,6 +99,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   const [rosterSearch, setRosterSearch] = useState('');
   const [rosterPosFilter, setRosterPosFilter] = useState('');
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [showGroupDraw, setShowGroupDraw] = useState(false);
   const [bulkPlayersText, setBulkPlayersText] = useState('');
   const [bulkPreviewPlayers, setBulkPreviewPlayers] = useState<{name: string, position: string}[]>([]);
   const [newPlayerName, setNewPlayerName] = useState('');
@@ -737,6 +739,49 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
   return (
     <div className="relative min-h-screen flex flex-col">
+      {/* Sorteio animado estilo Champions */}
+      {showGroupDraw && (
+        <GroupDraw
+          participants={((tournament as any).manualParticipants || []).map((p: any) => ({ id: p.id, name: p.name, logoUrl: p.logoUrl }))}
+          groupCount={Math.max(1, (tournament.groups || []).length || 1)}
+          tournamentName={tournament.name}
+          tournamentLogo={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl || tournament.bannerUrl}
+          themeColor={themeColor}
+          onClose={() => setShowGroupDraw(false)}
+          onConfirm={(assignments) => {
+            // Reordena para que a distribuição em rodízio (1º→A, 2º→B...) caia nos grupos sorteados
+            if (onUpdateTournament) {
+              const groupCount = Math.max(1, (tournament.groups || []).length || 1);
+              // Agrupa por grupo
+              const byGroup: Record<number, typeof assignments> = {};
+              assignments.forEach(a => {
+                if (!byGroup[a.groupIndex]) byGroup[a.groupIndex] = [];
+                byGroup[a.groupIndex].push(a);
+              });
+              // Intercala: posição 0 de cada grupo, depois posição 1 de cada grupo...
+              const newList: any[] = [];
+              let round = 0;
+              let added = true;
+              while (added) {
+                added = false;
+                for (let g = 0; g < groupCount; g++) {
+                  const member = byGroup[g]?.[round];
+                  if (member) {
+                    const orig = ((tournament as any).manualParticipants || []).find((p: any) => p.id === member.participant.id);
+                    newList.push(orig || { id: member.participant.id, name: member.participant.name, createdAt: Date.now() });
+                    added = true;
+                  }
+                }
+                round++;
+              }
+              onUpdateTournament(tournament.id, { manualParticipants: newList } as any);
+            }
+            setShowGroupDraw(false);
+            showToast('Sorteio confirmado! Agora gere os jogos.', 'success');
+          }}
+        />
+      )}
+
       {toast && (
           <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-xl shadow-2xl font-bold text-sm flex items-center gap-3 animate-in slide-in-from-top-4 fade-in duration-300 ${toast.type === 'error' ? 'bg-red-600 text-white border border-red-400' : 'bg-brand-primary text-white border border-blue-400'}`}>
               {toast.type === 'error' ? <AlertTriangle size={18}/> : <Info size={18}/>}
@@ -1950,39 +1995,25 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                               {((tournament as any).manualParticipants || []).length > 1 && (
                                   <div className="mt-4 pt-4 border-t border-yellow-700/30 flex flex-col sm:flex-row gap-2">
                                       <button
+                                          onClick={() => setShowGroupDraw(true)}
+                                          className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-black py-3 rounded-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wide transition-all shadow-lg"
+                                      >
+                                          🎬 Sorteio Animado (Estilo Champions)
+                                      </button>
+                                      <button
                                           onClick={() => {
                                               if (!onUpdateTournament) return;
                                               const list = [...((tournament as any).manualParticipants || [])];
-                                              // Embaralha (Fisher-Yates)
                                               for (let i = list.length - 1; i > 0; i--) {
                                                   const j = Math.floor(Math.random() * (i + 1));
                                                   [list[i], list[j]] = [list[j], list[i]];
                                               }
                                               onUpdateTournament(tournament.id, { manualParticipants: list } as any);
-                                              showToast('Participantes sorteados! A ordem foi embaralhada.', 'success');
+                                              showToast('Ordem embaralhada rapidamente.', 'success');
                                           }}
-                                          className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-black font-black py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wide transition-all"
+                                          className="sm:w-40 bg-brand-surface border border-brand-border hover:border-yellow-500 text-brand-textMuted hover:text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 text-xs uppercase tracking-wide transition-all"
                                       >
-                                          🎲 Sortear Ordem
-                                      </button>
-                                      <button
-                                          onClick={() => {
-                                              if (window.confirm('Sortear e gerar os jogos agora? Os participantes serão distribuídos aleatoriamente.')) {
-                                                  // Embaralha antes de gerar
-                                                  if (onUpdateTournament) {
-                                                      const list = [...((tournament as any).manualParticipants || [])];
-                                                      for (let i = list.length - 1; i > 0; i--) {
-                                                          const j = Math.floor(Math.random() * (i + 1));
-                                                          [list[i], list[j]] = [list[j], list[i]];
-                                                      }
-                                                      onUpdateTournament(tournament.id, { manualParticipants: list } as any);
-                                                  }
-                                                  setTimeout(() => onGenerateMatches(), 150);
-                                              }
-                                          }}
-                                          className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wide transition-all"
-                                      >
-                                          🎲 Sortear e Gerar Jogos
+                                          🎲 Sorteio Rápido
                                       </button>
                                   </div>
                               )}
