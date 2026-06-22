@@ -179,15 +179,6 @@ const Sidebar: React.FC<SidebarProps> = ({ role, onNavigate, currentPage, onLogo
 
       {/* Footer */}
       <div className="p-4 border-t border-[var(--border)] space-y-2">
-        {onChangeExperience && (
-          <button 
-              onClick={onChangeExperience} 
-              className="flex items-center gap-3 w-full p-3 text-[var(--text-main)] rounded-lg transition-colors hover:bg-[var(--bg-card)] border border-[var(--border)]"
-          >
-            <RefreshCw size={20} style={{ color: themeColor }} />
-            {!isRetracted && <span className="text-[var(--text-main)] font-bold text-sm">Trocar Modo de Jogo</span>}
-          </button>
-        )}
         <button 
             onClick={onLogout} 
             className="flex items-center gap-3 w-full p-3 text-[var(--text-main)] rounded-lg transition-colors hover:opacity-90 bg-[var(--primary)]"

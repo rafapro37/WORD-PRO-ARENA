@@ -136,8 +136,9 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
 
   // ── Ranking artilheiros (top 8) ─────────────────────────────────────────
   const topScorers = useMemo(() => {
+    const validTournamentIds = new Set(tournaments.map(t => t.id));
     return [...players]
-      .filter(p => (p.goals || 0) > 0)
+      .filter(p => (p.goals || 0) > 0 && (!p.tournamentId || validTournamentIds.has(p.tournamentId)))
       .sort((a, b) => (b.goals || 0) - (a.goals || 0))
       .slice(0, 8)
       .map(p => {
@@ -145,12 +146,13 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
         const profile = playerProfiles.find(pr => pr.userId === p.userId);
         return { ...p, teamName: team?.name || '—', photoUrl: profile?.photoUrl };
       });
-  }, [players, teams, playerProfiles]);
+  }, [players, teams, playerProfiles, tournaments]);
 
   // ── Ranking assistências (top 8) ─────────────────────────────────────────
   const topAssists = useMemo(() => {
+    const validTournamentIds = new Set(tournaments.map(t => t.id));
     return [...players]
-      .filter(p => (p.assists || 0) > 0)
+      .filter(p => (p.assists || 0) > 0 && (!p.tournamentId || validTournamentIds.has(p.tournamentId)))
       .sort((a, b) => (b.assists || 0) - (a.assists || 0))
       .slice(0, 8)
       .map(p => {
@@ -158,7 +160,7 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
         const profile = playerProfiles.find(pr => pr.userId === p.userId);
         return { ...p, teamName: team?.name || '—', photoUrl: profile?.photoUrl };
       });
-  }, [players, teams, playerProfiles]);
+  }, [players, teams, playerProfiles, tournaments]);
 
   // ── Atividade recente (partidas com placar lançado) ─────────────────────
   const recentMatches = useMemo(() =>

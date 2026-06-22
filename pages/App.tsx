@@ -617,15 +617,19 @@ const App: React.FC = () => {
         .filter(t => t.tournamentId === tournament.id)
         .map(t => t.name.toLowerCase());
 
+      const groups = tournament.groups || [];
+      const hasGroups = groups.length > 0;
+
       const newTeams = manualParticipants
         .filter((p: any) => !existingTeamNames.includes(p.name.toLowerCase()))
-        .map((p: any) => ({
+        .map((p: any, index: number) => ({
           id: generateId(),
           name: p.name,
           tournamentId: tournament.id,
           organizadorId: tournament.organizadorId,
           ligaId: tournament.ligaId,
-          groupId: tournament.groups?.[0]?.id || 'NONE',
+          // Distribui em rodízio entre os grupos (A, B, C, D, A, B...) em vez de jogar todos no A
+          groupId: hasGroups ? groups[index % groups.length].id : 'NONE',
           ownerId: tournament.organizadorId,
           roster: [],
           played: 0, won: 0, drawn: 0, lost: 0,
