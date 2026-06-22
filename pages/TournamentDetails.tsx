@@ -1770,14 +1770,24 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                           const percentage = possiblePoints > 0 ? Math.round((t.points / possiblePoints) * 100) : 0; 
                                           const isMyTeam = myTeamInTournament?.id === t.id; 
                                           const classificadosCount = tournament.classificados_por_grupo || tournament.playoffQualifiedCount || 4;
-                                          const isClassified = i < classificadosCount;
+                                          // Em pontos corridos (LEAGUE): top 4 = título, últimos 4 = rebaixamento
+                                          const isLeagueFormat = tournament.format === TournamentFormat.LEAGUE;
+                                          const totalTeams = sortedTeams.length;
+                                          const titleZone = isLeagueFormat && i < 4;
+                                          const relegationZone = isLeagueFormat && i >= totalTeams - 4 && totalTeams > 8;
+                                          const isClassified = !isLeagueFormat && i < classificadosCount;
                                           const tVisual = getTeamNameAndEscudo(t);
+                                          // Cor da faixa lateral
+                                          const rowAccent = titleZone ? 'border-l-4 border-l-emerald-500 bg-emerald-500/[0.06]' 
+                                              : relegationZone ? 'border-l-4 border-l-red-500 bg-red-500/[0.06]'
+                                              : isClassified ? 'border-l-4 border-l-emerald-500 bg-emerald-500/[0.04]'
+                                              : 'border-l-4 border-l-transparent';
                                           
                                           return ( 
                                               <React.Fragment key={t.id}>
-                                                  <tr className={`hover:bg-white/[0.04] transition-all border-b border-white/5 ${isMyTeam ? 'bg-brand-primary/10' : ''} cursor-pointer`} onClick={() => setSelectedMatch(selectedMatch?.homeTeamId === t.id ? null : { homeTeamId: t.id, awayTeamId: t.id } as any)}> 
+                                                  <tr className={`hover:bg-white/[0.04] transition-all border-b border-white/5 ${rowAccent} ${isMyTeam ? 'bg-brand-primary/10' : ''} cursor-pointer`} onClick={() => setSelectedMatch(selectedMatch?.homeTeamId === t.id ? null : { homeTeamId: t.id, awayTeamId: t.id } as any)}> 
                                                       <td className="py-5 px-2 md:py-6 text-center font-mono text-sm text-brand-textMuted/80 font-black">
-                                                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-[12px] font-black ${isClassified ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-white/5 text-white/50'}`}>
+                                                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-[12px] font-black ${(titleZone || isClassified) ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : relegationZone ? 'bg-red-500/15 text-red-400 border border-red-500/30' : 'bg-white/5 text-white/50'}`}>
                                                               {i+1}
                                                           </span>
                                                       </td> 
@@ -1912,6 +1922,27 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                               </span>
                                           </div>
                                       </div>
+                                  </div>
+
+                                  {/* Legenda de cores */}
+                                  <div className="mt-4 flex flex-wrap gap-4 px-2">
+                                      {tournament.format === TournamentFormat.LEAGUE ? (
+                                          <>
+                                              <div className="flex items-center gap-2">
+                                                  <span className="w-3 h-3 rounded-sm bg-emerald-500"></span>
+                                                  <span className="text-[10px] font-bold text-brand-textMuted uppercase tracking-wider">Brigando pelo título (Top 4)</span>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                  <span className="w-3 h-3 rounded-sm bg-red-500"></span>
+                                                  <span className="text-[10px] font-bold text-brand-textMuted uppercase tracking-wider">Zona de rebaixamento</span>
+                                              </div>
+                                          </>
+                                      ) : (
+                                          <div className="flex items-center gap-2">
+                                              <span className="w-3 h-3 rounded-sm bg-emerald-500"></span>
+                                              <span className="text-[10px] font-bold text-brand-textMuted uppercase tracking-wider">Classificados ({tournament.classificados_por_grupo || tournament.playoffQualifiedCount || 4} por grupo)</span>
+                                          </div>
+                                      )}
                                   </div>
                               </div>
                           )}
