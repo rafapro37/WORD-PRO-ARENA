@@ -686,23 +686,30 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       const hasAway = a && match.awayTeamId && match.awayTeamId !== 'TBD'; 
       const hVisual = getTeamNameAndEscudo(h);
       const aVisual = getTeamNameAndEscudo(a);
+      const homeWon = match.isFinished && (match.homeScore ?? 0) > (match.awayScore ?? 0);
+      const awayWon = match.isFinished && (match.awayScore ?? 0) > (match.homeScore ?? 0);
       return ( 
-          <div className="bg-brand-surface border border-brand-primary/40 rounded-lg shadow-[0_0_10px_rgba(var(--theme-primary),0.1)] w-full relative z-10 overflow-hidden cursor-pointer hover:border-brand-primary transition-all hover:shadow-[0_0_15px_rgba(var(--theme-primary),0.3)] flex flex-col" onClick={() => openMatchModal(match)}> 
-              <div className="bg-brand-primary/10 text-brand-primary text-[9px] text-center font-bold px-1 py-0.5 border-b border-brand-primary/20 uppercase tracking-widest">{match.stage || 'VS'}</div> 
-              <div className="p-2 grid gap-y-1"> 
-                  <div className="flex justify-between items-center gap-2 h-6"> 
-                      <div className="flex items-center gap-2 min-w-0 flex-1"> 
-                          <div className="w-7 h-7 flex items-center justify-center shrink-0 overflow-hidden"> {hasHome ? (hVisual.logoUrl ? <img src={hVisual.logoUrl} className="w-full h-full object-contain"/> : <Shield size={12} className="text-brand-primary"/>) : <div className="w-full h-full bg-transparent"></div>} </div> 
-                          <span className="text-[10px] font-bold text-brand-text truncate group-hover:text-brand-primary transition-colors block">{hasHome ? hVisual.name : <span className="text-transparent">-</span>}</span> 
+          <div className="bg-gradient-to-b from-[#1a1e2e] to-[#11141f] border border-brand-primary/30 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] w-full relative z-10 overflow-hidden cursor-pointer hover:border-brand-primary transition-all hover:shadow-[0_0_25px_rgba(255,106,0,0.25)] flex flex-col" onClick={() => openMatchModal(match)}> 
+              {/* Cabeçalho da fase */}
+              <div className="bg-brand-primary/15 text-brand-primary text-[10px] text-center font-black px-2 py-1.5 border-b border-brand-primary/20 uppercase tracking-[0.2em]">{match.stage || 'VS'}</div> 
+              <div className="p-3 flex flex-col gap-2"> 
+                  {/* Time da casa */}
+                  <div className={`flex justify-between items-center gap-3 rounded-lg px-2 py-2 transition-all ${homeWon ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-white/[0.02]'}`}> 
+                      <div className="flex items-center gap-3 min-w-0 flex-1"> 
+                          <div className="w-9 h-9 flex items-center justify-center shrink-0 overflow-hidden"> {hasHome ? (hVisual.logoUrl ? <img src={hVisual.logoUrl} className="w-full h-full object-contain"/> : <Shield size={18} className="text-brand-primary"/>) : <div className="w-full h-full"></div>} </div> 
+                          <span className={`text-[13px] font-black truncate transition-colors block uppercase tracking-tight ${homeWon ? 'text-emerald-400' : hasHome ? 'text-white' : 'text-white/30'}`}>{hasHome ? hVisual.name : 'A definir'}</span> 
+                          {homeWon && <Check size={14} className="text-emerald-400 shrink-0"/>}
                       </div> 
-                      <span className="text-brand-primary font-mono text-sm font-bold drop-shadow-[0_0_3px_rgba(var(--theme-primary),0.8)] min-w-[1.2rem] text-center shrink-0">{match.homeScore ?? '-'}</span> 
+                      <span className={`font-mono text-lg font-black min-w-[1.5rem] text-center shrink-0 ${homeWon ? 'text-emerald-400' : 'text-brand-primary'}`}>{match.homeScore ?? '–'}</span> 
                   </div> 
-                  <div className="flex justify-between items-center gap-2 h-6"> 
-                      <div className="flex items-center gap-2 min-w-0 flex-1"> 
-                          <div className="w-7 h-7 flex items-center justify-center shrink-0 overflow-hidden"> {hasAway ? (aVisual.logoUrl ? <img src={aVisual.logoUrl} className="w-full h-full object-contain"/> : <Shield size={12} className="text-brand-primary"/>) : <div className="w-full h-full bg-transparent"></div>} </div> 
-                          <span className="text-[10px] font-bold text-brand-text truncate group-hover:text-brand-primary transition-colors block">{hasAway ? aVisual.name : <span className="text-transparent">-</span>}</span> 
+                  {/* Time visitante */}
+                  <div className={`flex justify-between items-center gap-3 rounded-lg px-2 py-2 transition-all ${awayWon ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-white/[0.02]'}`}> 
+                      <div className="flex items-center gap-3 min-w-0 flex-1"> 
+                          <div className="w-9 h-9 flex items-center justify-center shrink-0 overflow-hidden"> {hasAway ? (aVisual.logoUrl ? <img src={aVisual.logoUrl} className="w-full h-full object-contain"/> : <Shield size={18} className="text-brand-primary"/>) : <div className="w-full h-full"></div>} </div> 
+                          <span className={`text-[13px] font-black truncate transition-colors block uppercase tracking-tight ${awayWon ? 'text-emerald-400' : hasAway ? 'text-white' : 'text-white/30'}`}>{hasAway ? aVisual.name : 'A definir'}</span> 
+                          {awayWon && <Check size={14} className="text-emerald-400 shrink-0"/>}
                       </div> 
-                      <span className="text-brand-primary font-mono text-sm font-bold drop-shadow-[0_0_3px_rgba(var(--theme-primary),0.8)] min-w-[1.2rem] text-center shrink-0">{match.awayScore ?? '-'}</span> 
+                      <span className={`font-mono text-lg font-black min-w-[1.5rem] text-center shrink-0 ${awayWon ? 'text-emerald-400' : 'text-brand-primary'}`}>{match.awayScore ?? '–'}</span> 
                   </div> 
               </div> 
           </div> 
@@ -736,7 +743,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   const connectorColor = bracketStyle === 'CHAMPIONS' ? 'border-brand-primary/60' : 'border-white/60';
   const pendingRegistrations = registrations.filter(r => r.status === 'PENDING');
   const processedRegistrations = registrations.filter(r => r.status !== 'PENDING');
-  const BracketColumn = ({ matches, title, slotHeightClass, isFirstColumn = false, isLastColumn = false }: { matches: Match[], title: string, slotHeightClass: string, isFirstColumn?: boolean, isLastColumn?: boolean }) => ( <div className="flex flex-col"> <div className="text-center text-white/50 text-[10px] font-bold uppercase mb-4 h-4">{title}</div> <div className="flex flex-col justify-center"> {matches.map((m, i) => ( <div key={`${m.id}-${i}`} className={`${slotHeightClass} flex items-center justify-center relative`}> {!isFirstColumn && <div className={`absolute left-[-1.25rem] w-5 border-b-2 ${connectorColor} top-1/2`}></div>} <div className="w-48"><MatchCard match={m} /></div> {!isLastColumn && ( <> <div className={`absolute right-[-1.25rem] w-5 border-b-2 ${connectorColor} top-1/2`}></div> <div className={`absolute right-[-1.25rem] w-0 border-r-2 ${connectorColor} ${i % 2 === 0 ? 'h-[50%] top-1/2' : 'h-[50%] bottom-1/2'}`}></div> </> )} </div> ))} </div> </div> );
+  const BracketColumn = ({ matches, title, slotHeightClass, isFirstColumn = false, isLastColumn = false }: { matches: Match[], title: string, slotHeightClass: string, isFirstColumn?: boolean, isLastColumn?: boolean }) => ( <div className="flex flex-col"> <div className="text-center text-white/60 text-xs font-black uppercase mb-4 h-4 tracking-[0.2em]">{title}</div> <div className="flex flex-col justify-center"> {matches.map((m, i) => ( <div key={`${m.id}-${i}`} className={`${slotHeightClass} flex items-center justify-center relative`}> {!isFirstColumn && <div className={`absolute left-[-1.75rem] w-7 border-b-2 ${connectorColor} top-1/2`}></div>} <div className="w-64"><MatchCard match={m} /></div> {!isLastColumn && ( <> <div className={`absolute right-[-1.75rem] w-7 border-b-2 ${connectorColor} top-1/2`}></div> <div className={`absolute right-[-1.75rem] w-0 border-r-2 ${connectorColor} ${i % 2 === 0 ? 'h-[50%] top-1/2' : 'h-[50%] bottom-1/2'}`}></div> </> )} </div> ))} </div> </div> );
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -2138,7 +2145,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
               {activeTab === 'brackets' && !isMD3 && !isLeague && (
                   <div className={`p-8 min-h-[600px] overflow-x-auto flex items-center justify-center ${bracketBgClass}`}>
                       {hasKnockoutStarted ? (
-                          <div className="flex flex-row items-center justify-center gap-10">
+                          <div className="flex flex-row items-center justify-center gap-14">
                                {bracketData.hasR16 && <BracketColumn matches={bracketData.r16} title="Oitavas de Final" slotHeightClass="h-32" isFirstColumn={true}/>}
                                {bracketData.hasQuarters && <BracketColumn matches={bracketData.quarters} title="Quartas de Final" slotHeightClass="h-64" isFirstColumn={!bracketData.hasR16}/>}
                                <BracketColumn matches={bracketData.semis} title="Semifinais" slotHeightClass="h-[32rem]" isFirstColumn={!bracketData.hasQuarters && !bracketData.hasR16}/>
