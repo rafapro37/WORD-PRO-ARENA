@@ -875,9 +875,10 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
               
               {/* --- APPEARANCE TAB --- */}
               {activeTab === ('scorers' as any) && (
-                  <div className="p-6 animate-in fade-in space-y-6">
-                      <h3 className="text-xl font-bold text-brand-text flex items-center gap-2"><Award className="text-brand-primary"/> Artilheiros & Assistências</h3>
+                  <div className="p-6 animate-in fade-in">
+                      <h3 className="text-xl font-bold text-brand-text flex items-center gap-2 mb-6"><Award className="text-brand-primary"/> Artilheiros & Assistências</h3>
 
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Artilheiros */}
                       <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
                           <h4 className="text-sm font-black text-brand-text uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -946,6 +947,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                   <p className="text-brand-textMuted text-sm italic text-center py-4">Nenhuma assistência registrada ainda.</p>
                               );
                           })()}
+                      </div>
                       </div>
                   </div>
               )}
