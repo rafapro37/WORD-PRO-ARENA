@@ -5,6 +5,7 @@ import { POSITIONS, AWARD_LABELS, POSITIONS_VIRTUAL, POSITIONS_REAL } from '../c
 import { Calendar, Users, BarChart, Trophy, Shirt, Plus, Save, Edit, UserPlus, Check, X, Trash2, Award, Shield, RefreshCw, Crown, ListPlus, Search, Filter, LayoutList, ChevronRight, Zap, ChevronLeft, Image, Upload, Hand, Lock, Info, Clock, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Globe, Instagram, Facebook, Twitter, Youtube, Gamepad2, MessageSquare, LinkIcon, Palette, Settings, Sparkles, CreditCard, Target } from '../components/Icons';
 import { extractStatsFromImage, ExtractedPlayerStats } from '../services/ocrService';
 import GroupDraw from '../components/GroupDraw';
+import ChampionsBracket from '../components/ChampionsBracket';
 
 interface TournamentDetailsProps {
   tournament: Tournament;
@@ -2143,61 +2144,24 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
               )}
 
               {activeTab === 'brackets' && !isMD3 && !isLeague && (
-                  <div className={`p-8 min-h-[600px] overflow-x-auto flex items-center justify-center ${bracketBgClass}`}>
+                  <div className={`min-h-[600px] ${bracketBgClass}`}>
                       {hasKnockoutStarted ? (
-                          <div className="flex flex-row items-center justify-center gap-14">
-                               {bracketData.hasR16 && <BracketColumn matches={bracketData.r16} title="Oitavas de Final" slotHeightClass="h-32" isFirstColumn={true}/>}
-                               {bracketData.hasQuarters && <BracketColumn matches={bracketData.quarters} title="Quartas de Final" slotHeightClass="h-64" isFirstColumn={!bracketData.hasR16}/>}
-                               <BracketColumn matches={bracketData.semis} title="Semifinais" slotHeightClass="h-[32rem]" isFirstColumn={!bracketData.hasQuarters && !bracketData.hasR16}/>
-                               
-                               {/* FINAL — com troféu destacado */}
-                               <div className="flex flex-col items-center">
-                                    <div className="text-center text-white/50 text-[10px] font-bold uppercase mb-4 h-4">Final</div>
-                                    <div className="h-[64rem] flex items-center justify-center relative">
-                                         <div className="relative flex flex-col items-center gap-4">
-                                             <div className="absolute left-[-1.25rem] w-5 border-b-2 border-brand-primary/60 top-1/2"></div>
-                                             
-                                             {/* Troféu com logo da federação */}
-                                             <div className="flex flex-col items-center gap-2 mb-4">
-                                               {(() => {
-                                                 const league = leagues.find((l: any) => l.id === tournament.ligaId);
-                                                 const leagueLogoUrl = league?.logoUrl || tournament.bannerUrl;
-                                                 return (
-                                                   <div className="relative">
-                                                     <div className="absolute inset-0 rounded-full bg-yellow-400/20 blur-2xl animate-pulse scale-150"></div>
-                                                     <div className="relative w-20 h-20 rounded-full border-2 border-yellow-400 bg-black/60 flex items-center justify-center shadow-[0_0_30px_rgba(250,204,21,0.5)]">
-                                                       {leagueLogoUrl ? (
-                                                         <img src={leagueLogoUrl} className="w-14 h-14 object-contain" alt="Logo" />
-                                                       ) : (
-                                                         <Trophy className="text-yellow-400 animate-bounce" size={40} />
-                                                       )}
-                                                     </div>
-                                                     <div className="absolute -top-1 -right-1 text-yellow-400 text-xs">⭐</div>
-                                                     <div className="absolute -bottom-1 -left-1 text-yellow-400 text-xs">⭐</div>
-                                                   </div>
-                                                 );
-                                               })()}
-                                               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-yellow-400/80">Campeão</span>
-                                               <span className="text-[10px] font-black text-white/60 text-center max-w-[120px] leading-tight">{tournament.name}</span>
-                                             </div>
-                                             
-                                             {/* Card da final */}
-                                             <div className="w-56">
-                                                {bracketData.finals.map(m => (
-                                                  <div key={m.id} className="relative">
-                                                    {/* Destaque especial para a final */}
-                                                    <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-yellow-600/30 via-yellow-400/20 to-yellow-600/30 blur-sm"></div>
-                                                    <div className="relative border-2 border-yellow-500/60 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(250,204,21,0.2)]">
-                                                      <MatchCard match={m} />
-                                                    </div>
-                                                  </div>
-                                                ))}
-                                             </div>
-                                         </div>
-                                    </div>
-                               </div>
-                          </div>
-                      ) : ( <div className="text-center text-white/50 italic"> O mata-mata ainda não foi gerado. Finalize a fase de grupos. </div> )}
+                          <ChampionsBracket
+                              r16={bracketData.r16}
+                              quarters={bracketData.quarters}
+                              semis={bracketData.semis}
+                              finals={bracketData.finals}
+                              getTeamVisual={(teamId) => {
+                                  const t = teams.find(tt => tt.id === teamId);
+                                  return getTeamNameAndEscudo(t);
+                              }}
+                              themeColor={themeColor}
+                              championLogoUrl={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl || tournament.bannerUrl}
+                              backgroundUrl={tournament.knockoutBackground}
+                              backgroundOpacity={tournament.knockoutOpacity !== undefined ? tournament.knockoutOpacity / 100 : 0.25}
+                              onMatchClick={(m) => openMatchModal(m as any)}
+                          />
+                      ) : ( <div className="text-center text-white/50 italic p-8"> O mata-mata ainda não foi gerado. Finalize a fase de grupos. </div> )}
                   </div>
               )}
           </div>
