@@ -651,6 +651,41 @@ const App: React.FC = () => {
     handleGenerateMatchesInternal(tournament.id);
   };
 
+  // Cria os times nos grupos a partir dos participantes manuais (sem gerar jogos)
+  const handleCreateTeamsFromManual = (tournamentId: string) => {
+    const tournament = state.tournaments.find(t => t.id === tournamentId);
+    if (!tournament) return;
+    const manualParticipants = (tournament as any).manualParticipants || [];
+    if (manualParticipants.length === 0) return;
+
+    const existingTeamNames = state.teams
+      .filter(t => t.tournamentId === tournament.id)
+      .map(t => t.name.toLowerCase());
+
+    const groups = tournament.groups || [];
+    const hasGroups = groups.length > 0;
+
+    const newTeams = manualParticipants
+      .filter((p: any) => !existingTeamNames.includes(p.name.toLowerCase()))
+      .map((p: any, index: number) => ({
+        id: generateId(),
+        name: p.name,
+        tournamentId: tournament.id,
+        organizadorId: tournament.organizadorId,
+        ligaId: tournament.ligaId,
+        logoUrl: p.logoUrl || undefined,
+        groupId: hasGroups ? groups[index % groups.length].id : 'NONE',
+        ownerId: tournament.organizadorId,
+        roster: [],
+        played: 0, won: 0, drawn: 0, lost: 0,
+        goalsFor: 0, goalsAgainst: 0, points: 0,
+      }));
+
+    if (newTeams.length > 0) {
+      setState(prev => ({ ...prev, teams: [...prev.teams, ...newTeams] }));
+    }
+  };
+
   const handleGenerateMatchesInternal = (tournamentId: string) => {
     const tournament = state.tournaments.find(t => t.id === tournamentId);
     if (!tournament) return;
@@ -2250,6 +2285,7 @@ const App: React.FC = () => {
                   logSystemAction("Times", `Time ${teamId} atualizado`, true);
                 }}
                 onGenerateMatches={handleGenerateMatches}
+                onCreateTeamsFromManual={handleCreateTeamsFromManual}
                 onDeleteTournament={(id) => {
                   // Remove do estado local
                   setState((prev) => ({

@@ -22,6 +22,7 @@ interface TournamentDetailsProps {
   onBulkAddPlayers: (teamId: string, names: string[]) => void;
   onUpdateTeam: (teamId: string, updates: Partial<Team>) => void;
   onGenerateMatches: () => void;
+  onCreateTeamsFromManual?: (tournamentId: string) => void;
   onDeleteTournament: (id: string) => void;
   onResetTournament: (id: string) => void;
   onDistributeAwards: (tournamentId: string, awards: TournamentAwards) => void;
@@ -40,7 +41,7 @@ interface TournamentDetailsProps {
 }
 
 const TournamentDetails: React.FC<TournamentDetailsProps> = ({ 
-  tournament, teams, matches, players, playerProfiles = [], registrations = [], currentUser, allTournaments, isOrganizer, leagues = [], onUpdateMatch, onAddPlayer, onBulkAddPlayers, onUpdateTeam, onGenerateMatches, onDeleteTournament, onResetTournament, onDistributeAwards, onAdvanceToKnockout, onMD3Action, onRegistrationAction, onRequestRegistration, onRemovePlayer, onBack, themeColor, bracketStyle = 'CHAMPIONS', onUpdateTournament, onUpdatePlayer, onFinishTournament
+  tournament, teams, matches, players, playerProfiles = [], registrations = [], currentUser, allTournaments, isOrganizer, leagues = [], onUpdateMatch, onAddPlayer, onBulkAddPlayers, onUpdateTeam, onGenerateMatches, onCreateTeamsFromManual, onDeleteTournament, onResetTournament, onDistributeAwards, onAdvanceToKnockout, onMD3Action, onRegistrationAction, onRequestRegistration, onRemovePlayer, onBack, themeColor, bracketStyle = 'CHAMPIONS', onUpdateTournament, onUpdatePlayer, onFinishTournament
 }) => {
   const isKnockout = tournament.format === TournamentFormat.KNOCKOUT;
   const isSwiss = tournament.format === TournamentFormat.SWISS;
@@ -653,7 +654,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
               <div className="p-1.5 grid gap-y-1"> 
                   <div className={`flex items-center justify-between gap-2 h-5 rounded px-0.5 ${homeWon ? 'bg-green-900/30' : ''}`}> 
                       <div className="flex items-center gap-2 min-w-0 flex-1"> 
-                          <div className="w-4 h-4 flex items-center justify-center shrink-0"> {hasHome ? (hVisual.logoUrl ? <img src={hVisual.logoUrl} className="w-full h-full object-contain" /> : <Shield size={10} className="text-brand-textMuted"/>) : <div className="w-4"/>} </div> 
+                          <div className="w-7 h-7 flex items-center justify-center shrink-0"> {hasHome ? (hVisual.logoUrl ? <img src={hVisual.logoUrl} className="w-full h-full object-contain" /> : <Shield size={12} className="text-brand-textMuted"/>) : <div className="w-7"/>} </div> 
                           <div className="flex flex-col min-w-0">
                             <span className={`text-[10px] font-bold truncate leading-tight block ${homeWon ? 'text-green-400' : 'text-brand-text'}`}>{hasHome ? hVisual.name : <span className="text-white/20">A definir</span>}</span>
                             {hasHome && hVisual.subName && <span className="text-[8px] text-brand-textMuted truncate leading-tight">{hVisual.subName}</span>}
@@ -664,7 +665,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                   </div> 
                   <div className={`flex items-center justify-between gap-2 h-5 rounded px-0.5 ${awayWon ? 'bg-green-900/30' : ''}`}> 
                       <div className="flex items-center gap-2 min-w-0 flex-1"> 
-                          <div className="w-4 h-4 flex items-center justify-center shrink-0"> {hasAway ? (aVisual.logoUrl ? <img src={aVisual.logoUrl} className="w-full h-full object-contain" /> : <Shield size={10} className="text-brand-textMuted"/>) : <div className="w-4"/>} </div> 
+                          <div className="w-7 h-7 flex items-center justify-center shrink-0"> {hasAway ? (aVisual.logoUrl ? <img src={aVisual.logoUrl} className="w-full h-full object-contain" /> : <Shield size={12} className="text-brand-textMuted"/>) : <div className="w-7"/>} </div> 
                           <div className="flex flex-col min-w-0">
                             <span className={`text-[10px] font-bold truncate leading-tight block ${awayWon ? 'text-green-400' : 'text-brand-text'}`}>{hasAway ? aVisual.name : <span className="text-white/20">A definir</span>}</span>
                             {hasAway && aVisual.subName && <span className="text-[8px] text-brand-textMuted truncate leading-tight">{aVisual.subName}</span>}
@@ -691,14 +692,14 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
               <div className="p-2 grid gap-y-1"> 
                   <div className="flex justify-between items-center gap-2 h-6"> 
                       <div className="flex items-center gap-2 min-w-0 flex-1"> 
-                          <div className="w-5 h-5 rounded-full bg-black border border-brand-primary/30 flex items-center justify-center shrink-0 overflow-hidden"> {hasHome ? (hVisual.logoUrl ? <img src={hVisual.logoUrl} className="w-full h-full object-cover"/> : <Shield size={10} className="text-brand-primary"/>) : <div className="w-full h-full bg-transparent"></div>} </div> 
+                          <div className="w-7 h-7 flex items-center justify-center shrink-0 overflow-hidden"> {hasHome ? (hVisual.logoUrl ? <img src={hVisual.logoUrl} className="w-full h-full object-contain"/> : <Shield size={12} className="text-brand-primary"/>) : <div className="w-full h-full bg-transparent"></div>} </div> 
                           <span className="text-[10px] font-bold text-brand-text truncate group-hover:text-brand-primary transition-colors block">{hasHome ? hVisual.name : <span className="text-transparent">-</span>}</span> 
                       </div> 
                       <span className="text-brand-primary font-mono text-sm font-bold drop-shadow-[0_0_3px_rgba(var(--theme-primary),0.8)] min-w-[1.2rem] text-center shrink-0">{match.homeScore ?? '-'}</span> 
                   </div> 
                   <div className="flex justify-between items-center gap-2 h-6"> 
                       <div className="flex items-center gap-2 min-w-0 flex-1"> 
-                          <div className="w-5 h-5 rounded-full bg-black border border-brand-primary/30 flex items-center justify-center shrink-0 overflow-hidden"> {hasAway ? (aVisual.logoUrl ? <img src={aVisual.logoUrl} className="w-full h-full object-cover"/> : <Shield size={10} className="text-brand-primary"/>) : <div className="w-full h-full bg-transparent"></div>} </div> 
+                          <div className="w-7 h-7 flex items-center justify-center shrink-0 overflow-hidden"> {hasAway ? (aVisual.logoUrl ? <img src={aVisual.logoUrl} className="w-full h-full object-contain"/> : <Shield size={12} className="text-brand-primary"/>) : <div className="w-full h-full bg-transparent"></div>} </div> 
                           <span className="text-[10px] font-bold text-brand-text truncate group-hover:text-brand-primary transition-colors block">{hasAway ? aVisual.name : <span className="text-transparent">-</span>}</span> 
                       </div> 
                       <span className="text-brand-primary font-mono text-sm font-bold drop-shadow-[0_0_3px_rgba(var(--theme-primary),0.8)] min-w-[1.2rem] text-center shrink-0">{match.awayScore ?? '-'}</span> 
@@ -777,7 +778,11 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
               onUpdateTournament(tournament.id, { manualParticipants: newList } as any);
             }
             setShowGroupDraw(false);
-            showToast('Sorteio confirmado! Agora gere os jogos.', 'success');
+            // Cria os times nos grupos imediatamente para aparecerem montados
+            if (onCreateTeamsFromManual) {
+              setTimeout(() => onCreateTeamsFromManual(tournament.id), 200);
+            }
+            showToast('Sorteio confirmado! Os grupos foram montados. Agora gere os jogos.', 'success');
           }}
         />
       )}
