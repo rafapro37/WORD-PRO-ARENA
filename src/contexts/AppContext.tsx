@@ -468,7 +468,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const filteredMatches = useMemo(() =>
     state.matches.filter(m => {
       const tourney = state.tournaments.find(t => t.id === m.tournamentId);
-      const orgOk  = !currentOrganizerId || m.organizadorId === currentOrganizerId;
+      // Aceita se o organizador bate OU se a partida pertence a um torneio do organizador atual
+      const orgOk  = !currentOrganizerId || m.organizadorId === currentOrganizerId || tourney?.organizadorId === currentOrganizerId;
       const ligaOk = selectedLeagueId ? tourney?.ligaId === selectedLeagueId : !tourney?.ligaId;
       return orgOk && ligaOk;
     }), [state.matches, currentOrganizerId, selectedLeagueId, state.tournaments]);

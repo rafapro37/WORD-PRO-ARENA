@@ -504,10 +504,12 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
 
       {/* ── ABA: ARTILHEIROS ── */}
       {activeTab === 'artilheiros' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {topScorers.length === 0 && topAssists.length === 0 && (
             <EmptyState icon="⚽" title="Nenhum dado registrado" description="Artilheiros e assistências aparecem aqui conforme os resultados são lançados." />
           )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
           {/* ARTILHEIROS */}
           {topScorers.length > 0 && (
@@ -613,6 +615,7 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
               </div>
             </div>
           )}
+          </div>
         </motion.div>
       )}
     </div>
