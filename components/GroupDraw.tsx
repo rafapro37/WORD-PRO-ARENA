@@ -11,6 +11,7 @@ interface Participant {
 interface GroupDrawProps {
   participants: Participant[];
   groupCount: number;
+  mode?: 'groups' | 'knockout';
   tournamentName: string;
   tournamentLogo?: string;
   themeColor?: string;
@@ -24,7 +25,7 @@ const GROUP_COLORS = [
 ];
 
 const GroupDraw: React.FC<GroupDrawProps> = ({
-  participants, groupCount, tournamentName, tournamentLogo, themeColor = '#FF6A00', onConfirm, onClose,
+  participants, groupCount, mode = 'groups', tournamentName, tournamentLogo, themeColor = '#FF6A00', onConfirm, onClose,
 }) => {
   // Ordem sorteada (embaralhada uma vez na montagem)
   const shuffled = useMemo(() => {
@@ -40,7 +41,9 @@ const GroupDraw: React.FC<GroupDrawProps> = ({
   const [revealing, setRevealing] = useState<Participant | null>(null);
   const [groupOf, setGroupOf] = useState<Record<string, number>>({});
 
-  const groupNames = Array.from({ length: groupCount }, (_, i) => `Grupo ${String.fromCharCode(65 + i)}`);
+  const groupNames = mode === 'knockout'
+    ? Array.from({ length: groupCount }, (_, i) => `Chave ${i + 1}`)
+    : Array.from({ length: groupCount }, (_, i) => `Grupo ${String.fromCharCode(65 + i)}`);
   const isComplete = drawnCount >= shuffled.length;
 
   const drawNext = () => {
@@ -97,7 +100,7 @@ const GroupDraw: React.FC<GroupDrawProps> = ({
             : <Trophy size={28} style={{ color: themeColor }} />}
           <div>
             <h2 className="text-white font-black italic uppercase tracking-tight text-lg leading-none">{tournamentName}</h2>
-            <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: themeColor }}>Sorteio de Grupos</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] font-bold" style={{ color: themeColor }}>{mode === 'knockout' ? 'Sorteio do Mata-Mata' : 'Sorteio de Grupos'}</p>
           </div>
         </div>
         <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-colors">
@@ -114,16 +117,16 @@ const GroupDraw: React.FC<GroupDrawProps> = ({
           {revealing ? (
             <motion.div
               key={revealing.id}
-              initial={{ scale: 0.3, opacity: 0, rotateY: 180 }}
-              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
-              exit={{ scale: 0.5, opacity: 0, y: -200 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+              initial={{ scale: 0.1, opacity: 0 }}
+              animate={{ scale: [0.1, 1.25, 1], opacity: 1 }}
+              exit={{ scale: 1.4, opacity: 0, y: -260, filter: 'blur(4px)' }}
+              transition={{ duration: 0.7, times: [0, 0.6, 1], ease: 'easeOut' }}
               className="relative z-10 flex flex-col items-center"
             >
               <div className="relative">
-                <div className="absolute inset-0 rounded-full blur-2xl opacity-50 animate-pulse" style={{ background: themeColor }} />
+                <div className="absolute inset-0 rounded-full blur-2xl opacity-60 animate-pulse" style={{ background: themeColor }} />
                 <div className="relative w-44 h-44 rounded-full border-4 bg-black/60 flex items-center justify-center shadow-2xl"
-                     style={{ borderColor: themeColor }}>
+                     style={{ borderColor: themeColor, boxShadow: `0 0 60px ${themeColor}` }}>
                   {revealing.logoUrl
                     ? <img src={revealing.logoUrl} className="w-28 h-28 object-contain" alt="" />
                     : <Shield size={70} style={{ color: themeColor }} />}
@@ -214,8 +217,14 @@ const GroupDraw: React.FC<GroupDrawProps> = ({
         <div className="flex gap-3 min-w-min justify-center">
           {groupNames.map((gName, gIdx) => {
             const membersInGroup = shuffled.filter(p => groupOf[p.id] === gIdx);
+            const isActiveGroup = revealing && (drawnCount % groupCount) === gIdx;
             return (
-              <div key={gIdx} className="flex-shrink-0 w-40 rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+              <div key={gIdx} className="flex-shrink-0 w-40 rounded-xl border overflow-hidden transition-all duration-300"
+                   style={{
+                     borderColor: isActiveGroup ? GROUP_COLORS[gIdx % GROUP_COLORS.length] : 'rgba(255,255,255,0.1)',
+                     boxShadow: isActiveGroup ? `0 0 20px ${GROUP_COLORS[gIdx % GROUP_COLORS.length]}` : 'none',
+                     background: 'rgba(255,255,255,0.05)',
+                   }}>
                 <div className="py-2 text-center font-black uppercase tracking-widest text-xs text-white"
                      style={{ background: GROUP_COLORS[gIdx % GROUP_COLORS.length] }}>
                   {gName}
@@ -225,8 +234,9 @@ const GroupDraw: React.FC<GroupDrawProps> = ({
                     {membersInGroup.map(p => (
                       <motion.div
                         key={p.id}
-                        initial={{ x: -30, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
+                        initial={{ scale: 1.5, opacity: 0, y: -20 }}
+                        animate={{ scale: 1, opacity: 1, y: 0 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                         className="flex items-center gap-2 bg-black/30 rounded-lg px-2 py-1.5"
                       >
                         {p.logoUrl

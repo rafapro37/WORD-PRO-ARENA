@@ -917,18 +917,20 @@ const App: React.FC = () => {
       }
 
       const teamCount = teams.length;
-      // Determine starting stage
+      // Determine starting stage conforme número de times
       let stageName: Match["stage"] = "R16";
-      let totalRounds = 4;
       if (teamCount <= 2) {
         stageName = "FINAL";
-        totalRounds = 1;
       } else if (teamCount <= 4) {
         stageName = "SF";
-        totalRounds = 2;
       } else if (teamCount <= 8) {
         stageName = "QF";
-        totalRounds = 3;
+      } else if (teamCount <= 16) {
+        stageName = "R16";
+      } else if (teamCount <= 32) {
+        stageName = "R32";
+      } else {
+        stageName = "R64";
       }
 
       // Simple shuffle or seeded if available (Random for now)
@@ -960,7 +962,7 @@ const App: React.FC = () => {
       // Generate subsequent empty rounds for tree structure
       let matchesInRound = newMatches.length;
       let currentRound = 1;
-      const stages = ["R16", "QF", "SF", "FINAL"];
+      const stages = ["R64", "R32", "R16", "QF", "SF", "FINAL"];
       let currentStageIndex = stages.indexOf(stageName || "R16");
 
       while (matchesInRound > 1) {
