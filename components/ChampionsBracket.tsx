@@ -208,9 +208,9 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   const finalCenterY = totalH / 2;
 
   return (
-    <div className="relative w-full overflow-x-auto rounded-2xl" style={{ background: '#1e1f26' }}>
+    <div className="relative w-full overflow-x-auto rounded-2xl" style={{ background: backgroundUrl ? '#0a0b0f' : '#1e1f26' }}>
       {backgroundUrl && (
-        <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${backgroundUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: backgroundOpacity }} />
+        <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${backgroundUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: 1 }} />
       )}
       <div ref={stageRef} className="relative mx-auto" style={{ width: totalW, height: totalH }}>
         {/* marca d'água */}

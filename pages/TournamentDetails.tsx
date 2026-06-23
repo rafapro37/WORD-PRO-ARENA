@@ -742,7 +742,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   };
 
   const MatchCard: React.FC<{ match: Match }> = bracketStyle === 'CHAMPIONS' ? NeonMatchCard : ClassicMatchCard;
-  const bracketBgClass = useMemo(() => tournament.knockoutBackground ? 'bg-black/20 backdrop-blur-sm' : bracketStyle === 'CHAMPIONS' ? 'bg-brand-dark' : 'bg-gradient-to-br from-brand-primary via-red-900 to-black', [bracketStyle, tournament.knockoutBackground]);
+  const bracketBgClass = useMemo(() => tournament.knockoutBackground ? '' : bracketStyle === 'CHAMPIONS' ? 'bg-brand-dark' : 'bg-gradient-to-br from-brand-primary via-red-900 to-black', [bracketStyle, tournament.knockoutBackground]);
   const connectorColor = bracketStyle === 'CHAMPIONS' ? 'border-brand-primary/60' : 'border-white/60';
   const pendingRegistrations = registrations.filter(r => r.status === 'PENDING');
   const processedRegistrations = registrations.filter(r => r.status !== 'PENDING');
@@ -945,8 +945,9 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                               ⚽ Artilheiros
                           </h4>
                           {(() => {
+                              const validTeamIds = new Set(teams.map(t => t.id));
                               const scorers = players
-                                  .filter(p => p.tournamentId === tournament.id && (p.goals || 0) > 0)
+                                  .filter(p => p.tournamentId === tournament.id && (p.goals || 0) > 0 && p.teamId && validTeamIds.has(p.teamId))
                                   .sort((a, b) => (b.goals || 0) - (a.goals || 0))
                                   .slice(0, 10);
                               return scorers.length > 0 ? (
@@ -980,8 +981,9 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                               🎯 Líderes em Assistências
                           </h4>
                           {(() => {
+                              const validTeamIds = new Set(teams.map(t => t.id));
                               const assisters = players
-                                  .filter(p => p.tournamentId === tournament.id && (p.assists || 0) > 0)
+                                  .filter(p => p.tournamentId === tournament.id && (p.assists || 0) > 0 && p.teamId && validTeamIds.has(p.teamId))
                                   .sort((a, b) => (b.assists || 0) - (a.assists || 0))
                                   .slice(0, 10);
                               return assisters.length > 0 ? (
@@ -2008,6 +2010,44 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                       + Adicionar
                                   </button>
                               </div>
+
+                              {/* Adicionar vários de uma vez */}
+                              <details className="mt-3 group">
+                                  <summary className="cursor-pointer text-[11px] font-bold text-yellow-400/80 hover:text-yellow-400 uppercase tracking-wide flex items-center gap-1">
+                                      📋 Adicionar vários de uma vez (colar lista)
+                                  </summary>
+                                  <div className="mt-2">
+                                      <textarea
+                                          id="bulk-participants-input"
+                                          rows={6}
+                                          placeholder={"Cole um nome por linha. Ex:\nPalmeiras\nFlamengo\nCorinthians\nSão Paulo\n..."}
+                                          className="w-full bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text text-sm focus:border-yellow-400 outline-none resize-y"
+                                      />
+                                      <button
+                                          onClick={() => {
+                                              const ta = document.getElementById('bulk-participants-input') as HTMLTextAreaElement;
+                                              if (!ta) return;
+                                              const names = ta.value.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+                                              if (names.length === 0) return;
+                                              if (onUpdateTournament) {
+                                                  const existing = (tournament as any).manualParticipants || [];
+                                                  const existingNames = existing.map((p: any) => p.name.toLowerCase());
+                                                  const novos = names
+                                                      .filter(n => !existingNames.includes(n.toLowerCase()))
+                                                      .map((name, i) => ({ id: `${Date.now()}-${i}`, name, createdAt: Date.now() + i }));
+                                                  onUpdateTournament(tournament.id, {
+                                                      manualParticipants: [...existing, ...novos]
+                                                  } as any);
+                                                  showToast(`${novos.length} participante(s) adicionado(s)!`, 'success');
+                                              }
+                                              ta.value = '';
+                                          }}
+                                          className="mt-2 w-full bg-yellow-600 hover:bg-yellow-500 text-black font-black py-2.5 rounded-lg transition-all text-sm uppercase tracking-wide"
+                                      >
+                                          + Adicionar Todos da Lista
+                                      </button>
+                                  </div>
+                              </details>
                               <p className="text-[10px] text-brand-textMuted mt-1">Pressione Enter ou clique em Adicionar. Esses participantes não precisam de cadastro.</p>
 
                               {/* Lista de participantes manuais */}
