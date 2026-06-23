@@ -316,7 +316,18 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
   const displayMatches = useMemo(() => {
       let filtered = [];
-      if (isKnockout) filtered = matches.sort((a, b) => a.id.localeCompare(b.id));
+      if (isKnockout) {
+          const STAGE_ORDER: Record<string, number> = { R64: 0, R32: 1, R16: 2, QF: 3, SF: 4, FINAL: 5 };
+          filtered = matches
+              // remove confrontos "fantasma" (sem nenhum time real definido ainda)
+              .filter(m => teams.some(t => t.id === m.homeTeamId) || teams.some(t => t.id === m.awayTeamId))
+              .sort((a, b) => {
+                  const sa = STAGE_ORDER[a.stage || ''] ?? 99;
+                  const sb = STAGE_ORDER[b.stage || ''] ?? 99;
+                  if (sa !== sb) return sa - sb;
+                  return a.id.localeCompare(b.id);
+              });
+      }
       else if (isSwiss) filtered = matches.sort((a, b) => b.round - a.round); 
       else if (isMD3) filtered = matches.sort((a, b) => (b.round === 99 ? 1 : a.round === 99 ? -1 : a.round - b.round));
       else if (isLeague) {
@@ -329,7 +340,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           filtered = matches.filter(m => m.groupId === activeGroupId).sort((a,b) => a.round - b.round);
       }
       return filtered;
-  }, [matches, activeGroupId, isSwiss, isMD3, isKnockout, isLeague, matchTurnFilter, leagueRoundsPerTurn]);
+  }, [matches, teams, activeGroupId, isSwiss, isMD3, isKnockout, isLeague, matchTurnFilter, leagueRoundsPerTurn]);
 
   const matchesByRound = useMemo(() => {
       const groups: Record<number, Match[]> = {};
@@ -724,18 +735,33 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       const a = teams.find(t => t.id === match.awayTeamId);
       const hVisual = getTeamNameAndEscudo(h);
       const aVisual = getTeamNameAndEscudo(a);
+      const finished = match.isFinished;
+      const hWin = finished && (match.homeScore ?? 0) > (match.awayScore ?? 0);
+      const aWin = finished && (match.awayScore ?? 0) > (match.homeScore ?? 0);
       return (
-          <div className="match-card-horizontal jogo-linha" onClick={() => openMatchModal(match)}>
-              <div className="time justify-end">
-                  <span className="team-name">{hVisual.name || 'TBD'}</span>
-                  {hVisual.logoUrl ? <img src={hVisual.logoUrl} className="logo-match" /> : <Shield size={32} className="text-slate-600"/>}
+          <div className="match-card-grid" onClick={() => openMatchModal(match)}>
+              <div className={`mcg-team ${hWin ? 'mcg-win' : ''}`}>
+                  {hVisual.logoUrl
+                      ? <img src={hVisual.logoUrl} className="mcg-logo" />
+                      : <span className="mcg-shield"><Shield size={26} /></span>}
+                  <span className="mcg-name">{hVisual.name || 'A definir'}</span>
               </div>
-              <div className="placar">
-                  {match.isFinished ? `${match.homeScore} - ${match.awayScore}` : 'X'}
+              <div className="mcg-score">
+                  {finished ? (
+                      <>
+                          <span className={hWin ? 'mcg-score-win' : ''}>{match.homeScore}</span>
+                          <span className="mcg-x">-</span>
+                          <span className={aWin ? 'mcg-score-win' : ''}>{match.awayScore}</span>
+                      </>
+                  ) : (
+                      <span className="mcg-vs">VS</span>
+                  )}
               </div>
-              <div className="time">
-                  {aVisual.logoUrl ? <img src={aVisual.logoUrl} className="logo-match" /> : <Shield size={32} className="text-slate-600"/>}
-                  <span className="team-name">{aVisual.name || 'TBD'}</span>
+              <div className={`mcg-team mcg-team-right ${aWin ? 'mcg-win' : ''}`}>
+                  <span className="mcg-name">{aVisual.name || 'A definir'}</span>
+                  {aVisual.logoUrl
+                      ? <img src={aVisual.logoUrl} className="mcg-logo" />
+                      : <span className="mcg-shield"><Shield size={26} /></span>}
               </div>
           </div>
       );
@@ -1701,26 +1727,41 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                       )}
 
                       {displayMatches.length > 0 ? (
-                          <div className="grid grid-cols-1 gap-3 items-start">
+                          <div className="flex flex-col gap-4 items-stretch">
                               {Object.entries(
                                   displayMatches.reduce((acc: any, m: any) => {
-                                      const groupName = tournament.groups.find(g => g.id === m.groupId)?.name || 'Outros';
-                                      if (!acc[groupName]) acc[groupName] = [];
-                                      acc[groupName].push(m);
+                                      const key = isKnockout
+                                          ? (m.stage || 'FASE')
+                                          : (tournament.groups.find(g => g.id === m.groupId)?.name || 'Jogos');
+                                      if (!acc[key]) acc[key] = [];
+                                      acc[key].push(m);
                                       return acc;
                                   }, {})
-                              ).map(([groupName, matches]: [string, any]) => (
-                                  <div key={groupName} className="grupo-jogos">
-                                      <div className="grupo-header" onClick={() => setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }))}>
-                                          {groupName} {expandedGroups[groupName] ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
-                                      </div>
-                                      {expandedGroups[groupName] && (
-                                          <div className="grupo-conteudo">
-                                              {matches.map((m: any) => <HorizontalMatchCard key={m.id} match={m} />)}
+                              ).map(([key, matches]: [string, any]) => {
+                                  const stageLabels: Record<string, string> = {
+                                      R64: '64-avos de Final', R32: '32-avos de Final', R16: 'Oitavas de Final',
+                                      QF: 'Quartas de Final', SF: 'Semifinal', FINAL: 'Grande Final',
+                                  };
+                                  const label = isKnockout ? (stageLabels[key] || key) : key;
+                                  const isOpen = expandedGroups[key] !== false; // aberto por padrão
+                                  return (
+                                      <div key={key} className="grupo-jogos">
+                                          <div className="grupo-header" onClick={() => setExpandedGroups(prev => ({ ...prev, [key]: prev[key] === false ? true : false }))}>
+                                              <span className="flex items-center gap-2">
+                                                  {key === 'FINAL' && <Trophy size={16} className="text-yellow-500" />}
+                                                  {label}
+                                                  <span className="text-[11px] font-mono bg-brand-primary/20 text-brand-primary px-2 py-0.5 rounded-full">{matches.length}</span>
+                                              </span>
+                                              {isOpen ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                                           </div>
-                                      )}
-                                  </div>
-                              ))}
+                                          {isOpen && (
+                                              <div className="grupo-conteudo-grid">
+                                                  {matches.map((m: any) => <HorizontalMatchCard key={m.id} match={m} />)}
+                                              </div>
+                                          )}
+                                      </div>
+                                  );
+                              })}
                           </div>
                       ) : ( hasMatches && <div className="text-center py-10 text-brand-textMuted">Nenhum jogo encontrado para este turno/filtro.</div> )}
                   </div>

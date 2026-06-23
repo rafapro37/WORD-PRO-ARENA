@@ -26,38 +26,6 @@ interface OrganizerDashboardProps {
 }
 
 // ─── Mini Gráfico de barras ───────────────────────────────────────────────────
-const BarChart2D: React.FC<{
-  data: { label: string; value: number; color?: string }[];
-  height?: number;
-}> = ({ data, height = 80 }) => {
-  const max = Math.max(...data.map(d => d.value), 1);
-  return (
-    <div className="flex items-end gap-1" style={{ height }}>
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
-          <div
-            className="absolute -top-7 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10"
-          >
-            {d.label}: {d.value}
-          </div>
-          <motion.div
-            initial={{ scaleY: 0 }}
-            animate={{ scaleY: 1 }}
-            transition={{ delay: i * 0.04, duration: 0.4, ease: 'easeOut' }}
-            style={{
-              height: `${(d.value / max) * 100}%`,
-              background: d.color || 'var(--theme-primary)',
-              minHeight: d.value > 0 ? 4 : 0,
-              transformOrigin: 'bottom',
-            }}
-            className="w-full rounded-t-sm opacity-80 hover:opacity-100 transition-opacity"
-          />
-        </div>
-      ))}
-    </div>
-  );
-};
-
 // ─── Badge de status de torneio ───────────────────────────────────────────────
 const TournamentStatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const cfg: Record<string, { label: string; cls: string }> = {
@@ -110,30 +78,6 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
     };
   }, [tournaments, teams, matches, players, registrations]);
 
-  // ── Gráfico: partidas por rodada (último torneio ativo) ─────────────────
-  const matchChartData = useMemo(() => {
-    // Pega o torneio com mais partidas (não depende de estar ACTIVE)
-    const activeTournament = tournaments.find(t => t.status === 'ACTIVE') 
-      || [...tournaments].sort((a, b) => matches.filter(m => m.tournamentId === b.id).length - matches.filter(m => m.tournamentId === a.id).length)[0]
-      || tournaments[0];
-    if (!activeTournament) return [];
-
-    const tourneyMatches = matches.filter(m => m.tournamentId === activeTournament.id);
-    const byRound = tourneyMatches.reduce<Record<number, number>>((acc, m) => {
-      const round = m.round || 1;
-      acc[round] = (acc[round] || 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(byRound)
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .slice(-12)
-      .map(([round, count]) => ({
-        label: `R${round}`,
-        value: count,
-      }));
-  }, [tournaments, matches]);
-
   // ── Ranking artilheiros (top 8) ─────────────────────────────────────────
   const topScorers = useMemo(() => {
     const validTournamentIds = new Set(tournaments.map(t => t.id));
@@ -182,6 +126,42 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
     tournaments.filter(t =>
       registrations.some(r => r.tournamentId === t.id && r.status === 'PENDING'),
     ), [tournaments, registrations]);
+
+  // ── Indicadores da aba Atividade ──────────────────────────────────────────
+  const activityStats = useMemo(() => {
+    const finished = matches.filter(m => m.isFinished);
+    const totalGoals = finished.reduce((s, m) => s + (m.homeScore || 0) + (m.awayScore || 0), 0);
+    const avgGoals = finished.length ? (totalGoals / finished.length) : 0;
+    const progressPct = matches.length ? Math.round((finished.length / matches.length) * 100) : 0;
+
+    // Maior goleada
+    let biggest: { label: string; diff: number; score: string } | null = null;
+    finished.forEach(m => {
+      const diff = Math.abs((m.homeScore || 0) - (m.awayScore || 0));
+      if (!biggest || diff > biggest.diff) {
+        const home = teams.find(t => t.id === m.homeTeamId)?.name || '?';
+        const away = teams.find(t => t.id === m.awayTeamId)?.name || '?';
+        const winner = (m.homeScore || 0) >= (m.awayScore || 0) ? home : away;
+        biggest = { label: winner, diff, score: `${m.homeScore} × ${m.awayScore}` };
+      }
+    });
+
+    return { finishedCount: finished.length, totalGoals, avgGoals, progressPct, biggest };
+  }, [matches, teams]);
+
+  // ── Top times ofensivos (gols marcados) ───────────────────────────────────
+  const topOffensiveTeams = useMemo(() => {
+    const goalsByTeam: Record<string, number> = {};
+    matches.filter(m => m.isFinished).forEach(m => {
+      if (m.homeTeamId) goalsByTeam[m.homeTeamId] = (goalsByTeam[m.homeTeamId] || 0) + (m.homeScore || 0);
+      if (m.awayTeamId) goalsByTeam[m.awayTeamId] = (goalsByTeam[m.awayTeamId] || 0) + (m.awayScore || 0);
+    });
+    return Object.entries(goalsByTeam)
+      .map(([teamId, goals]) => ({ label: teams.find(t => t.id === teamId)?.name || '?', value: goals }))
+      .filter(t => t.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6);
+  }, [matches, teams]);
 
   return (
     <div className="p-6 md:p-8 space-y-8 min-h-screen" style={{ background: 'var(--theme-bg)' }}>
@@ -423,63 +403,124 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
 
       {/* ── ABA: ATIVIDADE ── */}
       {activeTab === 'atividade' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
 
-          {/* Gráfico de partidas por rodada */}
-          <div className="rounded-2xl border border-[var(--theme-border)] p-5 space-y-4" style={{ background: 'var(--theme-surface)' }}>
-            <div>
-              <h3 className="font-black text-white text-sm">Partidas por Rodada</h3>
-              <p className="text-[11px] text-[var(--theme-text-muted)]">Torneio ativo atual</p>
-            </div>
-            {matchChartData.length > 0 ? (
-              <>
-                <BarChart2D data={matchChartData} height={100} />
-                <div className="flex justify-between text-[10px] text-[var(--theme-text-muted)] font-bold pt-1">
-                  {matchChartData.slice(0, 1).map(d => <span key={d.label}>{d.label}</span>)}
-                  <span>...</span>
-                  {matchChartData.slice(-1).map(d => <span key={d.label}>{d.label}</span>)}
-                </div>
-              </>
-            ) : (
-              <div className="h-24 flex items-center justify-center text-[var(--theme-text-muted)] text-sm">
-                Nenhuma partida gerada ainda
+          {/* KPIs rápidos */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Progresso */}
+            <div className="rounded-2xl border border-[var(--theme-border)] p-5" style={{ background: 'var(--theme-surface)' }}>
+              <p className="text-[11px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Progresso</p>
+              <p className="text-3xl font-black text-white mt-1">{activityStats.progressPct}%</p>
+              <div className="h-1.5 rounded-full bg-black/40 mt-2 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${activityStats.progressPct}%` }}
+                  transition={{ duration: 0.6 }}
+                  className="h-full rounded-full"
+                  style={{ background: 'var(--theme-primary)' }}
+                />
               </div>
-            )}
+              <p className="text-[10px] text-[var(--theme-text-muted)] mt-1.5">{activityStats.finishedCount} de {metrics.totalMatches} partidas</p>
+            </div>
+
+            {/* Média de gols */}
+            <div className="rounded-2xl border border-[var(--theme-border)] p-5" style={{ background: 'var(--theme-surface)' }}>
+              <p className="text-[11px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Média de Gols</p>
+              <p className="text-3xl font-black text-white mt-1">{activityStats.avgGoals.toFixed(1)}</p>
+              <p className="text-[10px] text-[var(--theme-text-muted)] mt-1.5">por partida finalizada</p>
+            </div>
+
+            {/* Total de gols */}
+            <div className="rounded-2xl border border-[var(--theme-border)] p-5" style={{ background: 'var(--theme-surface)' }}>
+              <p className="text-[11px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Gols no Total</p>
+              <p className="text-3xl font-black mt-1" style={{ color: 'var(--theme-primary)' }}>{activityStats.totalGoals}</p>
+              <p className="text-[10px] text-[var(--theme-text-muted)] mt-1.5">em todos os campeonatos</p>
+            </div>
+
+            {/* Maior goleada */}
+            <div className="rounded-2xl border border-[var(--theme-border)] p-5" style={{ background: 'var(--theme-surface)' }}>
+              <p className="text-[11px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Maior Goleada</p>
+              {activityStats.biggest ? (
+                <>
+                  <p className="text-3xl font-black text-white mt-1">{(activityStats.biggest as any).score}</p>
+                  <p className="text-[10px] text-[var(--theme-text-muted)] mt-1.5 truncate">{(activityStats.biggest as any).label}</p>
+                </>
+              ) : (
+                <p className="text-sm text-[var(--theme-text-muted)] italic mt-3">Sem dados ainda</p>
+              )}
+            </div>
           </div>
 
-          {/* Últimas partidas */}
-          <div className="rounded-2xl border border-[var(--theme-border)] p-5 space-y-3" style={{ background: 'var(--theme-surface)' }}>
-            <h3 className="font-black text-white text-sm">Últimas Partidas</h3>
-            {recentMatches.length === 0 && (
-              <p className="text-sm text-[var(--theme-text-muted)] italic">Nenhuma partida finalizada ainda.</p>
-            )}
-            {recentMatches.map((m, i) => (
-              <motion.div
-                key={m.id}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="flex items-center gap-3 py-2 border-b border-[var(--theme-border)] last:border-0"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-sm font-black text-white">
-                    <span className="truncate">{m.teamAName}</span>
-                    <span className="flex-shrink-0 px-2 py-0.5 rounded font-black text-[12px]"
-                          style={{ background: 'var(--theme-primary)', color: 'black' }}>
-                      {m.homeScore ?? '—'} × {m.awayScore ?? '—'}
-                    </span>
-                    <span className="truncate">{m.teamBName}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Últimas partidas */}
+            <div className="rounded-2xl border border-[var(--theme-border)] p-5 space-y-3" style={{ background: 'var(--theme-surface)' }}>
+              <h3 className="font-black text-white text-sm flex items-center gap-2">⚡ Últimas Partidas</h3>
+              {recentMatches.length === 0 && (
+                <p className="text-sm text-[var(--theme-text-muted)] italic">Nenhuma partida finalizada ainda.</p>
+              )}
+              {recentMatches.map((m, i) => (
+                <motion.div
+                  key={m.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="flex items-center gap-3 py-2 border-b border-[var(--theme-border)] last:border-0"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 text-sm font-black text-white">
+                      <span className="truncate flex-1 text-right">{m.teamAName}</span>
+                      <span className="flex-shrink-0 px-2.5 py-0.5 rounded font-black text-[12px] tabular-nums"
+                            style={{ background: 'var(--theme-primary)', color: 'black' }}>
+                        {m.homeScore ?? '—'} × {m.awayScore ?? '—'}
+                      </span>
+                      <span className="truncate flex-1">{m.teamBName}</span>
+                    </div>
+                    {m.tourneyName && (
+                      <p className="text-[10px] text-[var(--theme-text-muted)] truncate mt-0.5 text-center">{m.tourneyName}</p>
+                    )}
                   </div>
-                  {m.tourneyName && (
-                    <p className="text-[10px] text-[var(--theme-text-muted)] truncate mt-0.5">{m.tourneyName}</p>
-                  )}
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Top times ofensivos */}
+            <div className="rounded-2xl border border-[var(--theme-border)] p-5 space-y-4" style={{ background: 'var(--theme-surface)' }}>
+              <h3 className="font-black text-white text-sm flex items-center gap-2">🎯 Times Mais Ofensivos</h3>
+              {topOffensiveTeams.length > 0 ? (
+                <div className="space-y-3">
+                  {topOffensiveTeams.map((t, i) => {
+                    const max = topOffensiveTeams[0].value || 1;
+                    return (
+                      <div key={i} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span className="text-white truncate flex items-center gap-2">
+                            <span className="text-[var(--theme-text-muted)] tabular-nums">{i + 1}.</span>{t.label}
+                          </span>
+                          <span className="tabular-nums" style={{ color: 'var(--theme-primary)' }}>{t.value} gols</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-black/40 overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(t.value / max) * 100}%` }}
+                            transition={{ delay: i * 0.05, duration: 0.5 }}
+                            className="h-full rounded-full"
+                            style={{ background: 'var(--theme-primary)', opacity: 1 - i * 0.1 }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              </motion.div>
-            ))}
+              ) : (
+                <div className="h-32 flex items-center justify-center text-[var(--theme-text-muted)] text-sm italic">
+                  Os gols aparecem aqui conforme os resultados são lançados
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Distribuição de torneios por status */}
-          <div className="rounded-2xl border border-[var(--theme-border)] p-5 lg:col-span-2" style={{ background: 'var(--theme-surface)' }}>
+          <div className="rounded-2xl border border-[var(--theme-border)] p-5" style={{ background: 'var(--theme-surface)' }}>
             <h3 className="font-black text-white text-sm mb-4">Visão Geral dos Campeonatos</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {(['ACTIVE', 'DRAFT', 'FINISHED', 'PENDING'] as const).map(status => {

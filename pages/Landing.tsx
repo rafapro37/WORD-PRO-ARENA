@@ -141,6 +141,7 @@ const Landing: React.FC<LandingProps> = ({
 
     const marketHighlights = useMemo(() => 
         state.marketPlayers
+            .filter(p => !p.isFictitious)
             .filter(p => {
                 if (leagueId) {
                     if (p.ligaId === leagueId) return true;

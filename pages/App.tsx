@@ -44,7 +44,7 @@ import {
   deleteFromSupabase,
   deleteWhereFromSupabase,
 } from "../services/dataService";
-import { BASE_PLAYERS_X1, MARKET_KEY } from "../constants";
+import { MARKET_KEY } from "../constants";
 import { REAL_PLAYER_NAMES } from "../src/constants/realPlayers";
 import { hashPassword } from "../services/authService";
 
@@ -581,17 +581,7 @@ const App: React.FC = () => {
       teams: [...prev.teams, ...newTeams],
       players: [...prev.players, ...newPlayers],
       registrations: [...prev.registrations, ...newRegistrations],
-      marketPlayers:
-        data.tournamentType === "X1"
-          ? [
-              ...prev.marketPlayers,
-              ...BASE_PLAYERS_X1.map((p) => ({
-                ...p,
-                id: generateId(),
-                tournamentId: newTournament.id,
-              })),
-            ]
-          : prev.marketPlayers,
+      marketPlayers: prev.marketPlayers,
     }));
 
     logSystemAction(

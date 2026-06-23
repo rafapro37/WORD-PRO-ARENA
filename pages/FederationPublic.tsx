@@ -47,7 +47,7 @@ const FederationPublic: React.FC<FederationPublicProps> = ({
     );
 
     const leagueMarket = useMemo(() => 
-        state.marketPlayers.filter(p => {
+        state.marketPlayers.filter(p => !p.isFictitious).filter(p => {
             if (p.ligaId === leagueId) return true;
             const tournament = state.tournaments.find(t => t.id === p.tournamentId);
             return tournament?.ligaId === leagueId;
