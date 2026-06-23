@@ -1135,6 +1135,19 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                   </label>
                               </div>
                           </div>
+                          <div className="mt-4">
+                              <div className="flex items-center justify-between mb-1.5">
+                                  <span className="text-[11px] font-bold text-brand-text uppercase tracking-wider">Intensidade do fundo</span>
+                                  <span className="text-[11px] font-mono text-brand-primary">{(tournament as any).knockoutOpacity ?? 100}%</span>
+                              </div>
+                              <input
+                                  type="range" min={20} max={100} step={5}
+                                  value={(tournament as any).knockoutOpacity ?? 100}
+                                  onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutOpacity: Number(e.target.value) } as any)}
+                                  className="w-full accent-brand-primary"
+                              />
+                              <p className="text-[10px] text-brand-textMuted mt-1">100% deixa o fundo vivo; reduza se atrapalhar a leitura dos cards.</p>
+                          </div>
                           <p className="text-[11px] text-brand-textMuted mt-2 italic">Aparece como fundo na tela do chaveamento.</p>
                       </div>
 
@@ -2324,7 +2337,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                               championTrophyUrl={(tournament as any).knockoutTrophyUrl || undefined}
                               championLogoUrl={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl || tournament.bannerUrl}
                               backgroundUrl={tournament.knockoutBackground}
-                              backgroundOpacity={tournament.knockoutOpacity !== undefined ? tournament.knockoutOpacity / 100 : 0.25}
+                              backgroundOpacity={tournament.knockoutOpacity !== undefined ? tournament.knockoutOpacity / 100 : 1}
                               onMatchClick={(m) => openMatchModal(m as any)}
                           />
                       ) : ( <div className="text-center text-white/50 italic p-8"> O mata-mata ainda não foi gerado. Finalize a fase de grupos. </div> )}

@@ -69,6 +69,10 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   const contentH = halfMax * slotH;             // altura ocupada por um lado da maior fase
   const totalH = contentH + TOP_PAD + BOTTOM_PAD;
 
+  // Troféu personalizado GRANDE (até 150px), mas proporcional à altura do
+  // chaveamento pra não estourar em mata-mata com poucos times.
+  const trophySize = trophyImg ? Math.round(Math.max(90, Math.min(150, totalH * 0.32))) : 64;
+
   // Centro vertical do i-ésimo confronto de UM LADO da maior fase
   const baseCenterSide = (i: number) => TOP_PAD + i * slotH + slotH / 2;
 
@@ -234,7 +238,12 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   return (
     <div className="relative w-full overflow-x-auto rounded-2xl" style={{ background: backgroundUrl ? '#0a0b0f' : '#1e1f26' }}>
       {backgroundUrl && (
-        <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${backgroundUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: backgroundOpacity }} />
+        <>
+          {/* Fundo vivo (em destaque) */}
+          <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${backgroundUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: backgroundOpacity }} />
+          {/* Vinheta sutil: escurece só as bordas pra dar contraste aos cards sem apagar o fundo */}
+          <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.45) 100%)' }} />
+        </>
       )}
       <div ref={stageRef} className="relative mx-auto" style={{ width: totalW, height: totalH }}>
         {/* marca d'água */}
@@ -258,11 +267,11 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
           <div className="text-center font-black uppercase mb-2" style={{ fontSize: 11, letterSpacing: '2px', color: accent }}>Grande Final</div>
           {finalMatch && <Card match={finalMatch} phase="Final" />}
           <div className="flex flex-col items-center gap-2 mt-4">
-            <div className="relative grid place-items-center" style={{ width: 86, height: 86 }}>
-              <div className="absolute rounded-full animate-pulse" style={{ inset: -12, background: `radial-gradient(circle, ${accent}80 0%, transparent 70%)` }} />
+            <div className="relative grid place-items-center" style={{ width: trophySize + 24, height: trophySize + 24 }}>
+              <div className="absolute rounded-full animate-pulse" style={{ inset: -8, background: `radial-gradient(circle, ${accent}80 0%, transparent 70%)` }} />
               {trophyImg
-                ? <img src={trophyImg} className="relative z-[2] object-contain" style={{ width: 56, height: 56, filter: `drop-shadow(0 0 14px ${accent}88)` }} alt="" />
-                : <Trophy size={44} className="relative z-[2]" style={{ color: accent, filter: `drop-shadow(0 0 14px ${accent}88)` }} />}
+                ? <img src={trophyImg} className="relative z-[2] object-contain" style={{ width: trophySize, height: trophySize, filter: `drop-shadow(0 0 22px ${accent}aa)` }} alt="" />
+                : <Trophy size={trophySize} className="relative z-[2]" style={{ color: accent, filter: `drop-shadow(0 0 14px ${accent}88)` }} />}
             </div>
             <div className="font-black uppercase" style={{ fontSize: 9, letterSpacing: '4px', color: accent }}>★ CAMPEÃO ★</div>
             <div className="relative z-[2] text-center rounded-xl px-4 py-2.5" style={{ minWidth: 160, background: `linear-gradient(180deg, ${accent}24, ${accent}08)`, border: `1.5px solid ${accent}`, boxShadow: `0 0 24px ${accent}73` }}>
