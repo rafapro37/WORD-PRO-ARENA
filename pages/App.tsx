@@ -43,6 +43,7 @@ import {
   generateTestScenario,
   deleteFromSupabase,
   deleteWhereFromSupabase,
+  addDeletedTournamentId,
 } from "../services/dataService";
 import { MARKET_KEY } from "../constants";
 import { REAL_PLAYER_NAMES } from "../src/constants/realPlayers";
@@ -2281,14 +2282,27 @@ const App: React.FC = () => {
                 onGenerateMatches={handleGenerateMatches}
                 onCreateTeamsFromManual={handleCreateTeamsFromManual}
                 onDeleteTournament={(id) => {
-                  // Remove do estado local
-                  setState((prev) => ({
-                    ...prev,
-                    tournaments: prev.tournaments.filter((t) => t.id !== id),
-                    matches: prev.matches.filter((m) => m.tournamentId !== id),
-                    teams: prev.teams.filter((t) => t.tournamentId !== id),
-                    players: prev.players.filter((p) => p.tournamentId !== id),
-                  }));
+                  // Tombstone: impede que o campeonato volte no F5 mesmo se o
+                  // delete remoto não propagar a tempo.
+                  addDeletedTournamentId(id);
+                  // Remove do estado local (incluindo jogadores órfãos por time)
+                  setState((prev) => {
+                    const teamIdsDoTorneio = new Set(
+                      prev.teams.filter((t) => t.tournamentId === id).map((t) => t.id)
+                    );
+                    return {
+                      ...prev,
+                      tournaments: prev.tournaments.filter((t) => t.id !== id),
+                      matches: prev.matches.filter((m) => m.tournamentId !== id),
+                      teams: prev.teams.filter((t) => t.tournamentId !== id),
+                      players: prev.players.filter(
+                        (p) => p.tournamentId !== id && !teamIdsDoTorneio.has((p as any).teamId)
+                      ),
+                      registrations: prev.registrations.filter(
+                        (r) => (r as any).tournamentId !== id
+                      ),
+                    };
+                  });
                   // Remove do Supabase (senão volta no F5)
                   deleteFromSupabase('campeonatos', id);
                   deleteWhereFromSupabase('partidas', 'tournamentId', id);
@@ -2497,13 +2511,24 @@ const App: React.FC = () => {
                     }))
                   }
                   onDeleteTournament={(id) => {
-                    setState((prev) => ({
-                      ...prev,
-                      tournaments: prev.tournaments.filter((t) => t.id !== id),
-                      matches: prev.matches.filter((m) => m.tournamentId !== id),
-                      teams: prev.teams.filter((t) => t.tournamentId !== id),
-                      players: prev.players.filter((p) => p.tournamentId !== id),
-                    }));
+                    addDeletedTournamentId(id);
+                    setState((prev) => {
+                      const teamIdsDoTorneio = new Set(
+                        prev.teams.filter((t) => t.tournamentId === id).map((t) => t.id)
+                      );
+                      return {
+                        ...prev,
+                        tournaments: prev.tournaments.filter((t) => t.id !== id),
+                        matches: prev.matches.filter((m) => m.tournamentId !== id),
+                        teams: prev.teams.filter((t) => t.tournamentId !== id),
+                        players: prev.players.filter(
+                          (p) => p.tournamentId !== id && !teamIdsDoTorneio.has((p as any).teamId)
+                        ),
+                        registrations: prev.registrations.filter(
+                          (r) => (r as any).tournamentId !== id
+                        ),
+                      };
+                    });
                     deleteFromSupabase('campeonatos', id);
                     deleteWhereFromSupabase('partidas', 'tournamentId', id);
                     deleteWhereFromSupabase('times', 'tournamentId', id);

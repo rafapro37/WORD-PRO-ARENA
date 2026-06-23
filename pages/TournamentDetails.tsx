@@ -1137,6 +1137,98 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                           </div>
                           <p className="text-[11px] text-brand-textMuted mt-2 italic">Aparece como fundo na tela do chaveamento.</p>
                       </div>
+
+                      {/* Cores do Chaveamento */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Cores do Mata-Mata</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                  <p className="text-[11px] font-bold text-brand-text mb-1.5">Destaque (linhas, bordas, vencedor)</p>
+                                  <div className="flex items-center gap-2">
+                                      <input
+                                          type="color"
+                                          value={(tournament as any).knockoutAccentColor || themeColor}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutAccentColor: e.target.value } as any)}
+                                          className="w-10 h-10 rounded-lg border border-brand-border bg-transparent cursor-pointer"
+                                      />
+                                      <input
+                                          type="text"
+                                          value={(tournament as any).knockoutAccentColor || ''}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutAccentColor: e.target.value } as any)}
+                                          placeholder={themeColor}
+                                          className="flex-1 bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none"
+                                      />
+                                      {(tournament as any).knockoutAccentColor && (
+                                          <button onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutAccentColor: '' } as any)}
+                                              className="text-[10px] text-brand-textMuted hover:text-brand-text uppercase font-bold px-2">Limpar</button>
+                                      )}
+                                  </div>
+                              </div>
+                              <div>
+                                  <p className="text-[11px] font-bold text-brand-text mb-1.5">Texto das informações</p>
+                                  <div className="flex items-center gap-2">
+                                      <input
+                                          type="color"
+                                          value={(tournament as any).knockoutTextColor || '#f3f5f0'}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTextColor: e.target.value } as any)}
+                                          className="w-10 h-10 rounded-lg border border-brand-border bg-transparent cursor-pointer"
+                                      />
+                                      <input
+                                          type="text"
+                                          value={(tournament as any).knockoutTextColor || ''}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTextColor: e.target.value } as any)}
+                                          placeholder="#f3f5f0"
+                                          className="flex-1 bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none"
+                                      />
+                                      {(tournament as any).knockoutTextColor && (
+                                          <button onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTextColor: '' } as any)}
+                                              className="text-[10px] text-brand-textMuted hover:text-brand-text uppercase font-bold px-2">Limpar</button>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                          <p className="text-[11px] text-brand-textMuted mt-3 italic">Use cores que contrastem com o fundo escolhido pra não ficar apagado.</p>
+                      </div>
+
+                      {/* Troféu Personalizado */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Troféu do Mata-Mata</label>
+                          <div className="flex gap-4 items-start">
+                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-brand-surface border border-brand-border flex-shrink-0 flex items-center justify-center">
+                                  {(tournament as any).knockoutTrophyUrl
+                                      ? <img src={(tournament as any).knockoutTrophyUrl} className="w-full h-full object-contain" />
+                                      : <Trophy size={32} className="text-yellow-500" />
+                                  }
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                  <input
+                                      type="text"
+                                      value={(tournament as any).knockoutTrophyUrl || ''}
+                                      onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTrophyUrl: e.target.value } as any)}
+                                      placeholder="https://url-do-trofeu.com/trofeu.png"
+                                      className="w-full bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text text-sm focus:border-brand-primary outline-none"
+                                  />
+                                  <div className="flex items-center gap-2">
+                                      <label className="inline-flex items-center gap-2 bg-brand-surface border border-brand-border hover:border-brand-primary px-4 py-2 rounded-lg cursor-pointer text-[11px] font-bold text-brand-textMuted hover:text-brand-text transition-all uppercase tracking-widest">
+                                          <Upload size={13}/> Enviar troféu
+                                          <input type="file" hidden accept="image/*" onChange={async e => {
+                                              const file = e.target.files?.[0];
+                                              if (!file || !onUpdateTournament) return;
+                                              if (file.size > 2 * 1024 * 1024) { alert('Imagem muito grande (máx 2MB).'); return; }
+                                              const reader = new FileReader();
+                                              reader.onloadend = () => onUpdateTournament(tournament.id, { knockoutTrophyUrl: reader.result as string } as any);
+                                              reader.readAsDataURL(file);
+                                          }} />
+                                      </label>
+                                      {(tournament as any).knockoutTrophyUrl && (
+                                          <button onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTrophyUrl: '' } as any)}
+                                              className="text-[10px] text-brand-textMuted hover:text-brand-text uppercase font-bold px-2">Remover</button>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                          <p className="text-[11px] text-brand-textMuted mt-2 italic">Aparece no centro do chaveamento, no lugar do troféu padrão (PNG transparente fica melhor).</p>
+                      </div>
                   </div>
               )}
 
@@ -2227,6 +2319,9 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                   return getTeamNameAndEscudo(t);
                               }}
                               themeColor={themeColor}
+                              accentColor={(tournament as any).knockoutAccentColor || undefined}
+                              textColor={(tournament as any).knockoutTextColor || undefined}
+                              championTrophyUrl={(tournament as any).knockoutTrophyUrl || undefined}
                               championLogoUrl={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl || tournament.bannerUrl}
                               backgroundUrl={tournament.knockoutBackground}
                               backgroundOpacity={tournament.knockoutOpacity !== undefined ? tournament.knockoutOpacity / 100 : 0.25}

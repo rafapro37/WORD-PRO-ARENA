@@ -110,6 +110,12 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
   const recentMatches = useMemo(() =>
     [...matches]
       .filter(m => m.isFinished || m.homeScore != null || m.awayScore != null)
+      // ignora partidas órfãs (de campeonatos/times excluídos) que viram "?"
+      .filter(m =>
+        teams.some(t => t.id === m.homeTeamId) &&
+        teams.some(t => t.id === m.awayTeamId) &&
+        tournaments.some(t => t.id === m.tournamentId)
+      )
       .sort((a, b) => (b.scheduledAt || b.createdAt || 0) - (a.scheduledAt || a.createdAt || 0))
       .slice(0, 8)
       .map(m => {
@@ -128,11 +134,16 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
     ), [tournaments, registrations]);
 
   // ── Indicadores da aba Atividade ──────────────────────────────────────────
+  const validMatches = useMemo(() =>
+    matches.filter(m =>
+      teams.some(t => t.id === m.homeTeamId) && teams.some(t => t.id === m.awayTeamId)
+    ), [matches, teams]);
+
   const activityStats = useMemo(() => {
-    const finished = matches.filter(m => m.isFinished);
+    const finished = validMatches.filter(m => m.isFinished);
     const totalGoals = finished.reduce((s, m) => s + (m.homeScore || 0) + (m.awayScore || 0), 0);
     const avgGoals = finished.length ? (totalGoals / finished.length) : 0;
-    const progressPct = matches.length ? Math.round((finished.length / matches.length) * 100) : 0;
+    const progressPct = validMatches.length ? Math.round((finished.length / validMatches.length) * 100) : 0;
 
     // Maior goleada
     let biggest: { label: string; diff: number; score: string } | null = null;
@@ -146,13 +157,13 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
       }
     });
 
-    return { finishedCount: finished.length, totalGoals, avgGoals, progressPct, biggest };
-  }, [matches, teams]);
+    return { finishedCount: finished.length, totalMatches: validMatches.length, totalGoals, avgGoals, progressPct, biggest };
+  }, [validMatches, teams]);
 
   // ── Top times ofensivos (gols marcados) ───────────────────────────────────
   const topOffensiveTeams = useMemo(() => {
     const goalsByTeam: Record<string, number> = {};
-    matches.filter(m => m.isFinished).forEach(m => {
+    validMatches.filter(m => m.isFinished).forEach(m => {
       if (m.homeTeamId) goalsByTeam[m.homeTeamId] = (goalsByTeam[m.homeTeamId] || 0) + (m.homeScore || 0);
       if (m.awayTeamId) goalsByTeam[m.awayTeamId] = (goalsByTeam[m.awayTeamId] || 0) + (m.awayScore || 0);
     });
@@ -420,7 +431,7 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
                   style={{ background: 'var(--theme-primary)' }}
                 />
               </div>
-              <p className="text-[10px] text-[var(--theme-text-muted)] mt-1.5">{activityStats.finishedCount} de {metrics.totalMatches} partidas</p>
+              <p className="text-[10px] text-[var(--theme-text-muted)] mt-1.5">{activityStats.finishedCount} de {activityStats.totalMatches} partidas</p>
             </div>
 
             {/* Média de gols */}

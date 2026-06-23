@@ -6,7 +6,7 @@ import {
   AppState, User, UserRole, PlayerProfile, League,
   ExperienceType, AppSettings, Match, Player, Team,
 } from '../../types';
-import { loadState, saveState, generateId } from '../../services/dataService';
+import { loadState, saveState, generateId, getDeletedTournamentIds } from '../../services/dataService';
 import { fetchAllFromSupabase } from '../../services/dataService';
 import { clearSession } from '../../services/authService';
 import { useSync, type SyncStatus } from '../hooks/useSync';
@@ -201,6 +201,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             superficie: '#20242D', texto: '#F2F2F2',
           };
         }
+
+        // ── Remover campeonatos excluídos que possam ter voltado do Supabase ──
+        // (e todos os dados vinculados a eles), usando os tombstones locais.
+        const deletedIds = new Set(getDeletedTournamentIds());
+        if (deletedIds.size > 0) {
+          loaded.tournaments = loaded.tournaments.filter(t => !deletedIds.has(t.id));
+        }
+        // ── Limpar órfãos: dados cujo torneio não existe mais ──
+        const validTournamentIds = new Set(loaded.tournaments.map(t => t.id));
+        loaded.matches = loaded.matches.filter(m => !m.tournamentId || validTournamentIds.has(m.tournamentId));
+        loaded.teams = loaded.teams.filter(t => !(t as any).tournamentId || validTournamentIds.has((t as any).tournamentId));
+        loaded.players = loaded.players.filter(p => !(p as any).tournamentId || validTournamentIds.has((p as any).tournamentId));
+        loaded.registrations = loaded.registrations.filter(r => !(r as any).tournamentId || validTournamentIds.has((r as any).tournamentId));
 
         setState(loaded);
       } catch (err) {

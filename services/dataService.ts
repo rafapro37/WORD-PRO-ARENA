@@ -204,16 +204,47 @@ export const loadState = (): AppState => {
 
 // ─── Salvar no localStorage ───────────────────────────────────────────────────
 export const saveState = (state: AppState) => {
+  // 1) Sessão SEMPRE primeiro e isolada — garante que um erro de quota no
+  //    estado principal nunca deslogue o usuário no F5.
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     if (state.currentUser) {
       localStorage.setItem('pro_world_arena_session_v1', JSON.stringify(state.currentUser));
     } else {
       localStorage.removeItem('pro_world_arena_session_v1');
     }
   } catch (e) {
-    console.error('[Storage] Erro ao salvar:', e);
+    console.error('[Storage] Erro ao salvar sessão:', e);
   }
+
+  // 2) Estado principal — isolado. Se estourar a quota (imagens base64 pesadas),
+  //    a sessão acima já está garantida.
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('[Storage] Erro ao salvar estado (provável quota excedida):', e);
+  }
+};
+
+// ─── Tombstones: IDs de campeonatos excluídos ─────────────────────────────────
+// Lista pequena que SEMPRE persiste (mesmo com estado cheio) e impede que um
+// campeonato excluído reapareça no F5 caso o delete remoto não tenha propagado.
+const DELETED_KEY = 'pwa_deleted_tournaments_v1';
+
+export const getDeletedTournamentIds = (): string[] => {
+  try {
+    const raw = localStorage.getItem(DELETED_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
+export const addDeletedTournamentId = (id: string) => {
+  try {
+    const ids = getDeletedTournamentIds();
+    if (!ids.includes(id)) {
+      ids.push(id);
+      localStorage.setItem(DELETED_KEY, JSON.stringify(ids));
+    }
+  } catch (e) { console.error('[Storage] Erro ao registrar exclusão:', e); }
 };
 
 export const clearStorage = () => {
