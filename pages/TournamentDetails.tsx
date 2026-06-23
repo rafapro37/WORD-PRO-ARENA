@@ -1203,6 +1203,54 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                           <p className="text-[11px] text-brand-textMuted mt-3 italic">Use cores que contrastem com o fundo escolhido pra não ficar apagado.</p>
                       </div>
 
+                      {/* Fonte e Cards do Mata-Mata */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Fonte e Cards do Mata-Mata</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                  <p className="text-[11px] font-bold text-brand-text mb-1.5">Fonte dos nomes dos times</p>
+                                  <select
+                                      value={(tournament as any).knockoutFont || ''}
+                                      onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutFont: e.target.value } as any)}
+                                      className="w-full bg-brand-surface border border-brand-border rounded-lg p-2.5 text-brand-text text-sm focus:border-brand-primary outline-none"
+                                      style={{ fontFamily: (tournament as any).knockoutFont || undefined }}
+                                  >
+                                      <option value="">Padrão (Inter)</option>
+                                      <option value="'Oswald', sans-serif" style={{ fontFamily: "'Oswald', sans-serif" }}>Oswald (esportiva)</option>
+                                      <option value="'Bebas Neue', sans-serif" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>Bebas Neue (placar)</option>
+                                      <option value="'Anton', sans-serif" style={{ fontFamily: "'Anton', sans-serif" }}>Anton (impacto)</option>
+                                      <option value="'Teko', sans-serif" style={{ fontFamily: "'Teko', sans-serif" }}>Teko (condensada)</option>
+                                      <option value="'Russo One', sans-serif" style={{ fontFamily: "'Russo One', sans-serif" }}>Russo One (game)</option>
+                                      <option value="'Montserrat', sans-serif" style={{ fontFamily: "'Montserrat', sans-serif" }}>Montserrat (moderna)</option>
+                                  </select>
+                                  <p className="text-[10px] text-brand-textMuted mt-1.5" style={{ fontFamily: (tournament as any).knockoutFont || undefined }}>Prévia: REAL MADRID 2 × 1 BARCELONA</p>
+                              </div>
+                              <div>
+                                  <p className="text-[11px] font-bold text-brand-text mb-1.5">Cor de fundo dos cards</p>
+                                  <div className="flex items-center gap-2">
+                                      <input
+                                          type="color"
+                                          value={(tournament as any).knockoutCardColor || '#23252e'}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutCardColor: e.target.value } as any)}
+                                          className="w-10 h-10 rounded-lg border border-brand-border bg-transparent cursor-pointer"
+                                      />
+                                      <input
+                                          type="text"
+                                          value={(tournament as any).knockoutCardColor || ''}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutCardColor: e.target.value } as any)}
+                                          placeholder="padrão (escuro)"
+                                          className="flex-1 bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none"
+                                      />
+                                      {(tournament as any).knockoutCardColor && (
+                                          <button onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutCardColor: '' } as any)}
+                                              className="text-[10px] text-brand-textMuted hover:text-brand-text uppercase font-bold px-2">Limpar</button>
+                                      )}
+                                  </div>
+                                  <p className="text-[10px] text-brand-textMuted mt-1.5">Cor dos retângulos onde ficam os nomes. Use um tom translúcido escuro pra destacar sobre o fundo.</p>
+                              </div>
+                          </div>
+                      </div>
+
                       {/* Troféu Personalizado */}
                       <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
                           <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Troféu do Mata-Mata</label>
@@ -2335,6 +2383,8 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                               accentColor={(tournament as any).knockoutAccentColor || undefined}
                               textColor={(tournament as any).knockoutTextColor || undefined}
                               championTrophyUrl={(tournament as any).knockoutTrophyUrl || undefined}
+                              nameFont={(tournament as any).knockoutFont || undefined}
+                              cardColor={(tournament as any).knockoutCardColor || undefined}
                               championLogoUrl={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl || tournament.bannerUrl}
                               backgroundUrl={tournament.knockoutBackground}
                               backgroundOpacity={tournament.knockoutOpacity !== undefined ? tournament.knockoutOpacity / 100 : 1}

@@ -25,6 +25,10 @@ interface ChampionsBracketProps {
   textColor?: string;
   /** Troféu personalizado mostrado no centro. Default = ícone padrão */
   championTrophyUrl?: string;
+  /** Fonte dos nomes dos times no chaveamento */
+  nameFont?: string;
+  /** Cor de fundo dos cards do chaveamento */
+  cardColor?: string;
   championLogoUrl?: string;
   backgroundUrl?: string;
   backgroundOpacity?: number;
@@ -33,7 +37,7 @@ interface ChampionsBracketProps {
 
 const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   r16, quarters, semis, finals, r32 = [], getTeamVisual, themeColor,
-  accentColor, textColor, championTrophyUrl,
+  accentColor, textColor, championTrophyUrl, nameFont, cardColor,
   championLogoUrl, backgroundUrl, backgroundOpacity = 0.25, onMatchClick,
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -44,6 +48,8 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   const accent = accentColor || themeColor;
   const txt = textColor || '#f3f5f0';
   const txtMuted = textColor ? `${textColor}99` : '#8a8f9c';
+  const cardBg = cardColor || 'linear-gradient(180deg, #2b2e38, #23252e)';
+  const labelShadow = '0 1px 5px rgba(0,0,0,0.95)';
   const trophyImg = championTrophyUrl || championLogoUrl;
 
   // Fases existentes (da maior para a final)
@@ -189,7 +195,7 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
     return (
       <div data-bcard onClick={() => onMatchClick && onMatchClick(match)}
         className="rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
-        style={{ width: CARD_W, background: 'linear-gradient(180deg, #2b2e38, #23252e)', border: `1px solid ${accent}55`, boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
+        style={{ width: CARD_W, background: cardBg, border: `1px solid ${accent}55`, boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
         {showHead && (
           <div className="text-center font-black uppercase" style={{ fontSize: 9, letterSpacing: '2px', color: accent, background: `${accent}1f`, borderBottom: `1px solid ${accent}30`, padding: '4px' }}>{phase}</div>
         )}
@@ -198,7 +204,7 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
             <div className="flex items-center justify-center shrink-0" style={{ width: CREST, height: CREST }}>
               {hasHome ? (h.logoUrl ? <img src={h.logoUrl} className="w-full h-full object-contain" alt="" /> : <Shield size={CREST * 0.55} style={{ color: accent }} />) : <div className="w-full h-full" />}
             </div>
-            <span className="flex-1 truncate font-bold uppercase" style={{ fontSize: FONT, color: homeWon ? accent : (hasHome ? txt : txtMuted) }}>{hasHome ? h.name : 'A definir'}</span>
+            <span className="flex-1 truncate font-bold uppercase" style={{ fontSize: FONT, fontFamily: nameFont || undefined, color: homeWon ? accent : (hasHome ? txt : txtMuted) }}>{hasHome ? h.name : 'A definir'}</span>
             {homeWon && CREST > 22 && <Check size={12} style={{ color: accent }} className="shrink-0" />}
             <span className="font-black text-center shrink-0" style={{ fontSize: FONT + 3, minWidth: 20, color: homeWon ? accent : txt }}>{match.homeScore ?? '\u2013'}</span>
           </div>
@@ -207,7 +213,7 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
             <div className="flex items-center justify-center shrink-0" style={{ width: CREST, height: CREST }}>
               {hasAway ? (a.logoUrl ? <img src={a.logoUrl} className="w-full h-full object-contain" alt="" /> : <Shield size={CREST * 0.55} style={{ color: accent }} />) : <div className="w-full h-full" />}
             </div>
-            <span className="flex-1 truncate font-bold uppercase" style={{ fontSize: FONT, color: awayWon ? accent : (hasAway ? txt : txtMuted) }}>{hasAway ? a.name : 'A definir'}</span>
+            <span className="flex-1 truncate font-bold uppercase" style={{ fontSize: FONT, fontFamily: nameFont || undefined, color: awayWon ? accent : (hasAway ? txt : txtMuted) }}>{hasAway ? a.name : 'A definir'}</span>
             {awayWon && CREST > 22 && <Check size={12} style={{ color: accent }} className="shrink-0" />}
             <span className="font-black text-center shrink-0" style={{ fontSize: FONT + 3, minWidth: 20, color: awayWon ? accent : txt }}>{match.awayScore ?? '\u2013'}</span>
           </div>
@@ -219,7 +225,7 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   // Coluna: largura fixa, cards posicionados por TOP absoluto
   const Col: React.FC<{ colKey: string; title: string; items: { match: MatchLike; top: number }[]; leftPx: number }> = ({ colKey, title, items, leftPx }) => (
     <div data-bcol={colKey} className="absolute top-0" style={{ left: leftPx, width: CARD_W, height: totalH }}>
-      <div className="text-center font-black uppercase absolute left-0 right-0" style={{ top: 18, fontSize: 11, letterSpacing: '2px', color: txtMuted }}>{title}</div>
+      <div className="text-center font-black uppercase absolute left-0 right-0" style={{ top: 18, fontSize: 11, letterSpacing: '2px', color: txtMuted, textShadow: labelShadow }}>{title}</div>
       {items.map((it, i) => (
         <div key={`${it.match.id}-${i}`} className="absolute" style={{ top: it.top, left: 0, transform: 'translateY(-50%)' }}>
           <Card match={it.match} phase={title} />
@@ -238,12 +244,7 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   return (
     <div className="relative w-full overflow-x-auto rounded-2xl" style={{ background: backgroundUrl ? '#0a0b0f' : '#1e1f26' }}>
       {backgroundUrl && (
-        <>
-          {/* Fundo vivo (em destaque) */}
-          <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${backgroundUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: backgroundOpacity }} />
-          {/* Vinheta sutil: escurece só as bordas pra dar contraste aos cards sem apagar o fundo */}
-          <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.45) 100%)' }} />
-        </>
+        <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${backgroundUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: backgroundOpacity }} />
       )}
       <div ref={stageRef} className="relative mx-auto" style={{ width: totalW, height: totalH }}>
         {/* marca d'água */}
@@ -264,7 +265,7 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
 
         {/* CENTRO: FINAL + CAMPEÃO (posicionado absoluto) */}
         <div data-bcol="final" className="absolute z-[2]" style={{ left: centerX, width: CARD_W, top: finalCenterY, transform: 'translateY(-50%)' }}>
-          <div className="text-center font-black uppercase mb-2" style={{ fontSize: 11, letterSpacing: '2px', color: accent }}>Grande Final</div>
+          <div className="text-center font-black uppercase mb-2" style={{ fontSize: 11, letterSpacing: '2px', color: accent, textShadow: labelShadow }}>Grande Final</div>
           {finalMatch && <Card match={finalMatch} phase="Final" />}
           <div className="flex flex-col items-center gap-2 mt-4">
             <div className="relative grid place-items-center" style={{ width: trophySize + 24, height: trophySize + 24 }}>
