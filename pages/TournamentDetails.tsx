@@ -382,13 +382,15 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
   const bracketData = useMemo(() => {
       const allMatches = matches.filter(m => m.stage && m.stage !== 'GROUP' && m.stage !== 'SWISS' && m.stage !== 'LEAGUE').sort((a,b) => a.id.localeCompare(b.id));
+      const r64 = allMatches.filter(m => m.stage === 'R64');
+      const r32 = allMatches.filter(m => m.stage === 'R32');
       const r16 = allMatches.filter(m => m.stage === 'R16');
       const quarters = allMatches.filter(m => m.stage === 'QF');
       const semis = allMatches.filter(m => m.stage === 'SF');
       // Deduplica finais — mantém apenas a primeira (evita final duplicada)
       const allFinals = allMatches.filter(m => m.stage === 'FINAL');
       const finals = allFinals.length > 0 ? [allFinals[0]] : [];
-      return { r16, quarters, semis, finals, hasR16: r16.length > 0, hasQuarters: quarters.length > 0 };
+      return { r64, r32, r16, quarters, semis, finals, hasR16: r16.length > 0, hasQuarters: quarters.length > 0 };
   }, [matches]);
 
   const matchPlayers = useMemo(() => {
@@ -2147,6 +2149,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                   <div className={`min-h-[600px] ${bracketBgClass}`}>
                       {hasKnockoutStarted ? (
                           <ChampionsBracket
+                              r32={bracketData.r64.length > 0 ? bracketData.r64 : bracketData.r32}
                               r16={bracketData.r16}
                               quarters={bracketData.quarters}
                               semis={bracketData.semis}
