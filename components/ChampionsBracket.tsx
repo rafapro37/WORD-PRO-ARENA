@@ -45,10 +45,10 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   const halfMax = Math.ceil(maxMatches / 2); // nº de confrontos da maior fase em CADA lado
 
   // ---- ESCALA conforme tamanho ----
-  let CARD_W = 230, CARD_H = 74, V_GAP = 30, COL_GAP = 60, FONT = 13, CREST = 32, showHead = true;
-  if (maxMatches >= 32) { CARD_W = 150; CARD_H = 48; V_GAP = 12; COL_GAP = 34; FONT = 9.5; CREST = 20; showHead = false; }
-  else if (maxMatches >= 16) { CARD_W = 178; CARD_H = 56; V_GAP = 18; COL_GAP = 44; FONT = 11; CREST = 24; showHead = false; }
-  else if (maxMatches >= 8) { CARD_W = 215; CARD_H = 70; V_GAP = 26; COL_GAP = 54; FONT = 12.5; CREST = 30; showHead = true; }
+  let CARD_W = 230, CARD_H = 74, V_GAP = 44, COL_GAP = 40, FONT = 13, CREST = 32, showHead = true;
+  if (maxMatches >= 32) { CARD_W = 158; CARD_H = 50; V_GAP = 26; COL_GAP = 26; FONT = 10; CREST = 22; showHead = false; }
+  else if (maxMatches >= 16) { CARD_W = 185; CARD_H = 58; V_GAP = 34; COL_GAP = 30; FONT = 11.5; CREST = 26; showHead = false; }
+  else if (maxMatches >= 8) { CARD_W = 220; CARD_H = 72; V_GAP = 46; COL_GAP = 36; FONT = 13; CREST = 31; showHead = true; }
 
   const TOP_PAD = 50;
   const BOTTOM_PAD = 36;

@@ -2037,29 +2037,14 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                   </div>
                               )}
 
-                              {/* Botões de Sorteio */}
+                              {/* Botão de Sorteio */}
                               {((tournament as any).manualParticipants || []).length > 1 && (
-                                  <div className="mt-4 pt-4 border-t border-yellow-700/30 flex flex-col sm:flex-row gap-2">
+                                  <div className="mt-4 pt-4 border-t border-yellow-700/30">
                                       <button
                                           onClick={() => setShowGroupDraw(true)}
-                                          className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-black py-3 rounded-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wide transition-all shadow-lg"
+                                          className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-black py-3 rounded-lg flex items-center justify-center gap-2 text-sm uppercase tracking-wide transition-all shadow-lg"
                                       >
-                                          🎬 Sorteio Animado (Estilo Champions)
-                                      </button>
-                                      <button
-                                          onClick={() => {
-                                              if (!onUpdateTournament) return;
-                                              const list = [...((tournament as any).manualParticipants || [])];
-                                              for (let i = list.length - 1; i > 0; i--) {
-                                                  const j = Math.floor(Math.random() * (i + 1));
-                                                  [list[i], list[j]] = [list[j], list[i]];
-                                              }
-                                              onUpdateTournament(tournament.id, { manualParticipants: list } as any);
-                                              showToast('Ordem embaralhada rapidamente.', 'success');
-                                          }}
-                                          className="sm:w-40 bg-brand-surface border border-brand-border hover:border-yellow-500 text-brand-textMuted hover:text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 text-xs uppercase tracking-wide transition-all"
-                                      >
-                                          🎲 Sorteio Rápido
+                                          🎬 Sortear (Estilo Champions)
                                       </button>
                                   </div>
                               )}
@@ -2155,7 +2140,9 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                               semis={bracketData.semis}
                               finals={bracketData.finals}
                               getTeamVisual={(teamId) => {
+                                  if (!teamId || teamId === 'TBD') return { name: '', logoUrl: '' };
                                   const t = teams.find(tt => tt.id === teamId);
+                                  if (!t) return { name: '', logoUrl: '' };
                                   return getTeamNameAndEscudo(t);
                               }}
                               themeColor={themeColor}

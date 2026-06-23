@@ -49,12 +49,33 @@ const GroupDraw: React.FC<GroupDrawProps> = ({
     const groupIndex = drawnCount % groupCount; // distribui em rodízio
 
     setRevealing(participant);
-    // Após a animação de revelação, fixa no grupo
     setTimeout(() => {
       setGroupOf(prev => ({ ...prev, [participant.id]: groupIndex }));
       setRevealing(null);
       setDrawnCount(c => c + 1);
     }, 1400);
+  };
+
+  // Sorteia TODOS automaticamente em sequência rápida
+  const [autoRunning, setAutoRunning] = useState(false);
+  const drawAll = () => {
+    if (autoRunning || isComplete) return;
+    setAutoRunning(true);
+    let idx = drawnCount;
+    const step = () => {
+      if (idx >= shuffled.length) { setAutoRunning(false); return; }
+      const participant = shuffled[idx];
+      const groupIndex = idx % groupCount;
+      setRevealing(participant);
+      setTimeout(() => {
+        setGroupOf(prev => ({ ...prev, [participant.id]: groupIndex }));
+        setRevealing(null);
+        setDrawnCount(c => c + 1);
+        idx++;
+        setTimeout(step, 200);
+      }, 650);
+    };
+    step();
   };
 
   const handleConfirm = () => {
@@ -156,16 +177,27 @@ const GroupDraw: React.FC<GroupDrawProps> = ({
         </AnimatePresence>
 
         {/* Botão de ação */}
-        <div className="absolute bottom-8 z-20">
+        <div className="absolute bottom-8 z-20 flex items-center gap-3">
           {!isComplete ? (
-            <button
-              onClick={drawNext}
-              disabled={!!revealing}
-              className="px-10 py-4 rounded-full font-black uppercase tracking-widest text-white shadow-2xl transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 text-lg"
-              style={{ background: themeColor }}
-            >
-              {revealing ? 'Sorteando...' : '🎲 Sortear Próximo'}
-            </button>
+            <>
+              <button
+                onClick={drawAll}
+                disabled={autoRunning || !!revealing}
+                className="px-10 py-4 rounded-full font-black uppercase tracking-widest text-white shadow-2xl transition-all hover:scale-105 disabled:opacity-50 disabled:scale-100 text-lg"
+                style={{ background: themeColor }}
+              >
+                {autoRunning ? 'Sorteando...' : '🎲 Sortear Tudo'}
+              </button>
+              {!autoRunning && (
+                <button
+                  onClick={drawNext}
+                  disabled={!!revealing}
+                  className="px-6 py-4 rounded-full font-bold uppercase tracking-wider text-white/80 border border-white/20 hover:bg-white/10 transition-all text-sm disabled:opacity-40"
+                >
+                  Um por um
+                </button>
+              )}
+            </>
           ) : (
             <button
               onClick={handleConfirm}
