@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Tournament, Team, Match, Player, TournamentRegistration,
@@ -23,10 +23,71 @@ interface OrganizerDashboardProps {
   playerProfiles: PlayerProfile[];
   onNavigate: (page: string) => void;
   onSelectTournament: (id: string) => void;
-  dashboardBanner?: { url?: string; zoom?: number; posX?: number; posY?: number };
+  dashboardBanners?: { url?: string; zoom?: number; posX?: number; posY?: number }[];
+  cardsBackground?: { url?: string; zoom?: number; posX?: number; posY?: number };
 }
 
 // ─── Mini Gráfico de barras ───────────────────────────────────────────────────
+// ─── Carrossel de banners do topo (autoplay) ─────────────────────────────────
+const BannerCarousel: React.FC<{
+  banners: { url?: string; zoom?: number; posX?: number; posY?: number }[];
+}> = ({ banners }) => {
+  const valid = banners.filter(b => b?.url);
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    if (valid.length <= 1) return;
+    const t = setInterval(() => setIdx(i => (i + 1) % valid.length), 5000);
+    return () => clearInterval(t);
+  }, [valid.length]);
+
+  if (valid.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative w-full rounded-2xl overflow-hidden border border-[var(--theme-border)] select-none"
+      style={{ aspectRatio: '1200 / 240', background: '#0a0b0f' }}
+    >
+      {valid.map((b, i) => (
+        <div
+          key={i}
+          className="absolute inset-0 transition-opacity duration-700"
+          style={{ opacity: i === idx ? 1 : 0 }}
+        >
+          <img
+            src={b.url}
+            draggable={false}
+            className="absolute pointer-events-none"
+            style={{
+              width: `${b.zoom ?? 100}%`,
+              left: `${b.posX ?? 50}%`,
+              top: `${b.posY ?? 50}%`,
+              transform: 'translate(-50%, -50%)',
+              maxWidth: 'none',
+              maxHeight: 'none',
+            }}
+          />
+        </div>
+      ))}
+      {/* Indicadores (bolinhas) */}
+      {valid.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-[2]">
+          {valid.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIdx(i)}
+              className="w-2 h-2 rounded-full transition-all"
+              style={{ background: i === idx ? 'var(--theme-primary)' : 'rgba(255,255,255,0.4)', width: i === idx ? 18 : 8 }}
+            />
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
 // ─── Badge de status de torneio ───────────────────────────────────────────────
 const TournamentStatusBadge: React.FC<{ status: string }> = ({ status }) => {
   const cfg: Record<string, { label: string; cls: string }> = {
@@ -47,7 +108,7 @@ const TournamentStatusBadge: React.FC<{ status: string }> = ({ status }) => {
 const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
   currentUser, tournaments, teams, matches, players,
   registrations, leagues, playerProfiles,
-  onNavigate, onSelectTournament, dashboardBanner,
+  onNavigate, onSelectTournament, dashboardBanners, cardsBackground,
 }) => {
   const { locale, T } = useLocale();
   const [activeTab, setActiveTab] = useState<'campeonatos' | 'atividade' | 'artilheiros'>('campeonatos');
@@ -178,29 +239,32 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
   return (
     <div className="p-6 md:p-8 space-y-8 min-h-screen" style={{ background: 'var(--theme-bg)' }}>
 
-      {/* ── BANNER (definido pelo admin do sistema) ── */}
-      {dashboardBanner?.url && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative w-full rounded-2xl overflow-hidden border border-[var(--theme-border)] select-none"
-          style={{ aspectRatio: '1200 / 240', background: '#0a0b0f' }}
-        >
-          <img
-            src={dashboardBanner.url}
-            draggable={false}
-            className="absolute pointer-events-none"
-            style={{
-              width: `${dashboardBanner.zoom ?? 100}%`,
-              left: `${dashboardBanner.posX ?? 50}%`,
-              top: `${dashboardBanner.posY ?? 50}%`,
-              transform: 'translate(-50%, -50%)',
-              maxWidth: 'none',
-              maxHeight: 'none',
-            }}
-          />
-        </motion.div>
+      {/* ── CARROSSEL DE BANNERS (definido pelo admin do sistema) ── */}
+      {dashboardBanners && dashboardBanners.length > 0 && (
+        <BannerCarousel banners={dashboardBanners} />
       )}
+
+      {/* ── HERO: header + métricas, com fundo opcional atrás (admin/organizador) ── */}
+      <div className="relative rounded-2xl overflow-hidden" style={cardsBackground?.url ? { background: '#0a0b0f' } : undefined}>
+        {cardsBackground?.url && (
+          <>
+            <img
+              src={cardsBackground.url}
+              draggable={false}
+              className="absolute pointer-events-none select-none"
+              style={{
+                width: `${cardsBackground.zoom ?? 100}%`,
+                left: `${cardsBackground.posX ?? 50}%`,
+                top: `${cardsBackground.posY ?? 50}%`,
+                transform: 'translate(-50%, -50%)',
+                maxWidth: 'none',
+                maxHeight: 'none',
+              }}
+            />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.7))' }} />
+          </>
+        )}
+        <div className={cardsBackground?.url ? 'relative z-[1] p-5 md:p-6 space-y-6' : 'space-y-8'}>
 
       {/* ── HEADER ── */}
       <motion.div
@@ -288,6 +352,9 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
           </motion.div>
         ))}
       </div>
+        </div>
+      </div>
+      {/* ── fim do HERO ── */}
 
       {/* ── ALERTA: inscrições pendentes ── */}
       {tourneysWithPending.length > 0 && (

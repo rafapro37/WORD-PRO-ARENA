@@ -2198,12 +2198,24 @@ const App: React.FC = () => {
                   setSelectedTournamentId(id);
                   setCurrentPage('tournament-details');
                 }}
-                dashboardBanner={{
-                  url: (state.settings.globalImages as any)?.dashboardBanner,
-                  zoom: (state.settings.globalImages as any)?.dashboardBannerZoom,
-                  posX: (state.settings.globalImages as any)?.dashboardBannerPosX,
-                  posY: (state.settings.globalImages as any)?.dashboardBannerPosY,
-                }}
+                dashboardBanners={(() => {
+                  const gi = (state.settings.globalImages as any) || {};
+                  // Lista nova (carrossel); se vazia, cai pro banner único antigo
+                  if (Array.isArray(gi.dashboardBanners) && gi.dashboardBanners.length > 0) return gi.dashboardBanners;
+                  if (gi.dashboardBanner) return [{
+                    url: gi.dashboardBanner, zoom: gi.dashboardBannerZoom,
+                    posX: gi.dashboardBannerPosX, posY: gi.dashboardBannerPosY,
+                  }];
+                  return [];
+                })()}
+                cardsBackground={(() => {
+                  const u = state.currentUser as any;
+                  const gi = (state.settings.globalImages as any) || {};
+                  // Organizador complementa: se tiver o dele, usa; senão usa o global do admin
+                  if (u?.cardsBg) return { url: u.cardsBg, zoom: u.cardsBgZoom, posX: u.cardsBgPosX, posY: u.cardsBgPosY };
+                  if (gi.cardsBg) return { url: gi.cardsBg, zoom: gi.cardsBgZoom, posX: gi.cardsBgPosX, posY: gi.cardsBgPosY };
+                  return undefined;
+                })()}
               />
             )}
 

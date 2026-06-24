@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { toast } from '../src/lib/toast';
 import { User, PlanType, PlanConfig, ChangeLogEntry, League, MarketStatus, LeagueInvitation, LeagueMember, LeagueMemberStatus, PlanUpgradeRequest, PlanStatus, ExperienceType } from '../types';
 import { Save, User as UserIcon, Shield, CreditCard, AlertTriangle, Check, LayoutDashboard, Clock, Eye, RefreshCw, XCircle, Trophy, Plus, Trash2, Edit, Send, Mail, Users, LinkIcon, ArrowUp, Lock, Gamepad2 } from '../components/Icons';
+import ImageAdjuster from '../components/ImageAdjuster';
+import { uploadFile } from '../services/supabase';
 
 interface OrganizerSettingsProps {
   user: User;
@@ -48,6 +50,15 @@ const OrganizerSettings: React.FC<OrganizerSettingsProps> = ({
   const [orgName, setOrgName] = useState(user.organization?.nome || user.name);
   const [orgLogo, setOrgLogo] = useState(user.organization?.logo || '');
   const [orgColor, setOrgColor] = useState(user.organization?.corPrimaria || '#FF6A00');
+
+  // Fundo dos cards do painel (do organizador — sobrescreve o global do admin)
+  const [cardsBg, setCardsBg] = useState((user as any).cardsBg || '');
+  const [cardsBgZoom, setCardsBgZoom] = useState((user as any).cardsBgZoom ?? 100);
+  const [cardsBgPosX, setCardsBgPosX] = useState((user as any).cardsBgPosX ?? 50);
+  const [cardsBgPosY, setCardsBgPosY] = useState((user as any).cardsBgPosY ?? 50);
+  const saveCardsBg = (next: { cardsBg?: string; cardsBgZoom?: number; cardsBgPosX?: number; cardsBgPosY?: number }) => {
+    onUpdateUser({ cardsBg, cardsBgZoom, cardsBgPosX, cardsBgPosY, ...next } as any);
+  };
   
   const [isSaved, setIsSaved] = useState(false);
 
@@ -230,6 +241,67 @@ const OrganizerSettings: React.FC<OrganizerSettingsProps> = ({
                           </div>
                       </div>
                   </div>
+              </div>
+
+              {/* FUNDO DOS CARDS DO PAINEL (definido pelo organizador) */}
+              <div className="bg-brand-surface p-6 rounded-xl border border-brand-border">
+                  <h2 className="text-xl font-bold text-brand-text mb-2 flex items-center gap-2">
+                      <LayoutDashboard className="text-brand-primary" /> Fundo dos Cards do Painel
+                  </h2>
+                  <p className="text-brand-textMuted text-sm mb-6">Imagem atrás dos cards de métricas (Campeonatos, Times, Partidas...) no seu painel. Se você não definir, vale o fundo padrão do sistema.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                      <div className="space-y-3">
+                          <div className="w-full h-28 rounded-xl border border-brand-border overflow-hidden bg-black flex items-center justify-center">
+                              {cardsBg ? <img src={cardsBg} className="w-full h-full object-cover" alt="" /> : <span className="text-slate-600 text-xs">Sem fundo definido</span>}
+                          </div>
+                          <div className="flex items-center gap-3">
+                              <label className="inline-flex items-center gap-2 bg-brand-border hover:bg-slate-700 px-4 py-2 rounded text-[11px] font-bold text-white cursor-pointer transition-colors uppercase tracking-widest">
+                                  <Plus size={14}/> Carregar imagem
+                                  <input type="file" hidden accept="image/*" onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      if (file.size > 2 * 1024 * 1024) { toast.error('Imagem muito grande (máx 2MB).'); return; }
+                                      try {
+                                          const url = await uploadFile('arena-assets', `org-cards/${user.id}_${Date.now()}`, file);
+                                          setCardsBg(url);
+                                          saveCardsBg({ cardsBg: url });
+                                          toast.success('Fundo atualizado!');
+                                      } catch { toast.error('Falha ao enviar a imagem.'); }
+                                  }} />
+                              </label>
+                              {cardsBg && (
+                                  <button onClick={() => { setCardsBg(''); saveCardsBg({ cardsBg: '' }); }}
+                                      className="text-[11px] text-red-400 hover:text-red-300 font-bold uppercase">Remover</button>
+                              )}
+                          </div>
+                          <p className="text-[10px] text-slate-500 italic">PNG/JPG/WEBP, até 2MB. Imagem larga fica melhor.</p>
+                      </div>
+                      {cardsBg && (
+                          <ImageAdjuster
+                              image={cardsBg}
+                              zoom={cardsBgZoom}
+                              posX={cardsBgPosX}
+                              posY={cardsBgPosY}
+                              bgGradient="linear-gradient(135deg, #1a1c22, #0a0b0f)"
+                              accentColor={orgColor}
+                              label="Ajustar fundo"
+                              aspectRatio="1600 / 400"
+                              previewWidthClass="w-full"
+                              hideDecor
+                              onChange={vals => {
+                                  if (vals.zoom !== undefined) setCardsBgZoom(vals.zoom);
+                                  if (vals.posX !== undefined) setCardsBgPosX(vals.posX);
+                                  if (vals.posY !== undefined) setCardsBgPosY(vals.posY);
+                              }}
+                          />
+                      )}
+                  </div>
+                  {cardsBg && (
+                      <button onClick={() => { saveCardsBg({}); toast.success('Enquadramento salvo!'); }}
+                          className="mt-5 bg-brand-primary hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg flex items-center gap-2 transition-all">
+                          <Save size={16}/> Salvar enquadramento
+                      </button>
+                  )}
               </div>
           </div>
       )}

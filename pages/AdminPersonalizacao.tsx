@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AppState, AppSettings } from '../types';
 import { uploadFile } from '../services/supabase';
 import { useLocale } from '../src/contexts/LocaleContext';
+import CardImageAdjuster from '../components/ImageAdjuster';
 
 interface AdminPersonalizacaoProps {
     state: AppState;
@@ -170,86 +171,8 @@ const ImageUploadBox: React.FC<{
   );
 };
 
-// ─── Ajuste de imagem do card (arrastar livre + zoom) ─────────────────────────
-const CardImageAdjuster: React.FC<{
-  image: string;
-  zoom: number;
-  posX: number;
-  posY: number;
-  bgGradient: string;
-  accentColor: string;
-  label: string;
-  aspectRatio?: string;
-  previewWidthClass?: string;
-  hideDecor?: boolean;
-  onChange: (vals: { zoom?: number; posX?: number; posY?: number }) => void;
-}> = ({ image, zoom, posX, posY, bgGradient, accentColor, label, aspectRatio = '360 / 384', previewWidthClass = 'w-56', hideDecor = false, onChange }) => {
-  const boxRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
-  const start = useRef({ mx: 0, my: 0, px: 50, py: 100 });
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragging.current = true;
-    start.current = { mx: e.clientX, my: e.clientY, px: posX, py: posY };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragging.current || !boxRef.current) return;
-    const rect = boxRef.current.getBoundingClientRect();
-    const dx = ((e.clientX - start.current.mx) / rect.width) * 100;
-    const dy = ((e.clientY - start.current.my) / rect.height) * 100;
-    onChange({
-      posX: Math.max(-20, Math.min(120, start.current.px + dx)),
-      posY: Math.max(-20, Math.min(120, start.current.py + dy)),
-    });
-  };
-  const onPointerUp = () => { dragging.current = false; };
-
-  return (
-    <div className="bg-black/20 rounded-2xl p-5 border border-white/10">
-      <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: accentColor }}>{label}</p>
-      <p className="text-[10px] text-slate-500 mb-4">Arraste a imagem para posicionar. Use o zoom abaixo.</p>
-
-      {/* Preview no formato vertical do card real */}
-      <div
-        ref={boxRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        className={`relative ${previewWidthClass} mx-auto rounded-3xl overflow-hidden mb-4 border-2 border-white/10 cursor-move select-none touch-none`}
-        style={{ background: bgGradient, aspectRatio }}
-      >
-        {/* Diagonais decorativas iguais ao card real */}
-        {!hideDecor && (
-          <div className="absolute inset-0 opacity-30 pointer-events-none">
-            <div className="absolute -right-6 top-8 w-28 h-1.5 rotate-45" style={{ background: accentColor }}></div>
-            <div className="absolute -left-6 bottom-16 w-28 h-1.5 -rotate-45 bg-yellow-400"></div>
-          </div>
-        )}
-        <img src={image} draggable={false} className="absolute pointer-events-none drop-shadow-2xl"
-          style={{
-            width: `${zoom}%`,
-            left: `${posX}%`,
-            top: `${posY}%`,
-            transform: 'translate(-50%, -50%)',
-            maxWidth: 'none',
-            maxHeight: 'none',
-          }} />
-        {/* Faixa inferior como no card real */}
-        <div className="absolute bottom-0 inset-x-0 bg-black/40 py-1.5 text-center pointer-events-none">
-          <span className="text-white font-black text-[9px] uppercase tracking-widest">Pré-visualização</span>
-        </div>
-      </div>
-
-      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Zoom: {zoom}%</label>
-      <input type="range" min="20" max="500" value={zoom} onChange={e => onChange({ zoom: +e.target.value })} className="w-full" style={{ accentColor }} />
-      <div className="flex gap-2 mt-2">
-        <button onClick={() => onChange({ zoom: Math.max(20, zoom - 10) })} className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded py-1.5 text-xs font-bold text-slate-300">− Diminuir</button>
-        <button onClick={() => onChange({ zoom: zoom + 10 })} className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 rounded py-1.5 text-xs font-bold text-slate-300">+ Aumentar</button>
-      </div>
-    </div>
-  );
-};
+// ─── Ajuste de imagem: agora vem do componente compartilhado ──────────────────
+// (ver components/ImageAdjuster.tsx) — importado como CardImageAdjuster abaixo.
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpdateSettings, onBack }) => {
@@ -267,26 +190,47 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
     ...(state.settings.globalTheme || {}),
   });
 
-  const [imagens, setImagens] = useState({
-    logo:    '',
-    loginBg: '',
-    homeBg:  '',
-    favicon: '',
-    experienceBg:    '',
-    experienceX1:    '',
-    experienceClubs: '',
-    experienceX1Zoom:    100,
-    experienceX1PosX:    50,
-    experienceX1PosY:    100,
-    experienceClubsZoom: 100,
-    experienceClubsPosX: 50,
-    experienceClubsPosY: 100,
-    dashboardBanner:     '',
-    dashboardBannerZoom: 100,
-    dashboardBannerPosX: 50,
-    dashboardBannerPosY: 50,
-    ...(state.settings.globalImages || {}),
+  const [imagens, setImagens] = useState(() => {
+    const base: any = {
+      logo:    '',
+      loginBg: '',
+      homeBg:  '',
+      favicon: '',
+      experienceBg:    '',
+      experienceX1:    '',
+      experienceClubs: '',
+      experienceX1Zoom:    100,
+      experienceX1PosX:    50,
+      experienceX1PosY:    100,
+      experienceClubsZoom: 100,
+      experienceClubsPosX: 50,
+      experienceClubsPosY: 100,
+      dashboardBanner:     '',
+      dashboardBannerZoom: 100,
+      dashboardBannerPosX: 50,
+      dashboardBannerPosY: 50,
+      dashboardBanners:    [] as { url: string; zoom: number; posX: number; posY: number }[],
+      cardsBg:     '',
+      cardsBgZoom: 100,
+      cardsBgPosX: 50,
+      cardsBgPosY: 50,
+      ...(state.settings.globalImages || {}),
+    };
+    // Migração: banner único antigo vira o primeiro item do carrossel
+    if ((!base.dashboardBanners || base.dashboardBanners.length === 0) && base.dashboardBanner) {
+      base.dashboardBanners = [{
+        url: base.dashboardBanner, zoom: base.dashboardBannerZoom || 100,
+        posX: base.dashboardBannerPosX ?? 50, posY: base.dashboardBannerPosY ?? 50,
+      }];
+    }
+    if (!Array.isArray(base.dashboardBanners)) base.dashboardBanners = [];
+    return base;
   });
+
+  // Helpers do carrossel de banners
+  const addBanner = () => setImagens((p: any) => ({ ...p, dashboardBanners: [...(p.dashboardBanners || []), { url: '', zoom: 100, posX: 50, posY: 50 }] }));
+  const updateBanner = (i: number, patch: any) => setImagens((p: any) => ({ ...p, dashboardBanners: p.dashboardBanners.map((b: any, idx: number) => idx === i ? { ...b, ...patch } : b) }));
+  const removeBanner = (i: number) => setImagens((p: any) => ({ ...p, dashboardBanners: p.dashboardBanners.filter((_: any, idx: number) => idx !== i) }));
 
   const [textos, setTextos] = useState({
     nomePrimario:    state.settings.brandingTextPrimary   || 'PRO WORLD',
@@ -601,13 +545,6 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
                     onChange={v => setImagens(p => ({ ...p, experienceClubs: v }))}
                     onUpload={f => handleUpload('experienceClubs', f)}
                   />
-                  <ImageUploadBox
-                    label="Banner do Painel (Dashboard)"
-                    desc="Aparece no topo do painel do organizador (recomendado: 1200×240px)"
-                    value={imagens.dashboardBanner}
-                    onChange={v => setImagens(p => ({ ...p, dashboardBanner: v }))}
-                    onUpload={f => handleUpload('dashboardBanner', f)}
-                  />
                 </div>
 
                 {/* AJUSTES DE POSIÇÃO E ZOOM DAS IMAGENS DOS CARDS */}
@@ -650,29 +587,94 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
                   </div>
                 )}
 
-                {/* AJUSTE DO BANNER DO PAINEL (mesmo recurso de arrastar + zoom) */}
-                {imagens.dashboardBanner && (
-                  <div className="mt-8">
-                    <CardImageAdjuster
-                      image={imagens.dashboardBanner}
-                      zoom={imagens.dashboardBannerZoom}
-                      posX={imagens.dashboardBannerPosX}
-                      posY={imagens.dashboardBannerPosY}
-                      bgGradient="linear-gradient(135deg, #1a1c22, #0a0b0f)"
-                      accentColor={cores.corPrimaria}
-                      label="Ajustar Banner do Painel"
-                      aspectRatio="1200 / 240"
-                      previewWidthClass="w-full max-w-3xl"
-                      hideDecor
-                      onChange={vals => setImagens(p => ({
-                        ...p,
-                        ...(vals.zoom !== undefined ? { dashboardBannerZoom: vals.zoom } : {}),
-                        ...(vals.posX !== undefined ? { dashboardBannerPosX: vals.posX } : {}),
-                        ...(vals.posY !== undefined ? { dashboardBannerPosY: vals.posY } : {}),
-                      }))}
-                    />
+                {/* ── CARROSSEL DE BANNERS DO PAINEL ── */}
+                <div className="mt-10 border-t border-white/10 pt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-white">Carrossel de Banners do Painel</h3>
+                      <p className="text-[11px] text-slate-500 mt-1">Aparecem no topo do painel do organizador, passando automaticamente. Recomendado: 1200×240px.</p>
+                    </div>
+                    <button onClick={addBanner}
+                      className="px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest text-black flex-shrink-0"
+                      style={{ background: cores.corPrimaria }}>+ Adicionar banner</button>
                   </div>
-                )}
+
+                  {(!imagens.dashboardBanners || imagens.dashboardBanners.length === 0) && (
+                    <p className="text-xs text-slate-500 italic py-6 text-center bg-black/20 rounded-xl border border-dashed border-white/10">
+                      Nenhum banner ainda. Clique em "Adicionar banner" para começar o carrossel.
+                    </p>
+                  )}
+
+                  <div className="space-y-6">
+                    {(imagens.dashboardBanners || []).map((banner: any, i: number) => (
+                      <div key={i} className="bg-black/20 rounded-2xl p-5 border border-white/10">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-black uppercase tracking-widest" style={{ color: cores.corPrimaria }}>Banner {i + 1}</span>
+                          <button onClick={() => removeBanner(i)} className="text-[11px] font-bold text-red-400 hover:text-red-300 uppercase">Remover</button>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                          <ImageUploadBox
+                            label="Imagem do banner"
+                            desc="PNG, JPG ou WEBP (máx 2MB)"
+                            value={banner.url}
+                            onChange={v => updateBanner(i, { url: v })}
+                            onUpload={f => handleUpload('banner' + i, f)}
+                          />
+                          {banner.url && (
+                            <CardImageAdjuster
+                              image={banner.url}
+                              zoom={banner.zoom ?? 100}
+                              posX={banner.posX ?? 50}
+                              posY={banner.posY ?? 50}
+                              bgGradient="linear-gradient(135deg, #1a1c22, #0a0b0f)"
+                              accentColor={cores.corPrimaria}
+                              label="Ajustar enquadramento"
+                              aspectRatio="1200 / 240"
+                              previewWidthClass="w-full"
+                              hideDecor
+                              onChange={vals => updateBanner(i, vals)}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── FUNDO ATRÁS DOS CARDS (global do admin) ── */}
+                <div className="mt-10 border-t border-white/10 pt-8">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-white mb-1">Fundo Atrás dos Cards (Painel)</h3>
+                  <p className="text-[11px] text-slate-500 mb-4">Imagem de fundo da faixa de métricas (Campeonatos, Times, Partidas...). Padrão do sistema — cada organizador pode trocar pelo dele nas configurações.</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <ImageUploadBox
+                      label="Imagem de fundo dos cards"
+                      desc="Recomendado: imagem larga, 1600×400px"
+                      value={imagens.cardsBg}
+                      onChange={v => setImagens(p => ({ ...p, cardsBg: v }))}
+                      onUpload={f => handleUpload('cardsBg', f)}
+                    />
+                    {imagens.cardsBg && (
+                      <CardImageAdjuster
+                        image={imagens.cardsBg}
+                        zoom={imagens.cardsBgZoom}
+                        posX={imagens.cardsBgPosX}
+                        posY={imagens.cardsBgPosY}
+                        bgGradient="linear-gradient(135deg, #1a1c22, #0a0b0f)"
+                        accentColor={cores.corPrimaria}
+                        label="Ajustar fundo dos cards"
+                        aspectRatio="1600 / 400"
+                        previewWidthClass="w-full"
+                        hideDecor
+                        onChange={vals => setImagens(p => ({
+                          ...p,
+                          ...(vals.zoom !== undefined ? { cardsBgZoom: vals.zoom } : {}),
+                          ...(vals.posX !== undefined ? { cardsBgPosX: vals.posX } : {}),
+                          ...(vals.posY !== undefined ? { cardsBgPosY: vals.posY } : {}),
+                        }))}
+                      />
+                    )}
+                  </div>
+                </div>
               </motion.div>
             )}
 

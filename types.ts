@@ -231,6 +231,11 @@ export interface User {
   planStatus?: PlanStatus;
   planExpiresAt?: number;
   whatsapp?: string;
+  // Fundo dos cards do painel (definido pelo organizador, sobrescreve o global)
+  cardsBg?: string;
+  cardsBgZoom?: number;
+  cardsBgPosX?: number;
+  cardsBgPosY?: number;
   organization?: {
     nome: string;
     logo: string;
