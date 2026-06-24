@@ -342,10 +342,10 @@ const Login: React.FC<LoginProps> = ({
         {/* === BRANDING SECTION === */}
         <div className="flex-1 relative z-10 p-10 md:p-20 flex flex-col justify-between overflow-hidden">
             <div 
-                className="absolute inset-0 z-0 opacity-40 bg-cover bg-center"
-                style={{ backgroundImage: `url(${customBackgroundUrl || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1936&auto=format&fit=crop'})` }}
+                className="absolute inset-0 z-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${customBackgroundUrl || 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1936&auto=format&fit=crop'})`, opacity: customBackgroundUrl ? 0.95 : 0.4 }}
             ></div>
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-[var(--bg-main)] via-[var(--bg-main)]/80 to-transparent"></div>
+            <div className="absolute inset-0 z-0 bg-gradient-to-r from-[var(--bg-main)]/55 via-transparent to-transparent"></div>
             
             <div className="relative z-10 animate-in slide-in-from-left duration-700">
                 <div className="flex items-center gap-6 mb-12">
