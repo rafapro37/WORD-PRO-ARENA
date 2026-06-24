@@ -198,7 +198,7 @@ const Landing: React.FC<LandingProps> = ({
     const highlights = useMemo(() => [
         {
             title: isLeagueView && league ? `${league.name}` : "Portal PRO WORLD ARENA",
-            subtitle: isLeagueView ? "Federação Oficial" : "Temporada 2024",
+            subtitle: isLeagueView ? "Federação Oficial" : `Temporada ${new Date().getFullYear()}`,
             description: isLeagueView && league ? `Portal de competições da ${league.name}. Acompanhe tabelas, estatísticas e resultados atualizados.` : "Gerencie seu time, participe de ligas profissionais e acompanhe o mercado de transferências em tempo real.",
             image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1936&auto=format&fit=crop",
             badge: isLeagueView ? "DA FEDERAÇÃO" : "MODO PRO",
@@ -368,7 +368,7 @@ const Landing: React.FC<LandingProps> = ({
                             >
                                 <Zap size={14} style={{ color: leagueThemeColor }} />
                                 <span className="text-[10px] font-bold uppercase tracking-[0.3em]" style={{ color: leagueThemeColor }}>
-                                    {isLeagueView ? `Portal Oficial ${league.name}` : 'Pro Edition Arena'}
+                                    {isLeagueView ? `Portal Oficial ${league.name}` : 'PRO WORLD ARENA'}
                                 </span>
                             </motion.div>
                             
