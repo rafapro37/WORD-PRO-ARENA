@@ -54,9 +54,9 @@ export const fetchAllFromSupabase = async (): Promise<Partial<AppState>> => {
 // ─── Sincronizar tabela para o Supabase ──────────────────────────────────────
 // Colunas válidas por tabela — só esses campos são enviados ao Supabase
 const TABLE_COLUMNS: Record<string, string[]> = {
-  usuarios: ['id','name','username','email','password','role','plan','planStatus','status','organizadorId','ligaId','experiencePreference','organization','createdAt','emailVerified','whatsapp','verified'],
+  usuarios: ['id','name','username','email','password','role','plan','planStatus','status','organizadorId','ligaId','experiencePreference','organization','createdAt','emailVerified','whatsapp','verified','cardsBg','cardsBgZoom','cardsBgPosX','cardsBgPosY'],
   perfis: ['id','userId','nickname','photoUrl','teamName','teamLogoUrl','ligaId','clubData','position','overall','stats','createdAt'],
-  campeonatos: ['id','name','format','sport','experienceType','status','createdAt','organizadorId','ligaId','freeEditMode','manualParticipants','primaryColor','knockoutBackground','leagueLogoUrl','tournamentType','groups','swissRounds','currentRound','phase','awards','socialLinks','maxTeams','groupCount','bannerUrl','bannerSize','isPaid','entryFee','groupStageBackground','knockoutOpacity','classificacaoRules','classificados_por_grupo'],
+  campeonatos: ['id','name','format','sport','experienceType','status','createdAt','organizadorId','ligaId','freeEditMode','manualParticipants','primaryColor','knockoutBackground','leagueLogoUrl','tournamentType','groups','swissRounds','currentRound','phase','awards','socialLinks','maxTeams','groupCount','bannerUrl','bannerSize','isPaid','entryFee','groupStageBackground','knockoutOpacity','classificacaoRules','classificados_por_grupo','knockoutAccentColor','knockoutTextColor','knockoutTrophyUrl','knockoutFont','knockoutCardColor'],
   times: ['id','name','organizadorId','tournamentId','ligaId','groupId','ownerId','managerId','roster','played','won','drawn','lost','goalsFor','goalsAgainst','points','logoUrl'],
   partidas: ['id','organizadorId','tournamentId','homeTeamId','awayTeamId','homeScore','awayScore','isFinished','stage','groupId','round','scheduledAt','createdAt'],
   jogadores: ['id','organizadorId','tournamentId','teamId','name','position','goals','assists','yellowCards','redCards','photoUrl'],
