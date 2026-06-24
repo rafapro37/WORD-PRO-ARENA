@@ -179,8 +179,11 @@ const CardImageAdjuster: React.FC<{
   bgGradient: string;
   accentColor: string;
   label: string;
+  aspectRatio?: string;
+  previewWidthClass?: string;
+  hideDecor?: boolean;
   onChange: (vals: { zoom?: number; posX?: number; posY?: number }) => void;
-}> = ({ image, zoom, posX, posY, bgGradient, accentColor, label, onChange }) => {
+}> = ({ image, zoom, posX, posY, bgGradient, accentColor, label, aspectRatio = '360 / 384', previewWidthClass = 'w-56', hideDecor = false, onChange }) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const start = useRef({ mx: 0, my: 0, px: 50, py: 100 });
@@ -213,14 +216,16 @@ const CardImageAdjuster: React.FC<{
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        className="relative w-56 mx-auto rounded-3xl overflow-hidden mb-4 border-2 border-white/10 cursor-move select-none touch-none"
-        style={{ background: bgGradient, aspectRatio: '360 / 384' }}
+        className={`relative ${previewWidthClass} mx-auto rounded-3xl overflow-hidden mb-4 border-2 border-white/10 cursor-move select-none touch-none`}
+        style={{ background: bgGradient, aspectRatio }}
       >
         {/* Diagonais decorativas iguais ao card real */}
-        <div className="absolute inset-0 opacity-30 pointer-events-none">
-          <div className="absolute -right-6 top-8 w-28 h-1.5 rotate-45" style={{ background: accentColor }}></div>
-          <div className="absolute -left-6 bottom-16 w-28 h-1.5 -rotate-45 bg-yellow-400"></div>
-        </div>
+        {!hideDecor && (
+          <div className="absolute inset-0 opacity-30 pointer-events-none">
+            <div className="absolute -right-6 top-8 w-28 h-1.5 rotate-45" style={{ background: accentColor }}></div>
+            <div className="absolute -left-6 bottom-16 w-28 h-1.5 -rotate-45 bg-yellow-400"></div>
+          </div>
+        )}
         <img src={image} draggable={false} className="absolute pointer-events-none drop-shadow-2xl"
           style={{
             width: `${zoom}%`,
@@ -276,6 +281,10 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
     experienceClubsZoom: 100,
     experienceClubsPosX: 50,
     experienceClubsPosY: 100,
+    dashboardBanner:     '',
+    dashboardBannerZoom: 100,
+    dashboardBannerPosX: 50,
+    dashboardBannerPosY: 50,
     ...(state.settings.globalImages || {}),
   });
 
@@ -592,6 +601,13 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
                     onChange={v => setImagens(p => ({ ...p, experienceClubs: v }))}
                     onUpload={f => handleUpload('experienceClubs', f)}
                   />
+                  <ImageUploadBox
+                    label="Banner do Painel (Dashboard)"
+                    desc="Aparece no topo do painel do organizador (recomendado: 1200×240px)"
+                    value={imagens.dashboardBanner}
+                    onChange={v => setImagens(p => ({ ...p, dashboardBanner: v }))}
+                    onUpload={f => handleUpload('dashboardBanner', f)}
+                  />
                 </div>
 
                 {/* AJUSTES DE POSIÇÃO E ZOOM DAS IMAGENS DOS CARDS */}
@@ -631,6 +647,30 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
                         }))}
                       />
                     )}
+                  </div>
+                )}
+
+                {/* AJUSTE DO BANNER DO PAINEL (mesmo recurso de arrastar + zoom) */}
+                {imagens.dashboardBanner && (
+                  <div className="mt-8">
+                    <CardImageAdjuster
+                      image={imagens.dashboardBanner}
+                      zoom={imagens.dashboardBannerZoom}
+                      posX={imagens.dashboardBannerPosX}
+                      posY={imagens.dashboardBannerPosY}
+                      bgGradient="linear-gradient(135deg, #1a1c22, #0a0b0f)"
+                      accentColor={cores.corPrimaria}
+                      label="Ajustar Banner do Painel"
+                      aspectRatio="1200 / 240"
+                      previewWidthClass="w-full max-w-3xl"
+                      hideDecor
+                      onChange={vals => setImagens(p => ({
+                        ...p,
+                        ...(vals.zoom !== undefined ? { dashboardBannerZoom: vals.zoom } : {}),
+                        ...(vals.posX !== undefined ? { dashboardBannerPosX: vals.posX } : {}),
+                        ...(vals.posY !== undefined ? { dashboardBannerPosY: vals.posY } : {}),
+                      }))}
+                    />
                   </div>
                 )}
               </motion.div>

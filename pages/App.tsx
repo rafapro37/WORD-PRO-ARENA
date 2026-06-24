@@ -2198,6 +2198,12 @@ const App: React.FC = () => {
                   setSelectedTournamentId(id);
                   setCurrentPage('tournament-details');
                 }}
+                dashboardBanner={{
+                  url: (state.settings.globalImages as any)?.dashboardBanner,
+                  zoom: (state.settings.globalImages as any)?.dashboardBannerZoom,
+                  posX: (state.settings.globalImages as any)?.dashboardBannerPosX,
+                  posY: (state.settings.globalImages as any)?.dashboardBannerPosY,
+                }}
               />
             )}
 

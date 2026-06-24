@@ -23,6 +23,7 @@ interface OrganizerDashboardProps {
   playerProfiles: PlayerProfile[];
   onNavigate: (page: string) => void;
   onSelectTournament: (id: string) => void;
+  dashboardBanner?: { url?: string; zoom?: number; posX?: number; posY?: number };
 }
 
 // ─── Mini Gráfico de barras ───────────────────────────────────────────────────
@@ -46,7 +47,7 @@ const TournamentStatusBadge: React.FC<{ status: string }> = ({ status }) => {
 const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
   currentUser, tournaments, teams, matches, players,
   registrations, leagues, playerProfiles,
-  onNavigate, onSelectTournament,
+  onNavigate, onSelectTournament, dashboardBanner,
 }) => {
   const { locale, T } = useLocale();
   const [activeTab, setActiveTab] = useState<'campeonatos' | 'atividade' | 'artilheiros'>('campeonatos');
@@ -176,6 +177,30 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
 
   return (
     <div className="p-6 md:p-8 space-y-8 min-h-screen" style={{ background: 'var(--theme-bg)' }}>
+
+      {/* ── BANNER (definido pelo admin do sistema) ── */}
+      {dashboardBanner?.url && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative w-full rounded-2xl overflow-hidden border border-[var(--theme-border)] select-none"
+          style={{ aspectRatio: '1200 / 240', background: '#0a0b0f' }}
+        >
+          <img
+            src={dashboardBanner.url}
+            draggable={false}
+            className="absolute pointer-events-none"
+            style={{
+              width: `${dashboardBanner.zoom ?? 100}%`,
+              left: `${dashboardBanner.posX ?? 50}%`,
+              top: `${dashboardBanner.posY ?? 50}%`,
+              transform: 'translate(-50%, -50%)',
+              maxWidth: 'none',
+              maxHeight: 'none',
+            }}
+          />
+        </motion.div>
+      )}
 
       {/* ── HEADER ── */}
       <motion.div

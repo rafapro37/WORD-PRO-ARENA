@@ -323,6 +323,11 @@ export interface AppSettings {
         loginBg: string;
         logo: string;
         favicon?: string;
+        dashboardBanner?: string;
+        dashboardBannerZoom?: number;
+        dashboardBannerPosX?: number;
+        dashboardBannerPosY?: number;
+        [key: string]: any;
     };
 }
 
