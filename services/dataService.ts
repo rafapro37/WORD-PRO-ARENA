@@ -2,8 +2,9 @@ import { AppState, UserRole, PlanType, UserStatus, User, PlayerProfile, Tourname
 import { supabase } from './supabase';
 
 const STORAGE_KEY = 'pro_world_arena_db_v1';
+const DELETED_TOURNAMENTS_KEY = 'pro_world_arena_deleted_tournaments_v1';
 
-// ─── Buscar dados do Supabase — apenas núcleo MVP ────────────────────────────
+// ─── Buscar dados do Supabase — apenas núcleo MVP ─────────────────────────────
 export const fetchAllFromSupabase = async (): Promise<Partial<AppState>> => {
   const results: Partial<AppState> = {};
   try {
@@ -33,15 +34,21 @@ export const fetchAllFromSupabase = async (): Promise<Partial<AppState>> => {
       supabase.from('convites_liga').select('*'),
     ]);
 
+    // Filtra torneios excluídos localmente (tombstone) para não "ressuscitarem"
+    const deletedIds = getDeletedTournamentIds();
+    const filteredTournaments = (tournaments || []).filter((t: any) => !deletedIds.includes(t.id));
+    const validTournamentIds = new Set(filteredTournaments.map((t: any) => t.id));
+
     if (users)             results.users             = users;
     if (profiles)          results.playerProfiles    = profiles;
-    if (tournaments)       results.tournaments       = tournaments;
-    if (teams)             results.teams             = teams;
-    if (matches)           results.matches           = matches;
-    if (players)           results.players           = players;
+    if (tournaments)       results.tournaments       = filteredTournaments;
+    // Remove dados órfãos de torneios excluídos
+    if (teams)             results.teams             = (teams || []).filter((t: any) => !t.tournamentId || validTournamentIds.has(t.tournamentId));
+    if (matches)           results.matches           = (matches || []).filter((m: any) => !m.tournamentId || validTournamentIds.has(m.tournamentId));
+    if (players)           results.players           = (players || []).filter((p: any) => !p.tournamentId || validTournamentIds.has(p.tournamentId));
     if (news)              results.news              = news;
     if (ads)               results.ads               = ads;
-    if (registrations)     results.registrations     = registrations;
+    if (registrations)     results.registrations     = (registrations || []).filter((r: any) => !r.tournamentId || validTournamentIds.has(r.tournamentId));
     if (leagues)           results.leagues           = leagues;
     if (leagueInvitations) results.leagueInvitations = leagueInvitations;
 
@@ -98,6 +105,28 @@ export const syncToSupabase = async (table: string, data: any[]) => {
 
 export const generateId = () => Date.now().toString() + Math.floor(Math.random() * 10000).toString();
 
+// ─── Tombstone: torneios excluídos (para não voltarem no sync) ────────────────
+export const getDeletedTournamentIds = (): string[] => {
+  try {
+    const raw = localStorage.getItem(DELETED_TOURNAMENTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const addDeletedTournamentId = (id: string) => {
+  try {
+    const ids = getDeletedTournamentIds();
+    if (!ids.includes(id)) {
+      ids.push(id);
+      localStorage.setItem(DELETED_TOURNAMENTS_KEY, JSON.stringify(ids));
+    }
+  } catch (e) {
+    console.error('[Tombstone] Erro ao registrar torneio excluído:', e);
+  }
+};
+
 // ─── Configurações globais (cores, imagens, branding) ─────────────────────────
 // Salva as settings na tabela 'configuracoes' (id fixo 'GLOBAL') para sincronizar entre dispositivos
 export const saveSettingsToSupabase = async (settings: any) => {
@@ -124,7 +153,6 @@ export const loadSettingsFromSupabase = async (): Promise<any | null> => {
     return null;
   }
 };
-
 
 // ─── Deletar registro do Supabase ─────────────────────────────────────────────
 export const deleteFromSupabase = async (table: string, id: string) => {
