@@ -54,9 +54,9 @@ export const fetchAllFromSupabase = async (): Promise<Partial<AppState>> => {
 // ─── Sincronizar tabela para o Supabase ──────────────────────────────────────
 // Colunas válidas por tabela — só esses campos são enviados ao Supabase
 const TABLE_COLUMNS: Record<string, string[]> = {
-  usuarios: ['id','name','username','email','password','role','plan','planStatus','status','organizadorId','ligaId','experiencePreference','organization','createdAt','emailVerified','whatsapp','verified','cardsBg','cardsBgZoom','cardsBgPosX','cardsBgPosY'],
+  usuarios: ['id','name','username','email','password','role','plan','planStatus','status','organizadorId','ligaId','experiencePreference','organization','createdAt','emailVerified','whatsapp','verified'],
   perfis: ['id','userId','nickname','photoUrl','teamName','teamLogoUrl','ligaId','clubData','position','overall','stats','createdAt'],
-  campeonatos: ['id','name','format','sport','experienceType','status','createdAt','organizadorId','ligaId','freeEditMode','manualParticipants','primaryColor','knockoutBackground','leagueLogoUrl','tournamentType','groups','swissRounds','currentRound','phase','awards','socialLinks','maxTeams','groupCount','bannerUrl','bannerSize','isPaid','entryFee','groupStageBackground','knockoutOpacity','classificacaoRules','classificados_por_grupo','knockoutAccentColor','knockoutTextColor','knockoutTrophyUrl','knockoutFont','knockoutCardColor'],
+  campeonatos: ['id','name','format','sport','experienceType','status','createdAt','organizadorId','ligaId','freeEditMode','manualParticipants','primaryColor','knockoutBackground','leagueLogoUrl','tournamentType','groups','swissRounds','currentRound','phase','awards','socialLinks','maxTeams','groupCount','bannerUrl','bannerSize','isPaid','entryFee','groupStageBackground','knockoutOpacity','classificacaoRules','classificados_por_grupo'],
   times: ['id','name','organizadorId','tournamentId','ligaId','groupId','ownerId','managerId','roster','played','won','drawn','lost','goalsFor','goalsAgainst','points','logoUrl'],
   partidas: ['id','organizadorId','tournamentId','homeTeamId','awayTeamId','homeScore','awayScore','isFinished','stage','groupId','round','scheduledAt','createdAt'],
   jogadores: ['id','organizadorId','tournamentId','teamId','name','position','goals','assists','yellowCards','redCards','photoUrl'],
@@ -97,6 +97,34 @@ export const syncToSupabase = async (table: string, data: any[]) => {
 };
 
 export const generateId = () => Date.now().toString() + Math.floor(Math.random() * 10000).toString();
+
+// ─── Configurações globais (cores, imagens, branding) ─────────────────────────
+// Salva as settings na tabela 'configuracoes' (id fixo 'GLOBAL') para sincronizar entre dispositivos
+export const saveSettingsToSupabase = async (settings: any) => {
+  try {
+    const { error } = await supabase.from('configuracoes').upsert([{
+      id: 'GLOBAL',
+      dados: settings,
+      updatedAt: Date.now(),
+      createdAt: Date.now(),
+    }], { onConflict: 'id' });
+    if (error) console.warn('[Settings] Aviso ao salvar:', error.message);
+  } catch (error) {
+    console.error('[Settings] Falha ao salvar:', error);
+  }
+};
+
+export const loadSettingsFromSupabase = async (): Promise<any | null> => {
+  try {
+    const { data, error } = await supabase.from('configuracoes').select('dados').eq('id', 'GLOBAL').maybeSingle();
+    if (error) { console.warn('[Settings] Aviso ao carregar:', error.message); return null; }
+    return data?.dados || null;
+  } catch (error) {
+    console.error('[Settings] Falha ao carregar:', error);
+    return null;
+  }
+};
+
 
 // ─── Deletar registro do Supabase ─────────────────────────────────────────────
 export const deleteFromSupabase = async (table: string, id: string) => {
@@ -204,47 +232,16 @@ export const loadState = (): AppState => {
 
 // ─── Salvar no localStorage ───────────────────────────────────────────────────
 export const saveState = (state: AppState) => {
-  // 1) Sessão SEMPRE primeiro e isolada — garante que um erro de quota no
-  //    estado principal nunca deslogue o usuário no F5.
   try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     if (state.currentUser) {
       localStorage.setItem('pro_world_arena_session_v1', JSON.stringify(state.currentUser));
     } else {
       localStorage.removeItem('pro_world_arena_session_v1');
     }
   } catch (e) {
-    console.error('[Storage] Erro ao salvar sessão:', e);
+    console.error('[Storage] Erro ao salvar:', e);
   }
-
-  // 2) Estado principal — isolado. Se estourar a quota (imagens base64 pesadas),
-  //    a sessão acima já está garantida.
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.error('[Storage] Erro ao salvar estado (provável quota excedida):', e);
-  }
-};
-
-// ─── Tombstones: IDs de campeonatos excluídos ─────────────────────────────────
-// Lista pequena que SEMPRE persiste (mesmo com estado cheio) e impede que um
-// campeonato excluído reapareça no F5 caso o delete remoto não tenha propagado.
-const DELETED_KEY = 'pwa_deleted_tournaments_v1';
-
-export const getDeletedTournamentIds = (): string[] => {
-  try {
-    const raw = localStorage.getItem(DELETED_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-};
-
-export const addDeletedTournamentId = (id: string) => {
-  try {
-    const ids = getDeletedTournamentIds();
-    if (!ids.includes(id)) {
-      ids.push(id);
-      localStorage.setItem(DELETED_KEY, JSON.stringify(ids));
-    }
-  } catch (e) { console.error('[Storage] Erro ao registrar exclusão:', e); }
 };
 
 export const clearStorage = () => {
