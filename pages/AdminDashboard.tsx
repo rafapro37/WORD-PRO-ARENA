@@ -194,7 +194,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setPendingSettings({});
       setEditingPlans({});
       setHasChanges(false);
-      setPreviewTheme(null); // Clear preview on save
       setShowSuccess(true);
 
       setTimeout(() => setShowSuccess(false), 3000);

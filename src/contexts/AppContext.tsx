@@ -6,8 +6,7 @@ import {
   AppState, User, UserRole, PlayerProfile, League,
   ExperienceType, AppSettings, Match, Player, Team,
 } from '../../types';
-import { loadState, saveState, generateId } from '../../services/dataService';
-import { fetchAllFromSupabase, saveSettingsToSupabase, loadSettingsFromSupabase } from '../../services/dataService';
+import { loadState, saveState, generateId, fetchAllFromSupabase, saveSettingsToSupabase, loadSettingsFromSupabase } from '../../services/dataService';
 import { clearSession } from '../../services/authService';
 import { useSync, type SyncStatus } from '../hooks/useSync';
 import { useRealtime, type RealtimeNotification } from '../hooks/useRealtime';
