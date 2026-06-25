@@ -189,13 +189,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           console.warn('[AppContext] Supabase indisponível, usando dados locais:', remoteErr);
         }
 
-        // Restaurar sessão; configurações: remoto (sincronizado) tem prioridade
+        // Restaurar sessão; configurações: merge sem apagar o que só existe de um lado
         loaded.currentUser = sessionUser;
-        loaded.settings = {
+        const mergedSettings: any = {
           ...loaded.settings,
           ...localSettings,
           ...(remoteSettings || {}),
         };
+        // globalImages (logo, carrossel, fundos): o remoto ganha onde tem valor real,
+        // mas não apaga o que só existe localmente (ex.: carrossel ainda não enviado).
+        const liGI: any = (localSettings as any)?.globalImages || {};
+        const reGI: any = (remoteSettings as any)?.globalImages || {};
+        const mergedGI: any = { ...liGI };
+        for (const k of Object.keys(reGI)) {
+          const v = reGI[k];
+          const hasValue = v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0);
+          if (hasValue || !(k in mergedGI)) mergedGI[k] = v;
+        }
+        mergedSettings.globalImages = mergedGI;
+        loaded.settings = mergedSettings;
 
         // Garantir tema padrão
         if (!loaded.settings.globalTheme) {
