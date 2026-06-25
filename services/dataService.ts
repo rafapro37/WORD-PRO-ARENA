@@ -148,9 +148,15 @@ export const saveSettingsToSupabase = async (settings: any) => {
 
 export const loadSettingsFromSupabase = async (): Promise<any | null> => {
   try {
+    console.log('[Settings] Carregando configurações do Supabase...');
     const { data, error } = await supabase.from('configuracoes').select('dados').eq('id', 'GLOBAL').maybeSingle();
-    if (error) { console.warn('[Settings] Aviso ao carregar:', error.message); return null; }
-    return data?.dados || null;
+    if (error) { console.error('[Settings] ERRO ao carregar:', error.message, error); return null; }
+    if (data?.dados) {
+      console.log('[Settings] ✓ Configurações carregadas do Supabase!', data.dados);
+      return data.dados;
+    }
+    console.log('[Settings] Nenhuma configuração encontrada no Supabase (tabela vazia)');
+    return null;
   } catch (error) {
     console.error('[Settings] Falha ao carregar:', error);
     return null;
