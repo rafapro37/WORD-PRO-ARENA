@@ -6,8 +6,8 @@ import {
   AppState, User, UserRole, PlayerProfile, League,
   ExperienceType, AppSettings, Match, Player, Team,
 } from '../../types';
-import { loadState, saveState, generateId, getDeletedTournamentIds } from '../../services/dataService';
-import { fetchAllFromSupabase } from '../../services/dataService';
+import { loadState, saveState, generateId } from '../../services/dataService';
+import { fetchAllFromSupabase, saveSettingsToSupabase, loadSettingsFromSupabase } from '../../services/dataService';
 import { clearSession } from '../../services/authService';
 import { useSync, type SyncStatus } from '../hooks/useSync';
 import { useRealtime, type RealtimeNotification } from '../hooks/useRealtime';
@@ -194,6 +194,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...localSettings,
         };
 
+        // Carregar configurações globais do Supabase (sincroniza cores/imagens entre dispositivos)
+        try {
+          const remoteSettings = await loadSettingsFromSupabase();
+          if (remoteSettings) {
+            loaded.settings = { ...loaded.settings, ...remoteSettings };
+          }
+        } catch (settingsErr) {
+          console.warn('[AppContext] Configurações remotas indisponíveis:', settingsErr);
+        }
+
         // Garantir tema padrão
         if (!loaded.settings.globalTheme) {
           loaded.settings.globalTheme = {
@@ -201,19 +211,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             superficie: '#20242D', texto: '#F2F2F2',
           };
         }
-
-        // ── Remover campeonatos excluídos que possam ter voltado do Supabase ──
-        // (e todos os dados vinculados a eles), usando os tombstones locais.
-        const deletedIds = new Set(getDeletedTournamentIds());
-        if (deletedIds.size > 0) {
-          loaded.tournaments = loaded.tournaments.filter(t => !deletedIds.has(t.id));
-        }
-        // ── Limpar órfãos: dados cujo torneio não existe mais ──
-        const validTournamentIds = new Set(loaded.tournaments.map(t => t.id));
-        loaded.matches = loaded.matches.filter(m => !m.tournamentId || validTournamentIds.has(m.tournamentId));
-        loaded.teams = loaded.teams.filter(t => !(t as any).tournamentId || validTournamentIds.has((t as any).tournamentId));
-        loaded.players = loaded.players.filter(p => !(p as any).tournamentId || validTournamentIds.has((p as any).tournamentId));
-        loaded.registrations = loaded.registrations.filter(r => !(r as any).tournamentId || validTournamentIds.has((r as any).tournamentId));
 
         setState(loaded);
       } catch (err) {
@@ -414,7 +411,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [logSystemAction]);
 
   const handleUpdateSettings = useCallback((updates: Partial<AppSettings>) => {
-    setState(prev => ({ ...prev, settings: { ...prev.settings, ...updates } }));
+    setState(prev => {
+      const newSettings = { ...prev.settings, ...updates };
+      // Sincroniza as configurações globais entre dispositivos
+      saveSettingsToSupabase(newSettings);
+      return { ...prev, settings: newSettings };
+    });
   }, []);
 
   // ── Multi-tenant: dados filtrados ─────────────────────────────────────────
