@@ -2,9 +2,8 @@ import { AppState, UserRole, PlanType, UserStatus, User, PlayerProfile, Tourname
 import { supabase } from './supabase';
 
 const STORAGE_KEY = 'pro_world_arena_db_v1';
-const DELETED_TOURNAMENTS_KEY = 'pro_world_arena_deleted_tournaments_v1';
 
-// ─── Buscar dados do Supabase — apenas núcleo MVP ─────────────────────────────
+// ─── Buscar dados do Supabase — apenas núcleo MVP ────────────────────────────
 export const fetchAllFromSupabase = async (): Promise<Partial<AppState>> => {
   const results: Partial<AppState> = {};
   try {
@@ -34,23 +33,31 @@ export const fetchAllFromSupabase = async (): Promise<Partial<AppState>> => {
       supabase.from('convites_liga').select('*'),
     ]);
 
-    // Filtra torneios excluídos localmente (tombstone) para não "ressuscitarem"
-    const deletedIds = getDeletedTournamentIds();
-    const filteredTournaments = (tournaments || []).filter((t: any) => !deletedIds.includes(t.id));
-    const validTournamentIds = new Set(filteredTournaments.map((t: any) => t.id));
-
     if (users)             results.users             = users;
     if (profiles)          results.playerProfiles    = profiles;
-    if (tournaments)       results.tournaments       = filteredTournaments;
-    // Remove dados órfãos de torneios excluídos
-    if (teams)             results.teams             = (teams || []).filter((t: any) => !t.tournamentId || validTournamentIds.has(t.tournamentId));
-    if (matches)           results.matches           = (matches || []).filter((m: any) => !m.tournamentId || validTournamentIds.has(m.tournamentId));
-    if (players)           results.players           = (players || []).filter((p: any) => !p.tournamentId || validTournamentIds.has(p.tournamentId));
+    if (tournaments)       results.tournaments       = tournaments;
+    if (teams)             results.teams             = teams;
+    if (matches)           results.matches           = matches;
+    if (players)           results.players           = players;
     if (news)              results.news              = news;
     if (ads)               results.ads               = ads;
-    if (registrations)     results.registrations     = (registrations || []).filter((r: any) => !r.tournamentId || validTournamentIds.has(r.tournamentId));
+    if (registrations)     results.registrations     = registrations;
     if (leagues)           results.leagues           = leagues;
     if (leagueInvitations) results.leagueInvitations = leagueInvitations;
+
+    // Configurações globais do sistema (logo, banners, fundos...) — tabela própria.
+    // Resiliente: se a tabela ainda não existir, apenas ignora (não quebra o resto).
+    try {
+      const { data: configRows } = await supabase.from('configuracoes').select('*');
+      if (configRows && configRows.length > 0) {
+        const globalCfg: any = configRows.find((c: any) => c.id === 'GLOBAL' || c.id === 'global');
+        // a coluna no banco se chama "dados"; aceitamos "data" como alternativa
+        const cfgData = globalCfg?.dados ?? globalCfg?.data;
+        if (cfgData) results.settings = cfgData;
+      }
+    } catch (cfgErr) {
+      console.warn('[Supabase] configuracoes indisponível:', cfgErr);
+    }
 
   } catch (error) {
     console.error('[Supabase] Erro ao buscar dados:', error);
@@ -61,9 +68,9 @@ export const fetchAllFromSupabase = async (): Promise<Partial<AppState>> => {
 // ─── Sincronizar tabela para o Supabase ──────────────────────────────────────
 // Colunas válidas por tabela — só esses campos são enviados ao Supabase
 const TABLE_COLUMNS: Record<string, string[]> = {
-  usuarios: ['id','name','username','email','password','role','plan','planStatus','status','organizadorId','ligaId','experiencePreference','organization','createdAt','emailVerified','whatsapp','verified'],
+  usuarios: ['id','name','username','email','password','role','plan','planStatus','status','organizadorId','ligaId','experiencePreference','organization','createdAt','emailVerified','whatsapp','verified','cardsBg','cardsBgZoom','cardsBgPosX','cardsBgPosY'],
   perfis: ['id','userId','nickname','photoUrl','teamName','teamLogoUrl','ligaId','clubData','position','overall','stats','createdAt'],
-  campeonatos: ['id','name','format','sport','experienceType','status','createdAt','organizadorId','ligaId','freeEditMode','manualParticipants','primaryColor','knockoutBackground','leagueLogoUrl','tournamentType','groups','swissRounds','currentRound','phase','awards','socialLinks','maxTeams','groupCount','bannerUrl','bannerSize','isPaid','entryFee','groupStageBackground','knockoutOpacity','classificacaoRules','classificados_por_grupo'],
+  campeonatos: ['id','name','format','sport','experienceType','status','createdAt','organizadorId','ligaId','freeEditMode','manualParticipants','primaryColor','knockoutBackground','leagueLogoUrl','tournamentType','groups','swissRounds','currentRound','phase','awards','socialLinks','maxTeams','groupCount','bannerUrl','bannerSize','isPaid','entryFee','groupStageBackground','knockoutOpacity','classificacaoRules','classificados_por_grupo','knockoutAccentColor','knockoutTextColor','knockoutTrophyUrl','knockoutFont','knockoutCardColor'],
   times: ['id','name','organizadorId','tournamentId','ligaId','groupId','ownerId','managerId','roster','played','won','drawn','lost','goalsFor','goalsAgainst','points','logoUrl'],
   partidas: ['id','organizadorId','tournamentId','homeTeamId','awayTeamId','homeScore','awayScore','isFinished','stage','groupId','round','scheduledAt','createdAt'],
   jogadores: ['id','organizadorId','tournamentId','teamId','name','position','goals','assists','yellowCards','redCards','photoUrl'],
@@ -103,73 +110,27 @@ export const syncToSupabase = async (table: string, data: any[]) => {
   }
 };
 
+// ─── Sincronizar configurações globais (logo, banners, fundos...) ────────────
+export const syncSettingsToSupabase = async (settings: any) => {
+  if (!settings) return;
+  try {
+    // No banco: id (text) = 'GLOBAL', coluna jsonb = "dados", mais "updatedat".
+    const { error } = await supabase
+      .from('configuracoes')
+      .upsert({ id: 'GLOBAL', dados: settings, updatedat: Date.now() }, { onConflict: 'id' });
+    if (error) console.warn('[Sync] configuracoes:', error.message);
+  } catch (error) {
+    console.error('[Sync] Falha em configuracoes:', error);
+  }
+};
+
 export const generateId = () => Date.now().toString() + Math.floor(Math.random() * 10000).toString();
-
-// ─── Tombstone: torneios excluídos (para não voltarem no sync) ────────────────
-export const getDeletedTournamentIds = (): string[] => {
-  try {
-    const raw = localStorage.getItem(DELETED_TOURNAMENTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-};
-
-export const addDeletedTournamentId = (id: string) => {
-  try {
-    const ids = getDeletedTournamentIds();
-    if (!ids.includes(id)) {
-      ids.push(id);
-      localStorage.setItem(DELETED_TOURNAMENTS_KEY, JSON.stringify(ids));
-    }
-  } catch (e) {
-    console.error('[Tombstone] Erro ao registrar torneio excluído:', e);
-  }
-};
-
-// ─── Configurações globais (cores, imagens, branding) ─────────────────────────
-// Salva as settings na tabela 'configuracoes' (id fixo 'GLOBAL') para sincronizar entre dispositivos
-export const saveSettingsToSupabase = async (settings: any) => {
-  try {
-    console.log('[Settings] Salvando configurações no Supabase...');
-    const { data, error } = await supabase.from('configuracoes').upsert([{
-      id: 'GLOBAL',
-      dados: settings,
-    }], { onConflict: 'id' }).select();
-    if (error) {
-      console.error('[Settings] ERRO ao salvar:', error.message, error);
-    } else {
-      console.log('[Settings] ✓ Configurações salvas com sucesso!', data);
-    }
-  } catch (error) {
-    console.error('[Settings] Falha ao salvar:', error);
-  }
-};
-
-export const loadSettingsFromSupabase = async (): Promise<any | null> => {
-  try {
-    console.log('[Settings] Carregando configurações do Supabase...');
-    const { data, error } = await supabase.from('configuracoes').select('dados').eq('id', 'GLOBAL').maybeSingle();
-    if (error) { console.error('[Settings] ERRO ao carregar:', error.message, error); return null; }
-    if (data?.dados) {
-      console.log('[Settings] ✓ Configurações carregadas do Supabase!', data.dados);
-      return data.dados;
-    }
-    console.log('[Settings] Nenhuma configuração encontrada no Supabase (tabela vazia)');
-    return null;
-  } catch (error) {
-    console.error('[Settings] Falha ao carregar:', error);
-    return null;
-  }
-};
 
 // ─── Deletar registro do Supabase ─────────────────────────────────────────────
 export const deleteFromSupabase = async (table: string, id: string) => {
   try {
-    console.log(`[Delete] Removendo de ${table} id=${id}...`);
     const { error } = await supabase.from(table).delete().eq('id', id);
-    if (error) console.error(`[Delete] ERRO em ${table}:`, error.message, error);
-    else console.log(`[Delete] ✓ Removido de ${table}`);
+    if (error) console.warn(`[Delete] Aviso em ${table}:`, error.message);
   } catch (error) {
     console.error(`[Delete] Falha em ${table}:`, error);
   }
@@ -271,16 +232,47 @@ export const loadState = (): AppState => {
 
 // ─── Salvar no localStorage ───────────────────────────────────────────────────
 export const saveState = (state: AppState) => {
+  // 1) Sessão SEMPRE primeiro e isolada — garante que um erro de quota no
+  //    estado principal nunca deslogue o usuário no F5.
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     if (state.currentUser) {
       localStorage.setItem('pro_world_arena_session_v1', JSON.stringify(state.currentUser));
     } else {
       localStorage.removeItem('pro_world_arena_session_v1');
     }
   } catch (e) {
-    console.error('[Storage] Erro ao salvar:', e);
+    console.error('[Storage] Erro ao salvar sessão:', e);
   }
+
+  // 2) Estado principal — isolado. Se estourar a quota (imagens base64 pesadas),
+  //    a sessão acima já está garantida.
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('[Storage] Erro ao salvar estado (provável quota excedida):', e);
+  }
+};
+
+// ─── Tombstones: IDs de campeonatos excluídos ─────────────────────────────────
+// Lista pequena que SEMPRE persiste (mesmo com estado cheio) e impede que um
+// campeonato excluído reapareça no F5 caso o delete remoto não tenha propagado.
+const DELETED_KEY = 'pwa_deleted_tournaments_v1';
+
+export const getDeletedTournamentIds = (): string[] => {
+  try {
+    const raw = localStorage.getItem(DELETED_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
+export const addDeletedTournamentId = (id: string) => {
+  try {
+    const ids = getDeletedTournamentIds();
+    if (!ids.includes(id)) {
+      ids.push(id);
+      localStorage.setItem(DELETED_KEY, JSON.stringify(ids));
+    }
+  } catch (e) { console.error('[Storage] Erro ao registrar exclusão:', e); }
 };
 
 export const clearStorage = () => {

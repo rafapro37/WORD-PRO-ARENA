@@ -6,7 +6,8 @@ import {
   AppState, User, UserRole, PlayerProfile, League,
   ExperienceType, AppSettings, Match, Player, Team,
 } from '../../types';
-import { loadState, saveState, generateId, fetchAllFromSupabase, saveSettingsToSupabase, loadSettingsFromSupabase } from '../../services/dataService';
+import { loadState, saveState, generateId, getDeletedTournamentIds } from '../../services/dataService';
+import { fetchAllFromSupabase } from '../../services/dataService';
 import { clearSession } from '../../services/authService';
 import { useSync, type SyncStatus } from '../hooks/useSync';
 import { useRealtime, type RealtimeNotification } from '../hooks/useRealtime';
@@ -164,9 +165,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         // Buscar TUDO do Supabase primeiro
         let loaded: AppState = { ...local };
+        let remoteSettings: any = null;
         try {
           const remoteData = await fetchAllFromSupabase();
           if (remoteData && Object.keys(remoteData).length > 0) {
+            remoteSettings = (remoteData as any).settings || null;
             loaded = {
               ...local,
               users:             remoteData.users             || local.users,
@@ -186,22 +189,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           console.warn('[AppContext] Supabase indisponível, usando dados locais:', remoteErr);
         }
 
-        // Restaurar sessão e settings locais
+        // Restaurar sessão; configurações: remoto (sincronizado) tem prioridade
         loaded.currentUser = sessionUser;
         loaded.settings = {
           ...loaded.settings,
           ...localSettings,
+          ...(remoteSettings || {}),
         };
-
-        // Carregar configurações globais do Supabase (sincroniza cores/imagens entre dispositivos)
-        try {
-          const remoteSettings = await loadSettingsFromSupabase();
-          if (remoteSettings) {
-            loaded.settings = { ...loaded.settings, ...remoteSettings };
-          }
-        } catch (settingsErr) {
-          console.warn('[AppContext] Configurações remotas indisponíveis:', settingsErr);
-        }
 
         // Garantir tema padrão
         if (!loaded.settings.globalTheme) {
@@ -210,6 +204,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             superficie: '#20242D', texto: '#F2F2F2',
           };
         }
+
+        // ── Remover campeonatos excluídos que possam ter voltado do Supabase ──
+        // (e todos os dados vinculados a eles), usando os tombstones locais.
+        const deletedIds = new Set(getDeletedTournamentIds());
+        if (deletedIds.size > 0) {
+          loaded.tournaments = loaded.tournaments.filter(t => !deletedIds.has(t.id));
+        }
+        // ── Limpar órfãos: dados cujo torneio não existe mais ──
+        const validTournamentIds = new Set(loaded.tournaments.map(t => t.id));
+        loaded.matches = loaded.matches.filter(m => !m.tournamentId || validTournamentIds.has(m.tournamentId));
+        loaded.teams = loaded.teams.filter(t => !(t as any).tournamentId || validTournamentIds.has((t as any).tournamentId));
+        loaded.players = loaded.players.filter(p => !(p as any).tournamentId || validTournamentIds.has((p as any).tournamentId));
+        loaded.registrations = loaded.registrations.filter(r => !(r as any).tournamentId || validTournamentIds.has((r as any).tournamentId));
 
         setState(loaded);
       } catch (err) {
@@ -254,36 +261,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return state.currentUser.organizadorId || null;
   }, [state.currentUser]);
 
-  // Recarrega os dados do Supabase (chamado pelo realtime quando algo muda em outro dispositivo)
-  const reloadFromSupabase = useCallback(async () => {
-    try {
-      const remoteData = await fetchAllFromSupabase();
-      const remoteSettings = await loadSettingsFromSupabase();
-      setState(prev => ({
-        ...prev,
-        users:             remoteData.users             || prev.users,
-        tournaments:       remoteData.tournaments       || prev.tournaments,
-        teams:             remoteData.teams             || prev.teams,
-        matches:           remoteData.matches           || prev.matches,
-        players:           remoteData.players           || prev.players,
-        playerProfiles:    remoteData.playerProfiles    || prev.playerProfiles,
-        registrations:     remoteData.registrations     || prev.registrations,
-        leagues:           remoteData.leagues           || prev.leagues,
-        leagueInvitations: remoteData.leagueInvitations || prev.leagueInvitations,
-        news:              remoteData.news              || prev.news,
-        ads:               remoteData.ads               || prev.ads,
-        settings:          remoteSettings ? { ...prev.settings, ...remoteSettings } : prev.settings,
-      }));
-    } catch (e) {
-      console.warn('[Sync] Erro ao recarregar dados:', e);
-    }
-  }, []);
-
   useRealtime({
     currentUser: state.currentUser,
     organizadorId: realtimeOrgId,
     onNotification: addNotification,
-    onDataChange: reloadFromSupabase,
   });
 
   // ── Aplicar tema CSS em tempo real ───────────────────────────────────────
@@ -436,12 +417,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [logSystemAction]);
 
   const handleUpdateSettings = useCallback((updates: Partial<AppSettings>) => {
-    setState(prev => {
-      const newSettings = { ...prev.settings, ...updates };
-      // Salva no Supabase para sincronizar entre dispositivos
-      saveSettingsToSupabase(newSettings).catch(e => console.error('[Settings] erro no save:', e));
-      return { ...prev, settings: newSettings };
-    });
+    setState(prev => ({ ...prev, settings: { ...prev.settings, ...updates } }));
   }, []);
 
   // ── Multi-tenant: dados filtrados ─────────────────────────────────────────

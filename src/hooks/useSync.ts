@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { AppState, UserRole } from '../../types';
-import { saveState, syncToSupabase } from '../../services/dataService';
+import { saveState, syncToSupabase, syncSettingsToSupabase } from '../../services/dataService';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'ERROR';
 
@@ -55,6 +55,8 @@ export function useSync(state: AppState) {
           if (state.leagues.length       > 0) await syncToSupabase('federacoes',    state.leagues);
           if (state.news.length          > 0) await syncToSupabase('noticias',      state.news);
           if (state.ads.length           > 0) await syncToSupabase('anuncios',      state.ads);
+          // Configurações globais do sistema (logo, banners do carrossel, fundos...)
+          await syncSettingsToSupabase(state.settings);
         } else if (isOrganizer) {
           const myTournaments   = state.tournaments.filter(t => t.organizadorId === userId);
           const myTournamentIds = new Set(myTournaments.map(t => t.id));
