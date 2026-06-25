@@ -131,11 +131,16 @@ export const addDeletedTournamentId = (id: string) => {
 // Salva as settings na tabela 'configuracoes' (id fixo 'GLOBAL') para sincronizar entre dispositivos
 export const saveSettingsToSupabase = async (settings: any) => {
   try {
-    const { error } = await supabase.from('configuracoes').upsert([{
+    console.log('[Settings] Salvando configurações no Supabase...');
+    const { data, error } = await supabase.from('configuracoes').upsert([{
       id: 'GLOBAL',
       dados: settings,
-    }], { onConflict: 'id' });
-    if (error) console.warn('[Settings] Aviso ao salvar:', error.message);
+    }], { onConflict: 'id' }).select();
+    if (error) {
+      console.error('[Settings] ERRO ao salvar:', error.message, error);
+    } else {
+      console.log('[Settings] ✓ Configurações salvas com sucesso!', data);
+    }
   } catch (error) {
     console.error('[Settings] Falha ao salvar:', error);
   }

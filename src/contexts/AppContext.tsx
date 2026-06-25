@@ -412,8 +412,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const handleUpdateSettings = useCallback((updates: Partial<AppSettings>) => {
     setState(prev => {
       const newSettings = { ...prev.settings, ...updates };
-      // Sincroniza as configurações globais entre dispositivos
-      saveSettingsToSupabase(newSettings);
+      // Salva no Supabase para sincronizar entre dispositivos
+      saveSettingsToSupabase(newSettings).catch(e => console.error('[Settings] erro no save:', e));
       return { ...prev, settings: newSettings };
     });
   }, []);
