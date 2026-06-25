@@ -45,12 +45,28 @@ export function useSync(state: AppState) {
         const myProfile = state.playerProfiles.filter(p => p.userId === userId);
         if (myProfile.length > 0) await syncToSupabase('perfis', myProfile);
 
-        if (isOrganizer) {
+        if (isAdmin) {
+          // Admin é dono do sistema: sincroniza tudo (preservando o organizadorId de cada item)
+          if (state.tournaments.length   > 0) await syncToSupabase('campeonatos',   state.tournaments);
+          if (state.teams.length         > 0) await syncToSupabase('times',         state.teams);
+          if (state.matches.length       > 0) await syncToSupabase('partidas',      state.matches);
+          if (state.players.length       > 0) await syncToSupabase('jogadores',     state.players);
+          if (state.registrations.length > 0) await syncToSupabase('participantes', state.registrations);
+          if (state.leagues.length       > 0) await syncToSupabase('federacoes',    state.leagues);
+          if (state.news.length          > 0) await syncToSupabase('noticias',      state.news);
+          if (state.ads.length           > 0) await syncToSupabase('anuncios',      state.ads);
+        } else if (isOrganizer) {
           const myTournaments   = state.tournaments.filter(t => t.organizadorId === userId);
-          const myTeams         = state.teams.filter(t => t.organizadorId === userId);
-          const myMatches       = state.matches.filter(m => m.organizadorId === userId);
-          const myPlayers       = state.players.filter(p => p.organizadorId === userId);
-          const myRegistrations = state.registrations.filter(r => r.organizadorId === userId);
+          const myTournamentIds = new Set(myTournaments.map(t => t.id));
+          // Pertence a mim se o organizadorId bate OU está vinculado a um torneio meu.
+          // Carimba o organizadorId nos itens sem o campo, pra aparecerem em outro dispositivo.
+          const mine  = (x: any) => x.organizadorId === userId || (x.tournamentId && myTournamentIds.has(x.tournamentId));
+          const stamp = (arr: any[]) => arr.filter(mine).map(x => x.organizadorId ? x : { ...x, organizadorId: userId });
+
+          const myTeams         = stamp(state.teams);
+          const myMatches       = stamp(state.matches);
+          const myPlayers       = stamp(state.players);
+          const myRegistrations = stamp(state.registrations);
           const myLeagues       = state.leagues.filter(l => l.organizadorId === userId);
           const myNews          = state.news.filter(n => n.organizadorId === userId);
           const myAds           = state.ads.filter(a => a.organizadorId === userId);
