@@ -254,10 +254,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return state.currentUser.organizadorId || null;
   }, [state.currentUser]);
 
+  // Recarrega os dados do Supabase (chamado pelo realtime quando algo muda em outro dispositivo)
+  const reloadFromSupabase = useCallback(async () => {
+    try {
+      const remoteData = await fetchAllFromSupabase();
+      const remoteSettings = await loadSettingsFromSupabase();
+      setState(prev => ({
+        ...prev,
+        users:             remoteData.users             || prev.users,
+        tournaments:       remoteData.tournaments       || prev.tournaments,
+        teams:             remoteData.teams             || prev.teams,
+        matches:           remoteData.matches           || prev.matches,
+        players:           remoteData.players           || prev.players,
+        playerProfiles:    remoteData.playerProfiles    || prev.playerProfiles,
+        registrations:     remoteData.registrations     || prev.registrations,
+        leagues:           remoteData.leagues           || prev.leagues,
+        leagueInvitations: remoteData.leagueInvitations || prev.leagueInvitations,
+        news:              remoteData.news              || prev.news,
+        ads:               remoteData.ads               || prev.ads,
+        settings:          remoteSettings ? { ...prev.settings, ...remoteSettings } : prev.settings,
+      }));
+    } catch (e) {
+      console.warn('[Sync] Erro ao recarregar dados:', e);
+    }
+  }, []);
+
   useRealtime({
     currentUser: state.currentUser,
     organizadorId: realtimeOrgId,
     onNotification: addNotification,
+    onDataChange: reloadFromSupabase,
   });
 
   // ── Aplicar tema CSS em tempo real ───────────────────────────────────────
