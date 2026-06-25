@@ -134,8 +134,6 @@ export const saveSettingsToSupabase = async (settings: any) => {
     const { error } = await supabase.from('configuracoes').upsert([{
       id: 'GLOBAL',
       dados: settings,
-      updatedAt: Date.now(),
-      createdAt: Date.now(),
     }], { onConflict: 'id' });
     if (error) console.warn('[Settings] Aviso ao salvar:', error.message);
   } catch (error) {
