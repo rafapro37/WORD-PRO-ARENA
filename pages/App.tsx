@@ -43,6 +43,7 @@ import {
   generateTestScenario,
   deleteFromSupabase,
   deleteWhereFromSupabase,
+  addDeletedTournamentId,
 } from "../services/dataService";
 import { BASE_PLAYERS_X1, MARKET_KEY } from "../constants";
 import { REAL_PLAYER_NAMES } from "../src/constants/realPlayers";
@@ -2300,6 +2301,7 @@ const App: React.FC = () => {
                     players: prev.players.filter((p) => p.tournamentId !== id),
                   }));
                   // Remove do Supabase (senão volta no F5)
+                  addDeletedTournamentId(id);
                   deleteFromSupabase('campeonatos', id);
                   deleteWhereFromSupabase('partidas', 'tournamentId', id);
                   deleteWhereFromSupabase('times', 'tournamentId', id);
@@ -2509,6 +2511,7 @@ const App: React.FC = () => {
                       teams: prev.teams.filter((t) => t.tournamentId !== id),
                       players: prev.players.filter((p) => p.tournamentId !== id),
                     }));
+                    addDeletedTournamentId(id);
                     deleteFromSupabase('campeonatos', id);
                     deleteWhereFromSupabase('partidas', 'tournamentId', id);
                     deleteWhereFromSupabase('times', 'tournamentId', id);

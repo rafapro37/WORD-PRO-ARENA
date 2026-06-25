@@ -166,8 +166,10 @@ export const loadSettingsFromSupabase = async (): Promise<any | null> => {
 // ─── Deletar registro do Supabase ─────────────────────────────────────────────
 export const deleteFromSupabase = async (table: string, id: string) => {
   try {
+    console.log(`[Delete] Removendo de ${table} id=${id}...`);
     const { error } = await supabase.from(table).delete().eq('id', id);
-    if (error) console.warn(`[Delete] Aviso em ${table}:`, error.message);
+    if (error) console.error(`[Delete] ERRO em ${table}:`, error.message, error);
+    else console.log(`[Delete] ✓ Removido de ${table}`);
   } catch (error) {
     console.error(`[Delete] Falha em ${table}:`, error);
   }
