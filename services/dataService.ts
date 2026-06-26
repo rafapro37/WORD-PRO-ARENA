@@ -112,10 +112,9 @@ export const syncToSupabase = async (table: string, data: any[]) => {
 };
 
 // ─── Sincronizar configurações globais (logo, banners, fundos...) ────────────
-export const syncSettingsToSupabase = async (settings: any, showError = false) => {
+export const syncSettingsToSupabase = async (settings: any, showResult = false) => {
   if (!settings) return { ok: false };
   try {
-    // No banco: id (text) = 'GLOBAL', coluna jsonb = "dados", mais "updatedat".
     const payload = JSON.stringify(settings);
     const sizeKB = Math.round(payload.length / 1024);
     const { error } = await supabase
@@ -123,13 +122,14 @@ export const syncSettingsToSupabase = async (settings: any, showError = false) =
       .upsert({ id: 'GLOBAL', dados: settings, updatedat: Date.now() }, { onConflict: 'id' });
     if (error) {
       console.warn('[Sync] configuracoes:', error.message);
-      if (showError) toast.error(`Erro ao salvar (${sizeKB}KB): ${error.message}`, 8000);
+      if (showResult) toast.error(`Erro ao salvar (${sizeKB}KB): ${error.message}`, 8000);
       return { ok: false, error: error.message };
     }
+    if (showResult) toast.success(`Configurações enviadas ao servidor (${sizeKB}KB)`, 4000);
     return { ok: true };
   } catch (error: any) {
     console.error('[Sync] Falha em configuracoes:', error);
-    if (showError) toast.error(`Falha ao salvar: ${error?.message || String(error)}`, 8000);
+    if (showResult) toast.error(`Falha ao salvar: ${error?.message || String(error)}`, 8000);
     return { ok: false, error: String(error) };
   }
 };

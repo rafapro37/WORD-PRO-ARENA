@@ -3,6 +3,7 @@ import { toast } from '../src/lib/toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppState, AppSettings } from '../types';
 import { uploadFile } from '../services/supabase';
+import { syncSettingsToSupabase } from '../services/dataService';
 import { useLocale } from '../src/contexts/LocaleContext';
 import CardImageAdjuster from '../components/ImageAdjuster';
 
@@ -267,12 +268,22 @@ const AdminPersonalizacao: React.FC<AdminPersonalizacaoProps> = ({ state, onUpda
 
   const handleSave = () => {
     setSaving(true);
+    const novasSettings: any = {
+      ...state.settings,
+      globalTheme: cores,
+      globalImages: imagens,
+      brandingTextPrimary:   textos.nomePrimario,
+      brandingTextSecondary: textos.nomeSecundario,
+      _ts: Date.now(),
+    };
     onUpdateSettings({
       globalTheme: cores,
       globalImages: imagens,
       brandingTextPrimary:   textos.nomePrimario,
       brandingTextSecondary: textos.nomeSecundario,
     });
+    // Grava direto no Supabase e mostra o resultado (sucesso/erro) na tela
+    syncSettingsToSupabase(novasSettings, true);
     setTimeout(() => {
       setSaving(false);
       setSaved(true);
