@@ -45,7 +45,7 @@ import {
   deleteWhereFromSupabase,
   addDeletedTournamentId,
 } from "../services/dataService";
-import { BASE_PLAYERS_X1, MARKET_KEY } from "../constants";
+import { MARKET_KEY } from "../constants";
 import { REAL_PLAYER_NAMES } from "../src/constants/realPlayers";
 import { hashPassword } from "../services/authService";
 
@@ -582,17 +582,7 @@ const App: React.FC = () => {
       teams: [...prev.teams, ...newTeams],
       players: [...prev.players, ...newPlayers],
       registrations: [...prev.registrations, ...newRegistrations],
-      marketPlayers:
-        data.tournamentType === "X1"
-          ? [
-              ...prev.marketPlayers,
-              ...BASE_PLAYERS_X1.map((p) => ({
-                ...p,
-                id: generateId(),
-                tournamentId: newTournament.id,
-              })),
-            ]
-          : prev.marketPlayers,
+      marketPlayers: prev.marketPlayers,
     }));
 
     logSystemAction(
@@ -2208,6 +2198,24 @@ const App: React.FC = () => {
                   setSelectedTournamentId(id);
                   setCurrentPage('tournament-details');
                 }}
+                dashboardBanners={(() => {
+                  const gi = (state.settings.globalImages as any) || {};
+                  // Lista nova (carrossel); se vazia, cai pro banner único antigo
+                  if (Array.isArray(gi.dashboardBanners) && gi.dashboardBanners.length > 0) return gi.dashboardBanners;
+                  if (gi.dashboardBanner) return [{
+                    url: gi.dashboardBanner, zoom: gi.dashboardBannerZoom,
+                    posX: gi.dashboardBannerPosX, posY: gi.dashboardBannerPosY,
+                  }];
+                  return [];
+                })()}
+                cardsBackground={(() => {
+                  const u = state.currentUser as any;
+                  const gi = (state.settings.globalImages as any) || {};
+                  // Organizador complementa: se tiver o dele, usa; senão usa o global do admin
+                  if (u?.cardsBg) return { url: u.cardsBg, zoom: u.cardsBgZoom, posX: u.cardsBgPosX, posY: u.cardsBgPosY };
+                  if (gi.cardsBg) return { url: gi.cardsBg, zoom: gi.cardsBgZoom, posX: gi.cardsBgPosX, posY: gi.cardsBgPosY };
+                  return undefined;
+                })()}
               />
             )}
 
@@ -2292,16 +2300,28 @@ const App: React.FC = () => {
                 onGenerateMatches={handleGenerateMatches}
                 onCreateTeamsFromManual={handleCreateTeamsFromManual}
                 onDeleteTournament={(id) => {
-                  // Remove do estado local
-                  setState((prev) => ({
-                    ...prev,
-                    tournaments: prev.tournaments.filter((t) => t.id !== id),
-                    matches: prev.matches.filter((m) => m.tournamentId !== id),
-                    teams: prev.teams.filter((t) => t.tournamentId !== id),
-                    players: prev.players.filter((p) => p.tournamentId !== id),
-                  }));
-                  // Remove do Supabase (senão volta no F5)
+                  // Tombstone: impede que o campeonato volte no F5 mesmo se o
+                  // delete remoto não propagar a tempo.
                   addDeletedTournamentId(id);
+                  // Remove do estado local (incluindo jogadores órfãos por time)
+                  setState((prev) => {
+                    const teamIdsDoTorneio = new Set(
+                      prev.teams.filter((t) => t.tournamentId === id).map((t) => t.id)
+                    );
+                    return {
+                      ...prev,
+                      tournaments: prev.tournaments.filter((t) => t.id !== id),
+                      matches: prev.matches.filter((m) => m.tournamentId !== id),
+                      teams: prev.teams.filter((t) => t.tournamentId !== id),
+                      players: prev.players.filter(
+                        (p) => p.tournamentId !== id && !teamIdsDoTorneio.has((p as any).teamId)
+                      ),
+                      registrations: prev.registrations.filter(
+                        (r) => (r as any).tournamentId !== id
+                      ),
+                    };
+                  });
+                  // Remove do Supabase (senão volta no F5)
                   deleteFromSupabase('campeonatos', id);
                   deleteWhereFromSupabase('partidas', 'tournamentId', id);
                   deleteWhereFromSupabase('times', 'tournamentId', id);
@@ -2466,7 +2486,12 @@ const App: React.FC = () => {
                       ),
                     }))
                   }
-                  onUpdateSettings={handleUpdateSettings}
+                  onUpdateSettings={(s) =>
+                    setState((prev) => ({
+                      ...prev,
+                      settings: { ...prev.settings, ...s },
+                    }))
+                  }
                   onLogoUpload={() => {}}
                   onAddUser={(u) =>
                     setState((prev) => ({ ...prev, users: [...prev.users, u] }))
@@ -2504,14 +2529,24 @@ const App: React.FC = () => {
                     }))
                   }
                   onDeleteTournament={(id) => {
-                    setState((prev) => ({
-                      ...prev,
-                      tournaments: prev.tournaments.filter((t) => t.id !== id),
-                      matches: prev.matches.filter((m) => m.tournamentId !== id),
-                      teams: prev.teams.filter((t) => t.tournamentId !== id),
-                      players: prev.players.filter((p) => p.tournamentId !== id),
-                    }));
                     addDeletedTournamentId(id);
+                    setState((prev) => {
+                      const teamIdsDoTorneio = new Set(
+                        prev.teams.filter((t) => t.tournamentId === id).map((t) => t.id)
+                      );
+                      return {
+                        ...prev,
+                        tournaments: prev.tournaments.filter((t) => t.id !== id),
+                        matches: prev.matches.filter((m) => m.tournamentId !== id),
+                        teams: prev.teams.filter((t) => t.tournamentId !== id),
+                        players: prev.players.filter(
+                          (p) => p.tournamentId !== id && !teamIdsDoTorneio.has((p as any).teamId)
+                        ),
+                        registrations: prev.registrations.filter(
+                          (r) => (r as any).tournamentId !== id
+                        ),
+                      };
+                    });
                     deleteFromSupabase('campeonatos', id);
                     deleteWhereFromSupabase('partidas', 'tournamentId', id);
                     deleteWhereFromSupabase('times', 'tournamentId', id);
@@ -2598,7 +2633,12 @@ const App: React.FC = () => {
               state.currentUser.role === UserRole.ADMIN && (
                 <AdminPersonalizacao
                   state={state}
-                  onUpdateSettings={handleUpdateSettings}
+                  onUpdateSettings={(s) =>
+                    setState((prev) => ({
+                      ...prev,
+                      settings: { ...prev.settings, ...s },
+                    }))
+                  }
                   onBack={() => setCurrentPage("admin-dashboard")}
                 />
               )}
