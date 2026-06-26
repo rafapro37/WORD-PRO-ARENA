@@ -7,7 +7,7 @@ import {
   ExperienceType, AppSettings, Match, Player, Team,
 } from '../../types';
 import { loadState, saveState, generateId, getDeletedTournamentIds } from '../../services/dataService';
-import { fetchAllFromSupabase } from '../../services/dataService';
+import { fetchAllFromSupabase, syncSettingsToSupabase } from '../../services/dataService';
 import { clearSession } from '../../services/authService';
 import { useSync, type SyncStatus } from '../hooks/useSync';
 import { useRealtime, type RealtimeNotification } from '../hooks/useRealtime';
@@ -429,7 +429,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [logSystemAction]);
 
   const handleUpdateSettings = useCallback((updates: Partial<AppSettings>) => {
-    setState(prev => ({ ...prev, settings: { ...prev.settings, ...updates } }));
+    setState(prev => {
+      const newSettings = { ...prev.settings, ...updates };
+      // Admin: grava as configurações no Supabase na hora (não espera o ciclo do sync)
+      if (prev.currentUser?.role === UserRole.ADMIN) {
+        syncSettingsToSupabase(newSettings);
+      }
+      return { ...prev, settings: newSettings };
+    });
   }, []);
 
   // ── Multi-tenant: dados filtrados ─────────────────────────────────────────
