@@ -243,6 +243,12 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({
       {dashboardBanners && dashboardBanners.length > 0 && (
         <BannerCarousel banners={dashboardBanners} />
       )}
+      {/* Aviso só para o admin quando não há banners carregados (diagnóstico) */}
+      {isAdmin && (!dashboardBanners || dashboardBanners.length === 0) && (
+        <div className="rounded-xl border border-dashed border-[var(--theme-primary)]/40 bg-[var(--theme-primary)]/5 px-4 py-3 text-xs text-[var(--theme-text-muted)]">
+          Nenhum banner no carrossel ainda. Vá em <strong className="text-white">Personalização → Imagens e Logo → Carrossel</strong>, adicione a imagem e clique em <strong className="text-white">Salvar Alterações</strong> (botão no topo da tela).
+        </div>
+      )}
 
       {/* ── HERO: header + métricas, com fundo opcional atrás (admin/organizador) ── */}
       <div className="relative rounded-2xl overflow-hidden" style={cardsBackground?.url ? { background: '#0a0b0f' } : undefined}>
