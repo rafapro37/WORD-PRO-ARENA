@@ -439,7 +439,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Admin: marca a hora da edição e grava no Supabase na hora
       if (prev.currentUser?.role === UserRole.ADMIN) {
         newSettings._ts = Date.now();
-        syncSettingsToSupabase(newSettings);
+        syncSettingsToSupabase(newSettings, true);
       }
       return { ...prev, settings: newSettings };
     });

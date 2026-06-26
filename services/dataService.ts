@@ -1,5 +1,6 @@
 import { AppState, UserRole, PlanType, UserStatus, User, PlayerProfile, Tournament, Team, Match, Player, TournamentFormat, FinalFormat, SportType, ContractInvitation, TournamentRegistration, ClubPlayer, ExperienceType } from '../types';
 import { supabase } from './supabase';
+import { toast } from '../src/lib/toast';
 
 const STORAGE_KEY = 'pro_world_arena_db_v1';
 
@@ -111,16 +112,25 @@ export const syncToSupabase = async (table: string, data: any[]) => {
 };
 
 // ─── Sincronizar configurações globais (logo, banners, fundos...) ────────────
-export const syncSettingsToSupabase = async (settings: any) => {
-  if (!settings) return;
+export const syncSettingsToSupabase = async (settings: any, showError = false) => {
+  if (!settings) return { ok: false };
   try {
     // No banco: id (text) = 'GLOBAL', coluna jsonb = "dados", mais "updatedat".
+    const payload = JSON.stringify(settings);
+    const sizeKB = Math.round(payload.length / 1024);
     const { error } = await supabase
       .from('configuracoes')
       .upsert({ id: 'GLOBAL', dados: settings, updatedat: Date.now() }, { onConflict: 'id' });
-    if (error) console.warn('[Sync] configuracoes:', error.message);
-  } catch (error) {
+    if (error) {
+      console.warn('[Sync] configuracoes:', error.message);
+      if (showError) toast.error(`Erro ao salvar (${sizeKB}KB): ${error.message}`, 8000);
+      return { ok: false, error: error.message };
+    }
+    return { ok: true };
+  } catch (error: any) {
     console.error('[Sync] Falha em configuracoes:', error);
+    if (showError) toast.error(`Falha ao salvar: ${error?.message || String(error)}`, 8000);
+    return { ok: false, error: String(error) };
   }
 };
 
