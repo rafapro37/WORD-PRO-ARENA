@@ -196,17 +196,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...localSettings,
           ...(remoteSettings || {}),
         };
-        // globalImages (logo, carrossel, fundos): o remoto ganha onde tem valor real,
-        // mas não apaga o que só existe localmente (ex.: carrossel ainda não enviado).
+        // globalImages (logo, carrossel, fundos): vence o lado editado por último.
+        const localTs: number = (localSettings as any)?._ts || 0;
+        const remoteTs: number = (remoteSettings as any)?._ts || 0;
+        const localIsNewer = localTs > remoteTs;
         const liGI: any = (localSettings as any)?.globalImages || {};
         const reGI: any = (remoteSettings as any)?.globalImages || {};
-        const mergedGI: any = { ...liGI };
-        for (const k of Object.keys(reGI)) {
-          const v = reGI[k];
+        const primaryGI: any = localIsNewer ? liGI : reGI;   // mais recente
+        const secondaryGI: any = localIsNewer ? reGI : liGI;  // mais antigo (só preenche o que falta)
+        const mergedGI: any = { ...secondaryGI };
+        for (const k of Object.keys(primaryGI)) {
+          const v = primaryGI[k];
           const hasValue = v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && v.length === 0);
           if (hasValue || !(k in mergedGI)) mergedGI[k] = v;
         }
         mergedSettings.globalImages = mergedGI;
+        mergedSettings._ts = Math.max(localTs, remoteTs);
         loaded.settings = mergedSettings;
 
         // Garantir tema padrão
@@ -430,9 +435,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const handleUpdateSettings = useCallback((updates: Partial<AppSettings>) => {
     setState(prev => {
-      const newSettings = { ...prev.settings, ...updates };
-      // Admin: grava as configurações no Supabase na hora (não espera o ciclo do sync)
+      const newSettings: any = { ...prev.settings, ...updates };
+      // Admin: marca a hora da edição e grava no Supabase na hora
       if (prev.currentUser?.role === UserRole.ADMIN) {
+        newSettings._ts = Date.now();
         syncSettingsToSupabase(newSettings);
       }
       return { ...prev, settings: newSettings };
