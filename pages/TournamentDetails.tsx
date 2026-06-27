@@ -1351,7 +1351,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                       <p className="text-[10px] text-brand-textMuted">Tamanho da logo</p>
                                       <span className="text-[10px] font-mono text-brand-primary">{(tournament as any).knockoutLogoSize || 70}px</span>
                                   </div>
-                                  <input type="range" min={24} max={180} step={2} value={(tournament as any).knockoutLogoSize || 70} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutLogoSize: Number(e.target.value) } as any)} className="w-full accent-brand-primary" />
+                                  <input type="range" min={24} max={400} step={2} value={(tournament as any).knockoutLogoSize || 70} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutLogoSize: Number(e.target.value) } as any)} className="w-full accent-brand-primary" />
                               </div>
                           </div>
                           <p className="text-[11px] text-brand-textMuted italic">A logo é puxada automaticamente da federação vinculada ao campeonato.</p>

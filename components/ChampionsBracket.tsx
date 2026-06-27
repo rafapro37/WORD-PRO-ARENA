@@ -400,8 +400,8 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
         {/* CENTRO: FINAL + CAMPEÃO (posicionado absoluto) */}
         <div data-bcol="final" className="absolute z-[2]" style={{ left: centerX, width: CARD_W, top: finalCenterY, transform: 'translateY(-50%)' }}>
           {fedLogo && fedLogoPos === 'center' && (
-            <div className="flex justify-center mb-3">
-              <img src={fedLogo} alt="" className="object-contain" style={{ height: fedLogoSize || 70, filter: `drop-shadow(0 0 16px ${accent}66)` }} />
+            <div className="flex justify-center mb-3" style={{ position: 'relative', overflow: 'visible' }}>
+              <img src={fedLogo} alt="" style={{ height: fedLogoSize || 70, width: 'auto', maxWidth: 'none', objectFit: 'contain', filter: `drop-shadow(0 0 16px ${accent}66)` }} />
             </div>
           )}
           <div className="text-center font-black uppercase mb-2" style={{ fontSize: phaseSize || 11, letterSpacing: '2px', fontFamily: phaseFontR, color: phaseColor || accent, textShadow: labelShadow }}>Grande Final</div>
