@@ -1295,19 +1295,66 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                               </div>
                           </div>
                           <p className="text-[11px] text-brand-textMuted mt-2 italic">Aparece no centro do chaveamento, no lugar do troféu padrão (PNG transparente fica melhor).</p>
+                          <div className="mt-3 border-t border-brand-border pt-3">
+                              <div className="flex items-center justify-between mb-1">
+                                  <p className="text-[11px] font-bold text-brand-text">Tamanho do troféu</p>
+                                  <span className="text-[10px] font-mono text-brand-primary">{(tournament as any).knockoutTrophySize || 'auto'}{(tournament as any).knockoutTrophySize ? 'px' : ''}</span>
+                              </div>
+                              <input type="range" min={40} max={260} step={4} value={(tournament as any).knockoutTrophySize || 120} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTrophySize: Number(e.target.value) } as any)} className="w-full accent-brand-primary" />
+                          </div>
                       </div>
 
-                      {/* Topo do Chaveamento: texto livre + logo da federação */}
-                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
-                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Topo do Chaveamento</label>
-                          <input
-                              type="text"
-                              value={(tournament as any).knockoutHeaderText || ''}
-                              onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutHeaderText: e.target.value } as any)}
-                              placeholder="Ex: Campeonato Brasileiro 2026"
-                              className="w-full bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text text-sm focus:border-brand-primary outline-none"
-                          />
-                          <p className="text-[11px] text-brand-textMuted mt-2 italic">Escreva o que quiser. O logo da federação vinculada ao campeonato aparece automaticamente ao lado do texto.</p>
+                      {/* Topo do Chaveamento: nome + logo da federação */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border space-y-4">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest">Nome e Logo da Federação</label>
+
+                          <div>
+                              <p className="text-[11px] font-bold text-brand-text mb-1.5">Nome / texto livre</p>
+                              <input
+                                  type="text"
+                                  value={(tournament as any).knockoutHeaderText || ''}
+                                  onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutHeaderText: e.target.value } as any)}
+                                  placeholder="Ex: Campeonato Brasileiro 2026"
+                                  className="w-full bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text text-sm focus:border-brand-primary outline-none"
+                              />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                  <div className="flex items-center justify-between mb-1">
+                                      <p className="text-[10px] text-brand-textMuted">Tamanho do nome</p>
+                                      <span className="text-[10px] font-mono text-brand-primary">{(tournament as any).knockoutHeaderSize || 18}px</span>
+                                  </div>
+                                  <input type="range" min={10} max={60} step={1} value={(tournament as any).knockoutHeaderSize || 18} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutHeaderSize: Number(e.target.value) } as any)} className="w-full accent-brand-primary" />
+                              </div>
+                              <div>
+                                  <p className="text-[10px] text-brand-textMuted mb-1">Posição do nome</p>
+                                  <select value={(tournament as any).knockoutHeaderAlign || 'center'} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutHeaderAlign: e.target.value } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none">
+                                      <option value="left">Esquerda</option>
+                                      <option value="center">Centro</option>
+                                      <option value="right">Direita</option>
+                                  </select>
+                              </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-brand-border pt-3">
+                              <div>
+                                  <p className="text-[10px] text-brand-textMuted mb-1">Logo da federação</p>
+                                  <select value={(tournament as any).knockoutLogoPos || 'center'} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutLogoPos: e.target.value } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none">
+                                      <option value="center">No centro (na bola)</option>
+                                      <option value="top">No topo (ao lado do nome)</option>
+                                      <option value="hidden">Não mostrar</option>
+                                  </select>
+                              </div>
+                              <div>
+                                  <div className="flex items-center justify-between mb-1">
+                                      <p className="text-[10px] text-brand-textMuted">Tamanho da logo</p>
+                                      <span className="text-[10px] font-mono text-brand-primary">{(tournament as any).knockoutLogoSize || 70}px</span>
+                                  </div>
+                                  <input type="range" min={24} max={180} step={2} value={(tournament as any).knockoutLogoSize || 70} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutLogoSize: Number(e.target.value) } as any)} className="w-full accent-brand-primary" />
+                              </div>
+                          </div>
+                          <p className="text-[11px] text-brand-textMuted italic">A logo é puxada automaticamente da federação vinculada ao campeonato.</p>
                       </div>
 
                       {/* Sombra sobre o fundo */}
@@ -1341,15 +1388,12 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                       <p className="text-[10px] text-brand-textMuted mb-1">Fonte</p>
                                       <select value={(tournament as any).knockoutTeamFont || ''} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTeamFont: e.target.value } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none">
                                           <option value="">Padrão</option>
-                                          <option value="Arial, sans-serif">Arial</option>
                                           <option value="'Arial Black', sans-serif">Arial Black</option>
                                           <option value="Impact, sans-serif">Impact</option>
-                                          <option value="Georgia, serif">Georgia</option>
-                                          <option value="'Times New Roman', serif">Times New Roman</option>
-                                          <option value="'Courier New', monospace">Courier New</option>
-                                          <option value="Verdana, sans-serif">Verdana</option>
                                           <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                          <option value="Verdana, sans-serif">Verdana</option>
                                           <option value="Tahoma, sans-serif">Tahoma</option>
+                                          <option value="Arial, sans-serif">Arial</option>
                                       </select>
                                   </div>
                                   <div>
@@ -1371,15 +1415,12 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                       <p className="text-[10px] text-brand-textMuted mb-1">Fonte</p>
                                       <select value={(tournament as any).knockoutPhaseFont || ''} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutPhaseFont: e.target.value } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none">
                                           <option value="">Padrão</option>
-                                          <option value="Arial, sans-serif">Arial</option>
                                           <option value="'Arial Black', sans-serif">Arial Black</option>
                                           <option value="Impact, sans-serif">Impact</option>
-                                          <option value="Georgia, serif">Georgia</option>
-                                          <option value="'Times New Roman', serif">Times New Roman</option>
-                                          <option value="'Courier New', monospace">Courier New</option>
-                                          <option value="Verdana, sans-serif">Verdana</option>
                                           <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                          <option value="Verdana, sans-serif">Verdana</option>
                                           <option value="Tahoma, sans-serif">Tahoma</option>
+                                          <option value="Arial, sans-serif">Arial</option>
                                       </select>
                                   </div>
                                   <div>
@@ -1401,15 +1442,12 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                       <p className="text-[10px] text-brand-textMuted mb-1">Fonte</p>
                                       <select value={(tournament as any).knockoutScoreFont || ''} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutScoreFont: e.target.value } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none">
                                           <option value="">Padrão</option>
-                                          <option value="Arial, sans-serif">Arial</option>
                                           <option value="'Arial Black', sans-serif">Arial Black</option>
                                           <option value="Impact, sans-serif">Impact</option>
-                                          <option value="Georgia, serif">Georgia</option>
-                                          <option value="'Times New Roman', serif">Times New Roman</option>
-                                          <option value="'Courier New', monospace">Courier New</option>
-                                          <option value="Verdana, sans-serif">Verdana</option>
                                           <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                          <option value="Verdana, sans-serif">Verdana</option>
                                           <option value="Tahoma, sans-serif">Tahoma</option>
+                                          <option value="Arial, sans-serif">Arial</option>
                                       </select>
                                   </div>
                                   <div>
@@ -2518,7 +2556,12 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                               backgroundUrl={tournament.knockoutBackground}
                               backgroundOpacity={tournament.knockoutOpacity !== undefined ? tournament.knockoutOpacity / 100 : 1}
                               headerText={(tournament as any).knockoutHeaderText || undefined}
+                              headerSize={(tournament as any).knockoutHeaderSize || undefined}
+                              headerAlign={(tournament as any).knockoutHeaderAlign || undefined}
                               headerLogoUrl={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl || undefined}
+                              fedLogoPos={(tournament as any).knockoutLogoPos || undefined}
+                              fedLogoSize={(tournament as any).knockoutLogoSize || undefined}
+                              trophySizeProp={(tournament as any).knockoutTrophySize || undefined}
                               shadowIntensity={(tournament as any).knockoutShadow !== undefined ? (tournament as any).knockoutShadow / 100 : undefined}
                               teamColor={(tournament as any).knockoutTeamColor || undefined}
                               teamFont={(tournament as any).knockoutTeamFont || undefined}

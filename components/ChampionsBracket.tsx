@@ -34,8 +34,18 @@ interface ChampionsBracketProps {
   backgroundOpacity?: number;
   /** Texto livre exibido no topo do chaveamento */
   headerText?: string;
+  /** Tamanho do nome da federação (px) */
+  headerSize?: number;
+  /** Alinhamento do nome: 'left' | 'center' | 'right' */
+  headerAlign?: string;
   /** Logo da federação/liga exibido no topo */
   headerLogoUrl?: string;
+  /** Posição da logo da federação: 'top' | 'center' | 'hidden' */
+  fedLogoPos?: string;
+  /** Tamanho da logo da federação (px) */
+  fedLogoSize?: number;
+  /** Tamanho do troféu central (px) */
+  trophySizeProp?: number;
   /** Intensidade do escurecimento sobre o fundo (0 a 1) */
   shadowIntensity?: number;
   /** Estilo do NOME DOS TIMES */
@@ -51,7 +61,7 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   r16, quarters, semis, finals, r32 = [], getTeamVisual, themeColor,
   accentColor, textColor, championTrophyUrl, nameFont, cardColor,
   championLogoUrl, backgroundUrl, backgroundOpacity = 0.25,
-  headerText, headerLogoUrl, shadowIntensity,
+  headerText, headerSize, headerAlign, headerLogoUrl, fedLogoPos = 'center', fedLogoSize, trophySizeProp, shadowIntensity,
   teamColor, teamFont, teamSize, phaseColor, phaseFont, phaseSize, scoreColor, scoreFont, scoreSize,
   onMatchClick,
 }) => {
@@ -68,7 +78,10 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   const txtMuted = textColor ? `${textColor}99` : '#8a8f9c';
   const cardBg = cardColor || 'linear-gradient(180deg, #2b2e38, #23252e)';
   const labelShadow = '0 1px 5px rgba(0,0,0,0.95)';
-  const trophyImg = championTrophyUrl || championLogoUrl;
+  // Troféu = SOMENTE a imagem de troféu (separado da logo da federação)
+  const trophyImg = championTrophyUrl;
+  // Logo da federação (vem da liga vinculada)
+  const fedLogo = headerLogoUrl || championLogoUrl;
 
   // Estilos resolvidos por parte (com fallback para o comportamento atual)
   const teamColorR = teamColor || txt;
@@ -77,7 +90,7 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   const phaseFontR  = phaseFont || undefined;
   const scoreColorR = scoreColor || txt;
   const scoreFontR  = scoreFont || undefined;
-  const hasHeader = !!(headerText || headerLogoUrl);
+  const hasHeader = !!(headerText || (fedLogo && fedLogoPos === 'top'));
 
   // Fases existentes (da maior para a final)
   const phaseList = [
@@ -104,7 +117,7 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
 
   // Troféu personalizado GRANDE (até 150px), mas proporcional à altura do
   // chaveamento pra não estourar em mata-mata com poucos times.
-  const trophySize = trophyImg ? Math.round(Math.max(90, Math.min(150, totalH * 0.32))) : 64;
+  const trophySize = trophySizeProp || (trophyImg ? Math.round(Math.max(90, Math.min(150, totalH * 0.32))) : 64);
 
   // Centro vertical do i-ésimo confronto de UM LADO da maior fase
   const baseCenterSide = (i: number) => TOP_PAD + i * slotH + slotH / 2;
@@ -335,12 +348,17 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
         <div className="absolute inset-0 z-0 pointer-events-none" style={{ background: '#000', opacity: Math.min(1, shadowIntensity) }} />
       )}
 
-      {/* Faixa do topo: texto livre + logo da federação */}
+      {/* Faixa do topo: nome (tamanho/alinhamento) + logo só se posição = topo */}
       {hasHeader && (
-        <div className="absolute top-0 left-0 right-0 z-[15] flex items-center justify-center gap-3 pt-4 pb-2 pointer-events-none">
-          {headerLogoUrl && <img src={headerLogoUrl} alt="" className="object-contain shrink-0" style={{ height: 44, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))' }} />}
+        <div
+          className="absolute top-0 left-0 right-0 z-[15] flex items-center gap-3 pt-4 pb-2 pointer-events-none px-6"
+          style={{ justifyContent: headerAlign === 'left' ? 'flex-start' : headerAlign === 'right' ? 'flex-end' : 'center' }}
+        >
+          {fedLogo && fedLogoPos === 'top' && (
+            <img src={fedLogo} alt="" className="object-contain shrink-0" style={{ height: fedLogoSize || 44, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))' }} />
+          )}
           {headerText && (
-            <span className="font-black italic uppercase text-center" style={{ fontSize: phaseSize ? phaseSize + 6 : 18, letterSpacing: '2px', fontFamily: phaseFontR, color: phaseColor || accent, textShadow: '0 2px 8px rgba(0,0,0,0.85)' }}>{headerText}</span>
+            <span className="font-black italic uppercase" style={{ fontSize: headerSize || 18, letterSpacing: '2px', fontFamily: phaseFontR, color: phaseColor || accent, textShadow: '0 2px 8px rgba(0,0,0,0.85)' }}>{headerText}</span>
           )}
         </div>
       )}
@@ -381,6 +399,11 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
 
         {/* CENTRO: FINAL + CAMPEÃO (posicionado absoluto) */}
         <div data-bcol="final" className="absolute z-[2]" style={{ left: centerX, width: CARD_W, top: finalCenterY, transform: 'translateY(-50%)' }}>
+          {fedLogo && fedLogoPos === 'center' && (
+            <div className="flex justify-center mb-3">
+              <img src={fedLogo} alt="" className="object-contain" style={{ height: fedLogoSize || 70, filter: `drop-shadow(0 0 16px ${accent}66)` }} />
+            </div>
+          )}
           <div className="text-center font-black uppercase mb-2" style={{ fontSize: phaseSize || 11, letterSpacing: '2px', fontFamily: phaseFontR, color: phaseColor || accent, textShadow: labelShadow }}>Grande Final</div>
           {finalMatch && <Card match={finalMatch} phase="Final" />}
           <div className="flex flex-col items-center gap-2 mt-4">
