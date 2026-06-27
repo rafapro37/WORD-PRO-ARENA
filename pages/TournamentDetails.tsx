@@ -191,9 +191,9 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   const [newRuleDesc, setNewRuleDesc] = useState('');
 
   // Toast State
-  const [toast, setToast] = useState<{message: string, type: 'info' | 'error' | 'success' | 'warning'} | null>(null);
+  const [toast, setToast] = useState<{message: string, type: 'info' | 'error'} | null>(null);
   
-  const showToast = (message: string, type: 'info' | 'error' | 'success' | 'warning' = 'info') => {
+  const showToast = (message: string, type: 'info' | 'error' = 'info') => {
       setToast({ message, type });
       setTimeout(() => setToast(null), 3000);
   };
@@ -316,7 +316,18 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
   const displayMatches = useMemo(() => {
       let filtered = [];
-      if (isKnockout) filtered = matches.sort((a, b) => a.id.localeCompare(b.id));
+      if (isKnockout) {
+          const STAGE_ORDER: Record<string, number> = { R64: 0, R32: 1, R16: 2, QF: 3, SF: 4, FINAL: 5 };
+          filtered = matches
+              // remove confrontos "fantasma" (sem nenhum time real definido ainda)
+              .filter(m => teams.some(t => t.id === m.homeTeamId) || teams.some(t => t.id === m.awayTeamId))
+              .sort((a, b) => {
+                  const sa = STAGE_ORDER[a.stage || ''] ?? 99;
+                  const sb = STAGE_ORDER[b.stage || ''] ?? 99;
+                  if (sa !== sb) return sa - sb;
+                  return a.id.localeCompare(b.id);
+              });
+      }
       else if (isSwiss) filtered = matches.sort((a, b) => b.round - a.round); 
       else if (isMD3) filtered = matches.sort((a, b) => (b.round === 99 ? 1 : a.round === 99 ? -1 : a.round - b.round));
       else if (isLeague) {
@@ -329,7 +340,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           filtered = matches.filter(m => m.groupId === activeGroupId).sort((a,b) => a.round - b.round);
       }
       return filtered;
-  }, [matches, activeGroupId, isSwiss, isMD3, isKnockout, isLeague, matchTurnFilter, leagueRoundsPerTurn]);
+  }, [matches, teams, activeGroupId, isSwiss, isMD3, isKnockout, isLeague, matchTurnFilter, leagueRoundsPerTurn]);
 
   const matchesByRound = useMemo(() => {
       const groups: Record<number, Match[]> = {};
@@ -724,18 +735,33 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       const a = teams.find(t => t.id === match.awayTeamId);
       const hVisual = getTeamNameAndEscudo(h);
       const aVisual = getTeamNameAndEscudo(a);
+      const finished = match.isFinished;
+      const hWin = finished && (match.homeScore ?? 0) > (match.awayScore ?? 0);
+      const aWin = finished && (match.awayScore ?? 0) > (match.homeScore ?? 0);
       return (
-          <div className="match-card-horizontal jogo-linha" onClick={() => openMatchModal(match)}>
-              <div className="time justify-end">
-                  <span className="team-name">{hVisual.name || 'TBD'}</span>
-                  {hVisual.logoUrl ? <img src={hVisual.logoUrl} className="logo-match" /> : <Shield size={32} className="text-slate-600"/>}
+          <div className="match-card-grid" onClick={() => openMatchModal(match)}>
+              <div className={`mcg-team ${hWin ? 'mcg-win' : ''}`}>
+                  {hVisual.logoUrl
+                      ? <img src={hVisual.logoUrl} className="mcg-logo" />
+                      : <span className="mcg-shield"><Shield size={26} /></span>}
+                  <span className="mcg-name">{hVisual.name || 'A definir'}</span>
               </div>
-              <div className="placar">
-                  {match.isFinished ? `${match.homeScore} - ${match.awayScore}` : 'X'}
+              <div className="mcg-score">
+                  {finished ? (
+                      <>
+                          <span className={hWin ? 'mcg-score-win' : ''}>{match.homeScore}</span>
+                          <span className="mcg-x">-</span>
+                          <span className={aWin ? 'mcg-score-win' : ''}>{match.awayScore}</span>
+                      </>
+                  ) : (
+                      <span className="mcg-vs">VS</span>
+                  )}
               </div>
-              <div className="time">
-                  {aVisual.logoUrl ? <img src={aVisual.logoUrl} className="logo-match" /> : <Shield size={32} className="text-slate-600"/>}
-                  <span className="team-name">{aVisual.name || 'TBD'}</span>
+              <div className={`mcg-team mcg-team-right ${aWin ? 'mcg-win' : ''}`}>
+                  <span className="mcg-name">{aVisual.name || 'A definir'}</span>
+                  {aVisual.logoUrl
+                      ? <img src={aVisual.logoUrl} className="mcg-logo" />
+                      : <span className="mcg-shield"><Shield size={26} /></span>}
               </div>
           </div>
       );
@@ -755,6 +781,12 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
         <GroupDraw
           participants={((tournament as any).manualParticipants || []).map((p: any) => ({ id: p.id, name: p.name, logoUrl: p.logoUrl }))}
           groupCount={Math.max(1, (tournament.groups || []).length || 1)}
+          slotsPerGroup={
+            (tournament as any).teamsPerGroup
+            || ((tournament as any).maxTeams && (tournament.groups || []).length
+                ? Math.ceil((tournament as any).maxTeams / (tournament.groups || []).length)
+                : undefined)
+          }
           tournamentName={tournament.name}
           tournamentLogo={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl || tournament.bannerUrl}
           themeColor={themeColor}
@@ -1109,7 +1141,283 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                   </label>
                               </div>
                           </div>
+                          <div className="mt-4">
+                              <div className="flex items-center justify-between mb-1.5">
+                                  <span className="text-[11px] font-bold text-brand-text uppercase tracking-wider">Intensidade do fundo</span>
+                                  <span className="text-[11px] font-mono text-brand-primary">{(tournament as any).knockoutOpacity ?? 100}%</span>
+                              </div>
+                              <input
+                                  type="range" min={20} max={100} step={5}
+                                  value={(tournament as any).knockoutOpacity ?? 100}
+                                  onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutOpacity: Number(e.target.value) } as any)}
+                                  className="w-full accent-brand-primary"
+                              />
+                              <p className="text-[10px] text-brand-textMuted mt-1">100% deixa o fundo vivo; reduza se atrapalhar a leitura dos cards.</p>
+                          </div>
                           <p className="text-[11px] text-brand-textMuted mt-2 italic">Aparece como fundo na tela do chaveamento.</p>
+                      </div>
+
+                      {/* Cores do Chaveamento */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Cores do Mata-Mata</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                  <p className="text-[11px] font-bold text-brand-text mb-1.5">Destaque (linhas, bordas, vencedor)</p>
+                                  <div className="flex items-center gap-2">
+                                      <input
+                                          type="color"
+                                          value={(tournament as any).knockoutAccentColor || themeColor}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutAccentColor: e.target.value } as any)}
+                                          className="w-10 h-10 rounded-lg border border-brand-border bg-transparent cursor-pointer"
+                                      />
+                                      <input
+                                          type="text"
+                                          value={(tournament as any).knockoutAccentColor || ''}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutAccentColor: e.target.value } as any)}
+                                          placeholder={themeColor}
+                                          className="flex-1 bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none"
+                                      />
+                                      {(tournament as any).knockoutAccentColor && (
+                                          <button onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutAccentColor: '' } as any)}
+                                              className="text-[10px] text-brand-textMuted hover:text-brand-text uppercase font-bold px-2">Limpar</button>
+                                      )}
+                                  </div>
+                              </div>
+                              <div>
+                                  <p className="text-[11px] font-bold text-brand-text mb-1.5">Texto das informações</p>
+                                  <div className="flex items-center gap-2">
+                                      <input
+                                          type="color"
+                                          value={(tournament as any).knockoutTextColor || '#f3f5f0'}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTextColor: e.target.value } as any)}
+                                          className="w-10 h-10 rounded-lg border border-brand-border bg-transparent cursor-pointer"
+                                      />
+                                      <input
+                                          type="text"
+                                          value={(tournament as any).knockoutTextColor || ''}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTextColor: e.target.value } as any)}
+                                          placeholder="#f3f5f0"
+                                          className="flex-1 bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none"
+                                      />
+                                      {(tournament as any).knockoutTextColor && (
+                                          <button onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTextColor: '' } as any)}
+                                              className="text-[10px] text-brand-textMuted hover:text-brand-text uppercase font-bold px-2">Limpar</button>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                          <p className="text-[11px] text-brand-textMuted mt-3 italic">Use cores que contrastem com o fundo escolhido pra não ficar apagado.</p>
+                      </div>
+
+                      {/* Fonte e Cards do Mata-Mata */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Fonte e Cards do Mata-Mata</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                  <p className="text-[11px] font-bold text-brand-text mb-1.5">Fonte dos nomes dos times</p>
+                                  <select
+                                      value={(tournament as any).knockoutFont || ''}
+                                      onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutFont: e.target.value } as any)}
+                                      className="w-full bg-brand-surface border border-brand-border rounded-lg p-2.5 text-brand-text text-sm focus:border-brand-primary outline-none"
+                                      style={{ fontFamily: (tournament as any).knockoutFont || undefined }}
+                                  >
+                                      <option value="">Padrão (Inter)</option>
+                                      <option value="'Oswald', sans-serif" style={{ fontFamily: "'Oswald', sans-serif" }}>Oswald (esportiva)</option>
+                                      <option value="'Bebas Neue', sans-serif" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>Bebas Neue (placar)</option>
+                                      <option value="'Anton', sans-serif" style={{ fontFamily: "'Anton', sans-serif" }}>Anton (impacto)</option>
+                                      <option value="'Teko', sans-serif" style={{ fontFamily: "'Teko', sans-serif" }}>Teko (condensada)</option>
+                                      <option value="'Russo One', sans-serif" style={{ fontFamily: "'Russo One', sans-serif" }}>Russo One (game)</option>
+                                      <option value="'Montserrat', sans-serif" style={{ fontFamily: "'Montserrat', sans-serif" }}>Montserrat (moderna)</option>
+                                  </select>
+                                  <p className="text-[10px] text-brand-textMuted mt-1.5" style={{ fontFamily: (tournament as any).knockoutFont || undefined }}>Prévia: REAL MADRID 2 × 1 BARCELONA</p>
+                              </div>
+                              <div>
+                                  <p className="text-[11px] font-bold text-brand-text mb-1.5">Cor de fundo dos cards</p>
+                                  <div className="flex items-center gap-2">
+                                      <input
+                                          type="color"
+                                          value={(tournament as any).knockoutCardColor || '#23252e'}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutCardColor: e.target.value } as any)}
+                                          className="w-10 h-10 rounded-lg border border-brand-border bg-transparent cursor-pointer"
+                                      />
+                                      <input
+                                          type="text"
+                                          value={(tournament as any).knockoutCardColor || ''}
+                                          onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutCardColor: e.target.value } as any)}
+                                          placeholder="padrão (escuro)"
+                                          className="flex-1 bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none"
+                                      />
+                                      {(tournament as any).knockoutCardColor && (
+                                          <button onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutCardColor: '' } as any)}
+                                              className="text-[10px] text-brand-textMuted hover:text-brand-text uppercase font-bold px-2">Limpar</button>
+                                      )}
+                                  </div>
+                                  <p className="text-[10px] text-brand-textMuted mt-1.5">Cor dos retângulos onde ficam os nomes. Use um tom translúcido escuro pra destacar sobre o fundo.</p>
+                              </div>
+                          </div>
+                      </div>
+
+                      {/* Troféu Personalizado */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Troféu do Mata-Mata</label>
+                          <div className="flex gap-4 items-start">
+                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-brand-surface border border-brand-border flex-shrink-0 flex items-center justify-center">
+                                  {(tournament as any).knockoutTrophyUrl
+                                      ? <img src={(tournament as any).knockoutTrophyUrl} className="w-full h-full object-contain" />
+                                      : <Trophy size={32} className="text-yellow-500" />
+                                  }
+                              </div>
+                              <div className="flex-1 space-y-2">
+                                  <input
+                                      type="text"
+                                      value={(tournament as any).knockoutTrophyUrl || ''}
+                                      onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTrophyUrl: e.target.value } as any)}
+                                      placeholder="https://url-do-trofeu.com/trofeu.png"
+                                      className="w-full bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text text-sm focus:border-brand-primary outline-none"
+                                  />
+                                  <div className="flex items-center gap-2">
+                                      <label className="inline-flex items-center gap-2 bg-brand-surface border border-brand-border hover:border-brand-primary px-4 py-2 rounded-lg cursor-pointer text-[11px] font-bold text-brand-textMuted hover:text-brand-text transition-all uppercase tracking-widest">
+                                          <Upload size={13}/> Enviar troféu
+                                          <input type="file" hidden accept="image/*" onChange={async e => {
+                                              const file = e.target.files?.[0];
+                                              if (!file || !onUpdateTournament) return;
+                                              if (file.size > 2 * 1024 * 1024) { alert('Imagem muito grande (máx 2MB).'); return; }
+                                              const reader = new FileReader();
+                                              reader.onloadend = () => onUpdateTournament(tournament.id, { knockoutTrophyUrl: reader.result as string } as any);
+                                              reader.readAsDataURL(file);
+                                          }} />
+                                      </label>
+                                      {(tournament as any).knockoutTrophyUrl && (
+                                          <button onClick={() => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTrophyUrl: '' } as any)}
+                                              className="text-[10px] text-brand-textMuted hover:text-brand-text uppercase font-bold px-2">Remover</button>
+                                      )}
+                                  </div>
+                              </div>
+                          </div>
+                          <p className="text-[11px] text-brand-textMuted mt-2 italic">Aparece no centro do chaveamento, no lugar do troféu padrão (PNG transparente fica melhor).</p>
+                      </div>
+
+                      {/* Topo do Chaveamento: texto livre + logo da federação */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest mb-3">Topo do Chaveamento</label>
+                          <input
+                              type="text"
+                              value={(tournament as any).knockoutHeaderText || ''}
+                              onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutHeaderText: e.target.value } as any)}
+                              placeholder="Ex: Campeonato Brasileiro 2026"
+                              className="w-full bg-brand-surface border border-brand-border rounded-lg p-3 text-brand-text text-sm focus:border-brand-primary outline-none"
+                          />
+                          <p className="text-[11px] text-brand-textMuted mt-2 italic">Escreva o que quiser. O logo da federação vinculada ao campeonato aparece automaticamente ao lado do texto.</p>
+                      </div>
+
+                      {/* Sombra sobre o fundo */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border">
+                          <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[11px] font-bold text-brand-text uppercase tracking-wider">Sombra sobre o fundo</span>
+                              <span className="text-[11px] font-mono text-brand-primary">{(tournament as any).knockoutShadow ?? 0}%</span>
+                          </div>
+                          <input
+                              type="range" min={0} max={85} step={5}
+                              value={(tournament as any).knockoutShadow ?? 0}
+                              onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutShadow: Number(e.target.value) } as any)}
+                              className="w-full accent-brand-primary"
+                          />
+                          <p className="text-[10px] text-brand-textMuted mt-1">0% deixa o fundo limpo (sem sombra). Aumente pra escurecer e dar contraste aos cards.</p>
+                      </div>
+
+                      {/* Estilo dos Textos (separado por parte) */}
+                      <div className="bg-brand-surfaceHighlight rounded-xl p-5 border border-brand-border space-y-5">
+                          <label className="block text-xs font-bold text-brand-textMuted uppercase tracking-widest">Estilo dos Textos</label>
+
+                          {/* NOME DOS TIMES */}
+                          <div className="border-t border-brand-border pt-4">
+                              <p className="text-[11px] font-black text-brand-text uppercase tracking-wider mb-2">Nome dos Times</p>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                  <div>
+                                      <p className="text-[10px] text-brand-textMuted mb-1">Cor</p>
+                                      <input type="color" value={(tournament as any).knockoutTeamColor || '#f3f5f0'} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTeamColor: e.target.value } as any)} className="w-full h-9 rounded-lg border border-brand-border bg-transparent cursor-pointer" />
+                                  </div>
+                                  <div>
+                                      <p className="text-[10px] text-brand-textMuted mb-1">Fonte</p>
+                                      <select value={(tournament as any).knockoutTeamFont || ''} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTeamFont: e.target.value } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none">
+                                          <option value="">Padrão</option>
+                                          <option value="Arial, sans-serif">Arial</option>
+                                          <option value="'Arial Black', sans-serif">Arial Black</option>
+                                          <option value="Impact, sans-serif">Impact</option>
+                                          <option value="Georgia, serif">Georgia</option>
+                                          <option value="'Times New Roman', serif">Times New Roman</option>
+                                          <option value="'Courier New', monospace">Courier New</option>
+                                          <option value="Verdana, sans-serif">Verdana</option>
+                                          <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                          <option value="Tahoma, sans-serif">Tahoma</option>
+                                      </select>
+                                  </div>
+                                  <div>
+                                      <p className="text-[10px] text-brand-textMuted mb-1">Tamanho (px)</p>
+                                      <input type="number" min={8} max={28} value={(tournament as any).knockoutTeamSize || ''} placeholder="auto" onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutTeamSize: e.target.value ? Number(e.target.value) : undefined } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none" />
+                                  </div>
+                              </div>
+                          </div>
+
+                          {/* TÍTULO DA FASE */}
+                          <div className="border-t border-brand-border pt-4">
+                              <p className="text-[11px] font-black text-brand-text uppercase tracking-wider mb-2">Título da Fase <span className="text-brand-textMuted font-normal normal-case">(Oitavas, Quartas...)</span></p>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                  <div>
+                                      <p className="text-[10px] text-brand-textMuted mb-1">Cor</p>
+                                      <input type="color" value={(tournament as any).knockoutPhaseColor || '#8a8f9c'} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutPhaseColor: e.target.value } as any)} className="w-full h-9 rounded-lg border border-brand-border bg-transparent cursor-pointer" />
+                                  </div>
+                                  <div>
+                                      <p className="text-[10px] text-brand-textMuted mb-1">Fonte</p>
+                                      <select value={(tournament as any).knockoutPhaseFont || ''} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutPhaseFont: e.target.value } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none">
+                                          <option value="">Padrão</option>
+                                          <option value="Arial, sans-serif">Arial</option>
+                                          <option value="'Arial Black', sans-serif">Arial Black</option>
+                                          <option value="Impact, sans-serif">Impact</option>
+                                          <option value="Georgia, serif">Georgia</option>
+                                          <option value="'Times New Roman', serif">Times New Roman</option>
+                                          <option value="'Courier New', monospace">Courier New</option>
+                                          <option value="Verdana, sans-serif">Verdana</option>
+                                          <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                          <option value="Tahoma, sans-serif">Tahoma</option>
+                                      </select>
+                                  </div>
+                                  <div>
+                                      <p className="text-[10px] text-brand-textMuted mb-1">Tamanho (px)</p>
+                                      <input type="number" min={8} max={32} value={(tournament as any).knockoutPhaseSize || ''} placeholder="auto" onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutPhaseSize: e.target.value ? Number(e.target.value) : undefined } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none" />
+                                  </div>
+                              </div>
+                          </div>
+
+                          {/* RESULTADO / PLACAR */}
+                          <div className="border-t border-brand-border pt-4">
+                              <p className="text-[11px] font-black text-brand-text uppercase tracking-wider mb-2">Resultado / Placar</p>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                  <div>
+                                      <p className="text-[10px] text-brand-textMuted mb-1">Cor</p>
+                                      <input type="color" value={(tournament as any).knockoutScoreColor || '#f3f5f0'} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutScoreColor: e.target.value } as any)} className="w-full h-9 rounded-lg border border-brand-border bg-transparent cursor-pointer" />
+                                  </div>
+                                  <div>
+                                      <p className="text-[10px] text-brand-textMuted mb-1">Fonte</p>
+                                      <select value={(tournament as any).knockoutScoreFont || ''} onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutScoreFont: e.target.value } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none">
+                                          <option value="">Padrão</option>
+                                          <option value="Arial, sans-serif">Arial</option>
+                                          <option value="'Arial Black', sans-serif">Arial Black</option>
+                                          <option value="Impact, sans-serif">Impact</option>
+                                          <option value="Georgia, serif">Georgia</option>
+                                          <option value="'Times New Roman', serif">Times New Roman</option>
+                                          <option value="'Courier New', monospace">Courier New</option>
+                                          <option value="Verdana, sans-serif">Verdana</option>
+                                          <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                          <option value="Tahoma, sans-serif">Tahoma</option>
+                                      </select>
+                                  </div>
+                                  <div>
+                                      <p className="text-[10px] text-brand-textMuted mb-1">Tamanho (px)</p>
+                                      <input type="number" min={8} max={32} value={(tournament as any).knockoutScoreSize || ''} placeholder="auto" onChange={e => onUpdateTournament && onUpdateTournament(tournament.id, { knockoutScoreSize: e.target.value ? Number(e.target.value) : undefined } as any)} className="w-full bg-brand-surface border border-brand-border rounded-lg p-2 text-brand-text text-xs focus:border-brand-primary outline-none" />
+                                  </div>
+                              </div>
+                          </div>
                       </div>
                   </div>
               )}
@@ -1701,26 +2009,41 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                       )}
 
                       {displayMatches.length > 0 ? (
-                          <div className="grid grid-cols-1 gap-3 items-start">
+                          <div className="flex flex-col gap-4 items-stretch">
                               {Object.entries(
                                   displayMatches.reduce((acc: any, m: any) => {
-                                      const groupName = tournament.groups.find(g => g.id === m.groupId)?.name || 'Outros';
-                                      if (!acc[groupName]) acc[groupName] = [];
-                                      acc[groupName].push(m);
+                                      const key = isKnockout
+                                          ? (m.stage || 'FASE')
+                                          : (tournament.groups.find(g => g.id === m.groupId)?.name || 'Jogos');
+                                      if (!acc[key]) acc[key] = [];
+                                      acc[key].push(m);
                                       return acc;
                                   }, {})
-                              ).map(([groupName, matches]: [string, any]) => (
-                                  <div key={groupName} className="grupo-jogos">
-                                      <div className="grupo-header" onClick={() => setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }))}>
-                                          {groupName} {expandedGroups[groupName] ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
-                                      </div>
-                                      {expandedGroups[groupName] && (
-                                          <div className="grupo-conteudo">
-                                              {matches.map((m: any) => <HorizontalMatchCard key={m.id} match={m} />)}
+                              ).map(([key, matches]: [string, any]) => {
+                                  const stageLabels: Record<string, string> = {
+                                      R64: '64-avos de Final', R32: '32-avos de Final', R16: 'Oitavas de Final',
+                                      QF: 'Quartas de Final', SF: 'Semifinal', FINAL: 'Grande Final',
+                                  };
+                                  const label = isKnockout ? (stageLabels[key] || key) : key;
+                                  const isOpen = expandedGroups[key] !== false; // aberto por padrão
+                                  return (
+                                      <div key={key} className="grupo-jogos">
+                                          <div className="grupo-header" onClick={() => setExpandedGroups(prev => ({ ...prev, [key]: prev[key] === false ? true : false }))}>
+                                              <span className="flex items-center gap-2">
+                                                  {key === 'FINAL' && <Trophy size={16} className="text-yellow-500" />}
+                                                  {label}
+                                                  <span className="text-[11px] font-mono bg-brand-primary/20 text-brand-primary px-2 py-0.5 rounded-full">{matches.length}</span>
+                                              </span>
+                                              {isOpen ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                                           </div>
-                                      )}
-                                  </div>
-                              ))}
+                                          {isOpen && (
+                                              <div className="grupo-conteudo-grid">
+                                                  {matches.map((m: any) => <HorizontalMatchCard key={m.id} match={m} />)}
+                                              </div>
+                                          )}
+                                      </div>
+                                  );
+                              })}
                           </div>
                       ) : ( hasMatches && <div className="text-center py-10 text-brand-textMuted">Nenhum jogo encontrado para este turno/filtro.</div> )}
                   </div>
@@ -2186,9 +2509,26 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                   return getTeamNameAndEscudo(t);
                               }}
                               themeColor={themeColor}
+                              accentColor={(tournament as any).knockoutAccentColor || undefined}
+                              textColor={(tournament as any).knockoutTextColor || undefined}
+                              championTrophyUrl={(tournament as any).knockoutTrophyUrl || undefined}
+                              nameFont={(tournament as any).knockoutFont || undefined}
+                              cardColor={(tournament as any).knockoutCardColor || undefined}
                               championLogoUrl={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl || tournament.bannerUrl}
                               backgroundUrl={tournament.knockoutBackground}
-                              backgroundOpacity={tournament.knockoutOpacity !== undefined ? tournament.knockoutOpacity / 100 : 0.25}
+                              backgroundOpacity={tournament.knockoutOpacity !== undefined ? tournament.knockoutOpacity / 100 : 1}
+                              headerText={(tournament as any).knockoutHeaderText || undefined}
+                              headerLogoUrl={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl || undefined}
+                              shadowIntensity={(tournament as any).knockoutShadow !== undefined ? (tournament as any).knockoutShadow / 100 : undefined}
+                              teamColor={(tournament as any).knockoutTeamColor || undefined}
+                              teamFont={(tournament as any).knockoutTeamFont || undefined}
+                              teamSize={(tournament as any).knockoutTeamSize || undefined}
+                              phaseColor={(tournament as any).knockoutPhaseColor || undefined}
+                              phaseFont={(tournament as any).knockoutPhaseFont || undefined}
+                              phaseSize={(tournament as any).knockoutPhaseSize || undefined}
+                              scoreColor={(tournament as any).knockoutScoreColor || undefined}
+                              scoreFont={(tournament as any).knockoutScoreFont || undefined}
+                              scoreSize={(tournament as any).knockoutScoreSize || undefined}
                               onMatchClick={(m) => openMatchModal(m as any)}
                           />
                       ) : ( <div className="text-center text-white/50 italic p-8"> O mata-mata ainda não foi gerado. Finalize a fase de grupos. </div> )}
