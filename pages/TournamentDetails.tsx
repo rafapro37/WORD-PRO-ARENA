@@ -949,6 +949,22 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                   </button>
               )}
 
+              {/* SEÇÃO DO ORGANIZADOR (no final do menu) */}
+              {isOrganizer && (
+                  <>
+                      <div className="hidden lg:block border-t border-brand-border mt-2 pt-2" />
+                      <div className="hidden lg:flex items-center gap-2.5 px-3 py-2">
+                          {(leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl) && (
+                              <img src={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl} alt="" className="w-9 h-9 rounded-lg object-contain bg-brand-surface border border-brand-border shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                              <p className="text-[11px] font-black text-brand-text truncate leading-tight">{currentUser?.name || leagues.find((l: any) => l.id === tournament.ligaId)?.name || 'Organizador'}</p>
+                              <p className="text-[9px] text-brand-textMuted uppercase tracking-widest">Organizador</p>
+                          </div>
+                      </div>
+                  </>
+              )}
+
               {/* NEW APPEARANCE TAB FOR ORGANIZERS */}
               {isOrganizer && (
                   <button onClick={() => setActiveTab('appearance')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'appearance' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
