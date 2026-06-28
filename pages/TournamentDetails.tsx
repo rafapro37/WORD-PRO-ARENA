@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from "react-dom";
 import { toast } from '../src/lib/toast';
 import { Tournament, Team, Match, Player, MatchEvent, TournamentFormat, TournamentAwards, PlayerProfile, TournamentRegistration, User, UserRole, SocialLink } from '../types';
 import { POSITIONS, AWARD_LABELS, POSITIONS_VIRTUAL, POSITIONS_REAL } from '../constants';
@@ -966,6 +967,100 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
               </div>
           </div>
 
+          {/* Painel de abas: drawer no celular (via portal), fixo no desktop */}
+          {createPortal(
+            <>
+              {mobileMenuOpen && (
+                <div className="lg:hidden fixed inset-0 bg-black/70 z-[9998]" onClick={() => setMobileMenuOpen(false)} />
+              )}
+              <div
+                onClick={() => setMobileMenuOpen(false)}
+                className={`lg:hidden fixed top-0 left-0 h-full z-[9999] w-[82%] max-w-xs bg-brand-surface border-r border-brand-border p-3 overflow-y-auto shadow-2xl flex flex-col gap-1 transition-transform duration-300 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+              >
+              <div className="lg:hidden flex items-center justify-between mb-2 pb-2 border-b border-brand-border">
+                  <span className="text-xs font-black uppercase tracking-widest text-brand-textMuted">Menu</span>
+                  <button onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(false); }} className="text-brand-textMuted hover:text-brand-text text-xl leading-none px-1">×</button>
+              </div>
+              <button onClick={() => setActiveTab('overview')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'overview' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <Info size={16}/> Visão Geral
+              </button>
+              
+              {!isKnockout && (
+                  <button onClick={() => setActiveTab('standings')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'standings' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                      <BarChart size={16}/> Classificação
+                  </button>
+              )}
+              
+              <button onClick={() => setActiveTab('matches')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'matches' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <Calendar size={16}/> Jogos
+              </button>
+              
+              {(!isMD3 && !isLeague && (isKnockout || hasKnockoutStarted)) && (
+                  <button onClick={() => setActiveTab('brackets')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'brackets' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                      <Trophy size={16}/> Chaveamento
+                  </button>
+              )}
+
+              {/* Aba Artilheiros/Assistências (todos os campeonatos) */}
+              <button onClick={() => setActiveTab('scorers' as any)} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === ('scorers' as any) ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <Award size={16}/> Artilheiros
+              </button>
+              
+              {isTeamManager && myTeamInTournament && (
+                  <button onClick={() => setActiveTab('my-roster')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'my-roster' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                      <Users size={16}/> Meu Elenco
+                  </button>
+              )}
+
+              <button onClick={() => setActiveTab('teams')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'teams' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <Shield size={16}/> Chaves/Times
+              </button>
+              
+              <button onClick={() => setActiveTab('participants')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'participants' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <Users size={16}/> Participantes {pendingRegistrations.length > 0 && isOrganizer && <span className="bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">{pendingRegistrations.length}</span>}
+              </button>
+
+              {/* MARKETING TAB FOR ORGANIZERS */}
+              {isOrganizer && (
+                  <button onClick={() => setActiveTab('marketing')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'marketing' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                      <Globe size={16}/> Divulgação
+                  </button>
+              )}
+
+              {/* SEÇÃO DO ORGANIZADOR (no final do menu) */}
+              {isOrganizer && (
+                  <>
+                      <div className="border-t border-brand-border mt-2 pt-2" />
+                      <div className="flex items-center gap-2.5 px-2 sm:px-3 py-2">
+                          {(leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl) && (
+                              <img src={leagues.find((l: any) => l.id === tournament.ligaId)?.logoUrl} alt="" className="w-9 h-9 rounded-lg object-contain bg-brand-surface border border-brand-border shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                              <p className="text-[11px] font-black text-brand-text truncate leading-tight">{currentUser?.name || leagues.find((l: any) => l.id === tournament.ligaId)?.name || 'Organizador'}</p>
+                              <p className="text-[9px] text-brand-textMuted uppercase tracking-widest">Organizador</p>
+                          </div>
+                      </div>
+                  </>
+              )}
+
+              {/* NEW APPEARANCE TAB FOR ORGANIZERS */}
+              {isOrganizer && (
+                  <button onClick={() => setActiveTab('appearance')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'appearance' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                      <Palette size={16}/> Aparência
+                  </button>
+              )}
+
+              {/* NEW SETTINGS TAB FOR ORGANIZERS */}
+              {isOrganizer && (
+                  <button onClick={() => setActiveTab('config')} className={`w-full px-4 py-2.5 font-bold text-sm whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'config' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                      <Settings size={16}/> Configurações
+                  </button>
+              )}
+              </div>
+            </>,
+            document.body
+          )}
+
           {/* Botão de menu (só celular) */}
           <button
             onClick={() => setMobileMenuOpen(true)}
@@ -976,18 +1071,8 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           </button>
 
           <div className="flex flex-row gap-2 sm:gap-4 items-start">
-          {/* Overlay do drawer (celular) */}
-          {mobileMenuOpen && (
-            <div className="lg:hidden fixed inset-0 bg-black/70 z-[9998]" onClick={() => setMobileMenuOpen(false)} />
-          )}
-          {/* TABS — drawer deslizante no celular, fixo no desktop */}
-          <div
-            onClick={() => setMobileMenuOpen(false)}
-            className={`flex flex-col gap-1 shrink-0 bg-brand-surface lg:bg-brand-surface/60 border-brand-border lg:rounded-xl border-r lg:border p-3 lg:p-2
-              fixed lg:static top-0 left-0 h-full lg:h-auto z-[9999] lg:z-auto w-[80%] max-w-xs lg:w-56 overflow-y-auto shadow-2xl lg:shadow-none
-              transition-transform duration-300 lg:transition-none
-              ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
-          >
+          {/* Menu fixo no desktop */}
+          <div className="hidden lg:flex flex-col gap-1 w-56 shrink-0 bg-brand-surface/60 rounded-xl border border-brand-border p-2">
               <div className="lg:hidden flex items-center justify-between mb-2 pb-2 border-b border-brand-border">
                   <span className="text-xs font-black uppercase tracking-widest text-brand-textMuted">Menu</span>
                   <button onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(false); }} className="text-brand-textMuted hover:text-brand-text text-xl leading-none px-1">×</button>
