@@ -645,6 +645,8 @@ export interface Match {
     homePenaltyScore?: number | null;
     awayPenaltyScore?: number | null;
     stage?: string;
+    /** Jogo travado pelo organizador (mostra cadeado, não pode editar resultado) */
+    locked?: boolean;
 }
 
 export interface Player {

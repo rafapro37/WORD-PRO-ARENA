@@ -159,6 +159,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
   // Match Modal State
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [releaseCount, setReleaseCount] = useState(1);
   const [matchHomeScore, setMatchHomeScore] = useState<number>(0);
   const [matchAwayScore, setMatchAwayScore] = useState<number>(0);
   const [matchMvpId, setMatchMvpId] = useState<string>('');
@@ -552,6 +553,10 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   };
 
   const openMatchModal = (m: Match) => { 
+      if (m.locked) {
+          toast.error(isOrganizer ? 'Jogo bloqueado. Toque no cadeado para liberar.' : 'Jogo ainda não liberado pelo organizador.', 2500);
+          return;
+      }
       setSelectedMatch(m); 
       setMatchHomeScore(m.homeScore||0); 
       setMatchAwayScore(m.awayScore||0); 
@@ -653,6 +658,63 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   const handleAutoSelectAwards = () => { const sortedByGoals = [...players].sort((a,b) => b.goals - a.goals); const topScorer = sortedByGoals[0]; const sortedByAssists = [...players].sort((a,b) => b.assists - a.assists); const topAssister = sortedByAssists[0]; const sortedByMvp = [...players].sort((a,b) => b.mvps - a.mvps || (b.rating || 0) - (a.rating || 0)); const topMvp = sortedByMvp[0]; const defenders = players.filter(p => ['ZGD','ZGE','ZGC','LD','LE','VOL'].includes(p.position)); const topDefender = defenders.sort((a,b) => (b.rating || 0) - (a.rating || 0))[0]; const gks = players.filter(p => p.position === 'GK'); const topGk = gks.sort((a,b) => (b.rating || 0) - (a.rating || 0))[0]; setAwardSelections({ mvpId: topMvp?.id, bestStrikerId: topScorer?.id, bestMidfielderId: topAssister?.id, bestDefenderId: topDefender?.id, goldenGloveId: topGk?.id }); };
 
   // Match Cards - UPDATED FOR COMPACTNESS & FLEX/GRID ROBUSTNESS
+  // ── Liberação / bloqueio de jogos ───────────────────────────────
+  // Jogos deste campeonato (ordenados por rodada) que são "reais" (têm os dois times definidos)
+  const tournamentMatches = matches
+      .filter(m => m.tournamentId === tournament.id)
+      .sort((a, b) => (a.round || 0) - (b.round || 0));
+
+  const lockAllMatches = (lock: boolean) => {
+      const alvo = tournamentMatches.filter(m => !!m.locked !== lock);
+      if (alvo.length === 0) { toast.error(lock ? 'Todos já estão bloqueados.' : 'Todos já estão liberados.'); return; }
+      alvo.forEach(m => onUpdateMatch(m.id, { locked: lock }));
+      toast.success(`${alvo.length} ${alvo.length === 1 ? 'jogo' : 'jogos'} ${lock ? 'bloqueados' : 'liberados'}!`);
+  };
+
+  const releaseNextRound = () => {
+      const travados = tournamentMatches.filter(m => m.locked);
+      if (travados.length === 0) { toast.error('Não há jogos bloqueados.'); return; }
+      const proximaRodada = Math.min(...travados.map(m => m.round || 0));
+      const daRodada = travados.filter(m => (m.round || 0) === proximaRodada);
+      daRodada.forEach(m => onUpdateMatch(m.id, { locked: false }));
+      toast.success(`Rodada ${proximaRodada} liberada (${daRodada.length} jogos)!`);
+  };
+
+  const releaseSomeMatches = (n: number) => {
+      const travados = tournamentMatches.filter(m => m.locked);
+      if (travados.length === 0) { toast.error('Não há jogos bloqueados.'); return; }
+      const liberar = travados.slice(0, Math.max(1, n));
+      liberar.forEach(m => onUpdateMatch(m.id, { locked: false }));
+      toast.success(`${liberar.length} ${liberar.length === 1 ? 'jogo liberado' : 'jogos liberados'}!`);
+  };
+
+  // Camada de cadeado: overlay quando travado + botão travar/destravar (organizador)
+  const MatchLockLayer = ({ match }: { match: Match }) => {
+      const locked = !!match.locked;
+      if (!locked && !isOrganizer) return null;
+      return (
+          <>
+              {locked && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/55 backdrop-blur-[1px] pointer-events-none">
+                      <div className="flex flex-col items-center gap-0.5">
+                          <Lock size={20} className="text-brand-primary" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }} />
+                          <span className="text-[7px] font-black uppercase tracking-[0.2em] text-brand-primary">Bloqueado</span>
+                      </div>
+                  </div>
+              )}
+              {isOrganizer && (
+                  <button
+                      onClick={(e) => { e.stopPropagation(); onUpdateMatch(match.id, { locked: !locked }); toast.success(locked ? 'Jogo liberado' : 'Jogo bloqueado', 1500); }}
+                      className={`absolute top-1 right-1 z-30 w-6 h-6 flex items-center justify-center rounded-md border transition-colors ${locked ? 'bg-brand-primary/25 border-brand-primary' : 'bg-black/50 border-white/10 hover:border-white/40'}`}
+                      title={locked ? 'Liberar jogo' : 'Travar jogo'}
+                  >
+                      <Lock size={11} className={locked ? 'text-brand-primary' : 'text-brand-textMuted'} />
+                  </button>
+              )}
+          </>
+      );
+  };
+
   const ClassicMatchCard = ({ match }: { match: Match }) => { 
       const h = teams.find(t => t.id === match.homeTeamId); 
       const a = teams.find(t => t.id === match.awayTeamId); 
@@ -664,6 +726,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       const awayWon = match.isFinished && (match.awayScore ?? 0) > (match.homeScore ?? 0);
       return ( 
           <div className="bg-brand-surface border border-brand-primary/50 rounded w-full relative z-10 shadow cursor-pointer hover:border-brand-primary transition-all flex flex-col overflow-hidden group" onClick={() => openMatchModal(match)}> 
+              <MatchLockLayer match={match} />
               <div className="bg-black/40 text-brand-textMuted text-[9px] text-center font-bold px-1 uppercase tracking-wider py-0.5 border-b border-white/5">{match.stage || 'JOGO'}</div> 
               <div className="p-1.5 grid gap-y-1"> 
                   <div className={`flex items-center justify-between gap-2 h-5 rounded px-0.5 ${homeWon ? 'bg-green-900/30' : ''}`}> 
@@ -704,6 +767,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       const awayWon = match.isFinished && (match.awayScore ?? 0) > (match.homeScore ?? 0);
       return ( 
           <div className="bg-gradient-to-b from-[#1a1e2e] to-[#11141f] border border-brand-primary/30 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] w-full relative z-10 overflow-hidden cursor-pointer hover:border-brand-primary transition-all hover:shadow-[0_0_25px_rgba(255,106,0,0.25)] flex flex-col" onClick={() => openMatchModal(match)}> 
+              <MatchLockLayer match={match} />
               {/* Cabeçalho da fase */}
               <div className="bg-brand-primary/15 text-brand-primary text-[10px] text-center font-black px-2 py-1.5 border-b border-brand-primary/20 uppercase tracking-[0.2em]">{match.stage || 'VS'}</div> 
               <div className="p-3 flex flex-col gap-2"> 
@@ -739,7 +803,8 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       const hWin = finished && (match.homeScore ?? 0) > (match.awayScore ?? 0);
       const aWin = finished && (match.awayScore ?? 0) > (match.homeScore ?? 0);
       return (
-          <div className="match-card-grid" onClick={() => openMatchModal(match)}>
+          <div className="match-card-grid" style={{ position: 'relative' }} onClick={() => openMatchModal(match)}>
+              <MatchLockLayer match={match} />
               <div className={`mcg-team ${hWin ? 'mcg-win' : ''}`}>
                   {hVisual.logoUrl
                       ? <img src={hVisual.logoUrl} className="mcg-logo" />
@@ -2023,6 +2088,34 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
               {activeTab === 'matches' && (
                   <div className="p-6">
+                      {/* Controle de liberação de jogos (organizador) */}
+                      {isOrganizer && tournamentMatches.length > 0 && (
+                          <div className="bg-brand-surfaceHighlight border border-brand-border rounded-xl p-4 mb-6">
+                              <div className="flex items-center gap-2 mb-3">
+                                  <Lock size={16} className="text-brand-primary" />
+                                  <h3 className="text-brand-text font-bold text-sm">Liberação de Jogos</h3>
+                                  <span className="text-[11px] text-brand-textMuted ml-auto">
+                                      {tournamentMatches.filter(m => m.locked).length} bloqueados · {tournamentMatches.filter(m => !m.locked).length} liberados
+                                  </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                  <button onClick={releaseNextRound} className="bg-brand-primary hover:bg-brand-primary/80 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5">
+                                      <ChevronRight size={14}/> Liberar próxima rodada
+                                  </button>
+                                  <div className="flex items-center gap-1 bg-brand-surface border border-brand-border rounded-lg px-2 py-1">
+                                      <span className="text-[11px] text-brand-textMuted">Liberar</span>
+                                      <input type="number" min={1} value={releaseCount} onChange={e => setReleaseCount(Math.max(1, Number(e.target.value) || 1))} className="w-12 bg-transparent text-brand-text text-sm font-bold text-center outline-none" />
+                                      <button onClick={() => releaseSomeMatches(releaseCount)} className="text-brand-primary text-xs font-bold hover:underline">jogos</button>
+                                  </div>
+                                  <div className="flex-1" />
+                                  <button onClick={() => lockAllMatches(false)} className="bg-brand-surface hover:bg-brand-border text-brand-text px-3 py-2 rounded-lg text-xs font-bold transition-all border border-brand-border">Liberar tudo</button>
+                                  <button onClick={() => lockAllMatches(true)} className="bg-brand-surface hover:bg-brand-border text-brand-textMuted px-3 py-2 rounded-lg text-xs font-bold transition-all border border-brand-border flex items-center gap-1.5">
+                                      <Lock size={13}/> Bloquear tudo
+                                  </button>
+                              </div>
+                              <p className="text-[10px] text-brand-textMuted mt-2">Jogo bloqueado mostra um cadeado e não pode ter o resultado editado. Toque no cadeado de cada jogo para travar/liberar individualmente.</p>
+                          </div>
+                      )}
                       {/* Removed the inline style block for .match-grid */}
                       {isMD3 && isOrganizer && onMD3Action && (
                           <div className="bg-brand-surfaceHighlight border-2 border-brand-primary/30 p-4 rounded-xl mb-6 flex flex-col md:flex-row justify-between items-center gap-4">

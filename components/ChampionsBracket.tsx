@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Shield, Trophy, Check } from './Icons';
+import { Shield, Trophy, Check, Lock } from './Icons';
 
 interface MatchLike {
   id: string;
@@ -9,6 +9,7 @@ interface MatchLike {
   awayScore?: number | null;
   isFinished?: boolean;
   stage?: string;
+  locked?: boolean;
 }
 interface TeamVisual { name: string; logoUrl?: string; }
 interface ChampionsBracketProps {
@@ -91,6 +92,8 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
   const scoreColorR = scoreColor || txt;
   const scoreFontR  = scoreFont || undefined;
   const hasHeader = !!(headerText || (fedLogo && fedLogoPos === 'top'));
+  // Espaço reservado no topo proporcional ao tamanho do nome (evita encavalar o bracket)
+  const headerPad = hasHeader ? Math.max(52, (headerSize || 18) + 34, (fedLogoPos === 'top' ? (fedLogoSize || 44) + 24 : 0)) : 0;
 
   // Fases existentes (da maior para a final)
   const phaseList = [
@@ -280,8 +283,13 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
     const gap = CREST > 24 ? 10 : 6;
     return (
       <div data-bcard onClick={() => onMatchClick && onMatchClick(match)}
-        className="rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5"
+        className="rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 relative"
         style={{ width: CARD_W, background: cardBg, border: `1px solid ${accent}55`, boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
+        {match.locked && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none" style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(1px)' }}>
+            <Lock size={CREST * 0.7} style={{ color: accent, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }} />
+          </div>
+        )}
         {showHead && (
           <div className="text-center font-black uppercase" style={{ fontSize: 9, letterSpacing: '2px', fontFamily: phaseFontR, color: accent, background: `${accent}1f`, borderBottom: `1px solid ${accent}30`, padding: '4px' }}>{phase}</div>
         )}
@@ -333,10 +341,10 @@ const ChampionsBracket: React.FC<ChampionsBracketProps> = ({
       className="relative w-full rounded-2xl flex items-center justify-center"
       style={{
         background: backgroundUrl ? '#0a0b0f' : '#1e1f26',
-        minHeight: isFullscreen ? '100vh' : totalH * fitScale + 28,
+        minHeight: isFullscreen ? '100vh' : totalH * fitScale + headerPad + 28,
         overflow: 'hidden',
         padding: 14,
-        paddingTop: hasHeader ? 66 : 14,
+        paddingTop: 14 + headerPad,
       }}
     >
       {backgroundUrl && (
