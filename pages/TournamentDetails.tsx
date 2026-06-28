@@ -900,70 +900,71 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
               </div>
           </div>
 
+          <div className="flex flex-col lg:flex-row gap-4 items-start">
           {/* TABS */}
-          <div className="flex gap-2 border-b border-brand-border mb-6 overflow-x-auto pb-1">
-              <button onClick={() => setActiveTab('overview')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'overview' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+          <div className="flex flex-row lg:flex-col gap-1 w-full lg:w-56 shrink-0 overflow-x-auto lg:overflow-visible bg-brand-surface/60 rounded-xl border border-brand-border p-2 mb-4 lg:mb-0">
+              <button onClick={() => setActiveTab('overview')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'overview' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                   <Info size={16}/> Visão Geral
               </button>
               
               {!isKnockout && (
-                  <button onClick={() => setActiveTab('standings')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'standings' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <button onClick={() => setActiveTab('standings')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'standings' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                       <BarChart size={16}/> Classificação
                   </button>
               )}
               
-              <button onClick={() => setActiveTab('matches')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'matches' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+              <button onClick={() => setActiveTab('matches')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'matches' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                   <Calendar size={16}/> Jogos
               </button>
               
               {(!isMD3 && !isLeague && (isKnockout || hasKnockoutStarted)) && (
-                  <button onClick={() => setActiveTab('brackets')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'brackets' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <button onClick={() => setActiveTab('brackets')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'brackets' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                       <Trophy size={16}/> Chaveamento
                   </button>
               )}
 
               {/* Aba Artilheiros/Assistências (todos os campeonatos) */}
-              <button onClick={() => setActiveTab('scorers' as any)} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === ('scorers' as any) ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+              <button onClick={() => setActiveTab('scorers' as any)} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === ('scorers' as any) ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                   <Award size={16}/> Artilheiros
               </button>
               
               {isTeamManager && myTeamInTournament && (
-                  <button onClick={() => setActiveTab('my-roster')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'my-roster' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <button onClick={() => setActiveTab('my-roster')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'my-roster' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                       <Users size={16}/> Meu Elenco
                   </button>
               )}
 
-              <button onClick={() => setActiveTab('teams')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'teams' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+              <button onClick={() => setActiveTab('teams')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'teams' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                   <Shield size={16}/> Chaves/Times
               </button>
               
-              <button onClick={() => setActiveTab('participants')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'participants' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+              <button onClick={() => setActiveTab('participants')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'participants' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                   <Users size={16}/> Participantes {pendingRegistrations.length > 0 && isOrganizer && <span className="bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full">{pendingRegistrations.length}</span>}
               </button>
 
               {/* MARKETING TAB FOR ORGANIZERS */}
               {isOrganizer && (
-                  <button onClick={() => setActiveTab('marketing')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'marketing' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <button onClick={() => setActiveTab('marketing')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'marketing' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                       <Globe size={16}/> Divulgação
                   </button>
               )}
 
               {/* NEW APPEARANCE TAB FOR ORGANIZERS */}
               {isOrganizer && (
-                  <button onClick={() => setActiveTab('appearance')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'appearance' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <button onClick={() => setActiveTab('appearance')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'appearance' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                       <Palette size={16}/> Aparência
                   </button>
               )}
 
               {/* NEW SETTINGS TAB FOR ORGANIZERS */}
               {isOrganizer && (
-                  <button onClick={() => setActiveTab('config')} className={`px-4 py-2 font-bold whitespace-nowrap rounded-t-lg transition-colors flex items-center gap-2 ${activeTab === 'config' ? 'bg-brand-surfaceHighlight text-brand-text border-b-2 border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
+                  <button onClick={() => setActiveTab('config')} className={`lg:w-full px-4 py-2.5 font-bold whitespace-nowrap rounded-lg transition-colors flex items-center gap-2 justify-start text-left ${activeTab === 'config' ? 'bg-brand-primary/15 text-brand-primary border-l-[3px] border-brand-primary' : 'text-brand-textMuted hover:text-brand-text hover:bg-brand-surfaceHighlight/50'}`}>
                       <Settings size={16}/> Configurações
                   </button>
               )}
           </div>
 
-          <div className="bg-brand-surface/90 backdrop-blur rounded-xl border border-brand-border min-h-[400px] shadow-2xl relative overflow-hidden">
+          <div className="flex-1 min-w-0 bg-brand-surface/90 backdrop-blur rounded-xl border border-brand-border min-h-[400px] shadow-2xl relative overflow-hidden">
               
               {/* --- APPEARANCE TAB --- */}
               {activeTab === ('scorers' as any) && (
@@ -2577,6 +2578,7 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                       ) : ( <div className="text-center text-white/50 italic p-8"> O mata-mata ainda não foi gerado. Finalize a fase de grupos. </div> )}
                   </div>
               )}
+          </div>
           </div>
 
           {showRegistrationModal && (
