@@ -18,6 +18,13 @@
   --global-font-size: 16px;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -25,7 +32,35 @@ body {
   color: var(--text-main);
   font-family: 'Inter', sans-serif;
   font-size: var(--global-font-size);
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-touch-callout: none;
 }
+
+/* Sensação de app nativo: sem seleção acidental na UI, mas liberada em campos de texto e conteúdo marcável */
+button, a, .no-select { user-select: none; -webkit-user-select: none; }
+input, textarea, select, [contenteditable="true"], .selectable {
+  user-select: text; -webkit-user-select: text; -webkit-touch-callout: default;
+}
+
+/* Bordas seguras (notch / barra de gestos) quando instalado em tela cheia */
+@media (display-mode: standalone), (display-mode: minimal-ui) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Scrollbar discreta em toda a aplicação (cara de app) */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;

@@ -2,83 +2,52 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PRO WORLD ARENA — Sem conexão</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Sem conexão — PRO WORLD ARENA</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1A1C22;
-      color: #F2F2F2;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-      text-align: center;
+      background: radial-gradient(120% 80% at 50% 30%, #20232b 0%, #14161b 70%);
+      color: #f2f2f2;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 24px; min-height: 100%;
     }
+    .glow {
+      position: absolute; width: 320px; height: 320px; border-radius: 50%;
+      background: rgba(255,106,0,.22); filter: blur(70px); z-index: 0;
+    }
+    .card { position: relative; z-index: 1; max-width: 380px; }
     .logo {
-      font-size: 2rem;
-      font-weight: 900;
-      font-style: italic;
-      letter-spacing: -0.05em;
-      margin-bottom: 2rem;
+      width: 104px; height: 104px; border-radius: 26px; margin: 0 auto 22px;
+      display: block; box-shadow: 0 14px 40px rgba(255,106,0,.25);
     }
-    .logo span { color: #FF6A00; }
-    .icon {
-      font-size: 4rem;
-      margin-bottom: 1.5rem;
-      opacity: 0.4;
-    }
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.75rem;
-    }
-    p {
-      color: #9CA3AF;
-      font-size: 0.9rem;
-      max-width: 320px;
-      line-height: 1.6;
-      margin-bottom: 2rem;
-    }
+    h1 { font-size: 24px; font-weight: 800; letter-spacing: .3px; margin-bottom: 10px; }
+    p { color: #bdbdbd; font-size: 15px; line-height: 1.55; margin-bottom: 28px; }
+    .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:#ef4444; margin-right:7px; vertical-align: middle; animation: pulse 1.4s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
     button {
-      background: #FF6A00;
-      color: #000;
-      border: none;
-      padding: 0.75rem 2rem;
-      border-radius: 0.75rem;
-      font-weight: 900;
-      font-size: 0.875rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      cursor: pointer;
-      transition: opacity 0.2s;
+      background: #FF6A00; color: #fff; border: none; font-weight: 800; font-size: 15px;
+      padding: 14px 34px; border-radius: 14px; cursor: pointer; letter-spacing: .3px;
+      box-shadow: 0 8px 24px rgba(255,106,0,.35); transition: transform .15s, box-shadow .15s;
     }
-    button:hover { opacity: 0.85; }
-    .status {
-      margin-top: 1.5rem;
-      font-size: 0.75rem;
-      color: #6B7280;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
+    button:active { transform: scale(.96); }
+    .hint { margin-top: 18px; font-size: 12px; color: #6b7280; }
   </style>
 </head>
 <body>
-  <div class="logo">PRO WORLD <span>ARENA</span></div>
-  <div class="icon">📡</div>
-  <h1>Sem conexão</h1>
-  <p>Você está offline. Verifique sua conexão com a internet e tente novamente.</p>
-  <button onclick="window.location.reload()">Tentar novamente</button>
-  <p class="status">Os dados salvos localmente continuam disponíveis</p>
-
+  <div class="glow"></div>
+  <div class="card">
+    <img src="/icons/icon-192.png" alt="PRO WORLD ARENA" class="logo" />
+    <h1>Você está offline</h1>
+    <p><span class="dot"></span>Sem conexão com a internet no momento. Verifique seus dados ou Wi-Fi e tente novamente.</p>
+    <button onclick="location.reload()">Tentar de novo</button>
+    <div class="hint">PRO WORLD ARENA · Gestão de Campeonatos</div>
+  </div>
   <script>
-    // Voltar automaticamente quando recuperar conexão
-    window.addEventListener('online', () => window.location.reload());
+    // Recarrega automaticamente assim que a conexão voltar
+    window.addEventListener('online', () => location.reload());
   </script>
 </body>
 </html>
