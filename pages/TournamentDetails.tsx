@@ -978,13 +978,13 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           <div className="flex flex-row gap-2 sm:gap-4 items-start">
           {/* Overlay do drawer (celular) */}
           {mobileMenuOpen && (
-            <div className="lg:hidden fixed inset-0 bg-black/60 z-[55]" onClick={() => setMobileMenuOpen(false)} />
+            <div className="lg:hidden fixed inset-0 bg-black/70 z-[9998]" onClick={() => setMobileMenuOpen(false)} />
           )}
           {/* TABS — drawer deslizante no celular, fixo no desktop */}
           <div
             onClick={() => setMobileMenuOpen(false)}
             className={`flex flex-col gap-1 shrink-0 bg-brand-surface lg:bg-brand-surface/60 border-brand-border lg:rounded-xl border-r lg:border p-3 lg:p-2
-              fixed lg:static top-0 left-0 h-full lg:h-auto z-[60] lg:z-auto w-[78%] max-w-xs lg:w-56 overflow-y-auto
+              fixed lg:static top-0 left-0 h-full lg:h-auto z-[9999] lg:z-auto w-[80%] max-w-xs lg:w-56 overflow-y-auto shadow-2xl lg:shadow-none
               transition-transform duration-300 lg:transition-none
               ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
           >
