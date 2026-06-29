@@ -175,6 +175,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Buscar TUDO do Supabase primeiro
         let loaded: AppState = { ...local };
         let remoteSettings: any = null;
+
+        // Mescla por id preservando a EDIÇÃO LOCAL quando o servidor ainda não tem
+        // aquele campo preenchido. Evita que o F5 apague customizações (ex.: banner
+        // do chaveamento) que ainda não foram sincronizadas pro Supabase.
+        const mergeByIdPreserveLocal = (remoteList: any[] = [], localList: any[] = []) => {
+          const localById = new Map((localList || []).map((x: any) => [x.id, x]));
+          const merged = (remoteList || []).map((r: any) => {
+            const l = localById.get(r.id);
+            if (!l) return r;
+            const out: any = { ...r };
+            for (const k of Object.keys(l)) {
+              const lv = l[k], rv = r[k];
+              const lHas = lv !== undefined && lv !== null && lv !== '' && !(Array.isArray(lv) && lv.length === 0);
+              const rHas = rv !== undefined && rv !== null && rv !== '' && !(Array.isArray(rv) && rv.length === 0);
+              if (lHas && !rHas) out[k] = lv; // preserva o que o local tem e o servidor (ainda) não
+            }
+            return out;
+          });
+          // mantém itens que só existem localmente (ainda não enviados)
+          const remoteIds = new Set((remoteList || []).map((r: any) => r.id));
+          for (const l of (localList || [])) if (!remoteIds.has(l.id)) merged.push(l);
+          return merged;
+        };
+
         try {
           const remoteData = await fetchAllFromSupabase();
           if (remoteData && Object.keys(remoteData).length > 0) {
@@ -182,8 +206,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             loaded = {
               ...local,
               users:             remoteData.users             || local.users,
-              tournaments:       remoteData.tournaments       || local.tournaments,
-              teams:             remoteData.teams             || local.teams,
+              tournaments:       mergeByIdPreserveLocal(remoteData.tournaments, local.tournaments),
+              teams:             mergeByIdPreserveLocal(remoteData.teams, local.teams),
               matches:           remoteData.matches           || local.matches,
               players:           remoteData.players           || local.players,
               playerProfiles:    remoteData.playerProfiles    || local.playerProfiles,
