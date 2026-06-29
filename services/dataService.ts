@@ -253,13 +253,34 @@ export const loadState = (): AppState => {
   };
 };
 
+// Remove imagens base64 pesadas (> ~5KB) ao salvar no localStorage. Elas vêm do
+// Supabase no boot, então não se perdem — só param de entupir o armazenamento e
+// estourar a quota (o que corrompia o estado e derrubava a sessão no F5).
+const stripHeavyImages = (obj: any): any => {
+  if (typeof obj === 'string') {
+    return (obj.startsWith('data:') && obj.length > 5000) ? '' : obj;
+  }
+  if (Array.isArray(obj)) return obj.map(stripHeavyImages);
+  if (obj && typeof obj === 'object') {
+    const out: any = {};
+    for (const k in obj) out[k] = stripHeavyImages(obj[k]);
+    return out;
+  }
+  return obj;
+};
+
 // ─── Salvar no localStorage ───────────────────────────────────────────────────
 export const saveState = (state: AppState) => {
-  // 1) Sessão SEMPRE primeiro e isolada — garante que um erro de quota no
-  //    estado principal nunca deslogue o usuário no F5.
+  // 1) SESSÃO é prioridade absoluta. Se faltar espaço, joga fora o estado pesado
+  //    e re-tenta — o usuário NUNCA pode ser deslogado por falta de espaço.
   try {
     if (state.currentUser) {
-      localStorage.setItem('pro_world_arena_session_v1', JSON.stringify(state.currentUser));
+      try {
+        localStorage.setItem('pro_world_arena_session_v1', JSON.stringify(state.currentUser));
+      } catch {
+        try { localStorage.removeItem(STORAGE_KEY); } catch {}
+        localStorage.setItem('pro_world_arena_session_v1', JSON.stringify(state.currentUser));
+      }
     } else {
       localStorage.removeItem('pro_world_arena_session_v1');
     }
@@ -267,12 +288,14 @@ export const saveState = (state: AppState) => {
     console.error('[Storage] Erro ao salvar sessão:', e);
   }
 
-  // 2) Estado principal — isolado. Se estourar a quota (imagens base64 pesadas),
-  //    a sessão acima já está garantida.
+  // 2) Estado principal ENXUTO (sem imagens base64 pesadas) — evita estourar a
+  //    quota. As imagens são rebaixadas do Supabase no próximo boot.
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const lean = stripHeavyImages(state);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lean));
   } catch (e) {
-    console.error('[Storage] Erro ao salvar estado (provável quota excedida):', e);
+    console.warn('[Storage] Estado não coube no localStorage (ok, vem do Supabase):', e);
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
   }
 };
 
