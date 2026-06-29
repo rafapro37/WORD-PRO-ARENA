@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from "react-dom";
 import { toast } from '../src/lib/toast';
+import { uploadFile } from '../services/supabase';
 import { Tournament, Team, Match, Player, MatchEvent, TournamentFormat, TournamentAwards, PlayerProfile, TournamentRegistration, User, UserRole, SocialLink } from '../types';
 import { POSITIONS, AWARD_LABELS, POSITIONS_VIRTUAL, POSITIONS_REAL } from '../constants';
 import { Calendar, Users, BarChart, Trophy, Shirt, Plus, Save, Edit, UserPlus, Check, X, Trash2, Award, Shield, RefreshCw, Crown, ListPlus, Search, Filter, LayoutList, ChevronRight, Zap, ChevronLeft, Image, Upload, Hand, Lock, Info, Clock, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Globe, Instagram, Facebook, Twitter, Youtube, Gamepad2, MessageSquare, LinkIcon, Palette, Settings, Sparkles, CreditCard, Target } from '../components/Icons';
@@ -1267,9 +1268,12 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                       <input type="file" hidden accept="image/*" onChange={async e => {
                                           const file = e.target.files?.[0];
                                           if (!file || !onUpdateTournament) return;
-                                          const reader = new FileReader();
-                                          reader.onloadend = () => onUpdateTournament(tournament.id, { bannerUrl: reader.result as string });
-                                          reader.readAsDataURL(file);
+                                          try {
+                                            const url = await uploadFile('arena-assets', `banners/${tournament.id}_${Date.now()}`, file);
+                                            onUpdateTournament(tournament.id, { bannerUrl: url });
+                                            toast.success('Banner enviado!');
+                                          } catch (err: any) { toast.error('Falha no envio: ' + (err?.message || 'erro')); }
+                                          e.target.value = '';
                                       }} />
                                   </label>
                               </div>
@@ -1325,9 +1329,12 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                       <input type="file" hidden accept="image/*" onChange={async e => {
                                           const file = e.target.files?.[0];
                                           if (!file || !onUpdateTournament) return;
-                                          const reader = new FileReader();
-                                          reader.onloadend = () => onUpdateTournament(tournament.id, { knockoutBackground: reader.result as string });
-                                          reader.readAsDataURL(file);
+                                          try {
+                                            const url = await uploadFile('arena-assets', `knockout-bg/${tournament.id}_${Date.now()}`, file);
+                                            onUpdateTournament(tournament.id, { knockoutBackground: url });
+                                            toast.success('Fundo enviado!');
+                                          } catch (err: any) { toast.error('Falha no envio: ' + (err?.message || 'erro')); }
+                                          e.target.value = '';
                                       }} />
                                   </label>
                               </div>
@@ -1473,9 +1480,12 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                               const file = e.target.files?.[0];
                                               if (!file || !onUpdateTournament) return;
                                               if (file.size > 2 * 1024 * 1024) { alert('Imagem muito grande (máx 2MB).'); return; }
-                                              const reader = new FileReader();
-                                              reader.onloadend = () => onUpdateTournament(tournament.id, { knockoutTrophyUrl: reader.result as string } as any);
-                                              reader.readAsDataURL(file);
+                                              try {
+                                                const url = await uploadFile('arena-assets', `knockout-trophy/${tournament.id}_${Date.now()}`, file);
+                                                onUpdateTournament(tournament.id, { knockoutTrophyUrl: url } as any);
+                                                toast.success('Troféu enviado!');
+                                              } catch (err: any) { toast.error('Falha no envio: ' + (err?.message || 'erro')); }
+                                              e.target.value = '';
                                           }} />
                                       </label>
                                       {(tournament as any).knockoutTrophyUrl && (
@@ -1751,14 +1761,15 @@ const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                                           type="file" 
                                           hidden 
                                           accept="image/*" 
-                                          onChange={(e) => {
+                                          onChange={async (e) => {
                                               const file = e.target.files?.[0];
-                                              if (file) {
-                                                  const reader = new FileReader();
-                                                  reader.onloadend = () => {
-                                                      if (onUpdateTournament) onUpdateTournament(tournament.id, { bannerUrl: reader.result as string });
-                                                  };
-                                                  reader.readAsDataURL(file);
+                                              if (file && onUpdateTournament) {
+                                                  try {
+                                                    const url = await uploadFile('arena-assets', `banners/${tournament.id}_${Date.now()}`, file);
+                                                    onUpdateTournament(tournament.id, { bannerUrl: url });
+                                                    toast.success('Banner enviado!');
+                                                  } catch (err: any) { toast.error('Falha no envio: ' + (err?.message || 'erro')); }
+                                                  e.target.value = '';
                                               }
                                           }} 
                                       />

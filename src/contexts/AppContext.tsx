@@ -100,7 +100,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [publicMarketView,     setPublicMarketView]  = useState(false);
 
   // ── AppState ──────────────────────────────────────────────────────────────
-  const [state, setState] = useState<AppState>({
+  const [state, setState] = useState<AppState>(() => {
+    const __init: AppState = {
     currentUser: null,
     users: [],
     playerProfiles: [],
@@ -151,6 +152,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     leagueInvitations: [],
     leagueMembers: [],
     planUpgradeRequests: [],
+    };
+    // Restaura a sessão JÁ no primeiro render — sem isto há um instante "deslogado"
+    // que derruba o login e libera campeonatos de outros no F5.
+    try {
+      const __s = localStorage.getItem('pro_world_arena_session_v1');
+      if (__s) __init.currentUser = JSON.parse(__s);
+    } catch {}
+    return __init;
   });
 
   // ── Carregar dados iniciais — Supabase é a fonte principal ───────────────
@@ -245,6 +254,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     bootstrap();
   }, []);
+
+  // ── Persistência imediata da sessão ───────────────────────────────────────
+  // Grava a sessão no localStorage assim que o usuário muda (login), sem esperar
+  // o ciclo de sync. Nunca remove aqui — o logout cuida disso via clearSession.
+  useEffect(() => {
+    try {
+      if (state.currentUser) {
+        localStorage.setItem('pro_world_arena_session_v1', JSON.stringify(state.currentUser));
+      }
+    } catch (e) {
+      console.warn('[Auth] Falha ao persistir sessão:', e);
+    }
+  }, [state.currentUser]);
 
   // ── Sync automático ───────────────────────────────────────────────────────
   const { syncStatus } = useSync(state);
