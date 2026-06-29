@@ -217,27 +217,40 @@ const INITIAL_STATE: AppState = {
 
 // ─── Carregar do localStorage ─────────────────────────────────────────────────
 export const loadState = (): AppState => {
+  // 1) SESSÃO primeiro e ISOLADA — nunca pode ser perdida por erro no estado
+  //    principal. Sem isto, um localStorage corrompido ou cheio (imagens base64
+  //    pesadas) desloga o usuário no F5 e derruba o filtro "só os meus campeonatos".
+  let sessionUser: any = null;
+  try {
+    const session = localStorage.getItem('pro_world_arena_session_v1');
+    if (session) sessionUser = JSON.parse(session);
+  } catch (e) {
+    console.warn('[Storage] Sessão ilegível:', e);
+  }
+
+  // 2) ESTADO principal — ISOLADO. Se falhar (corrompido / quota estourada),
+  //    recupera só a sessão e deixa o boot rebaixar o resto do Supabase.
+  let parsed: any = {};
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    const session = localStorage.getItem('pro_world_arena_session_v1');
-    let parsed: any = {};
     if (stored) parsed = JSON.parse(stored);
-    if (session) {
-      try { parsed.currentUser = JSON.parse(session); } catch {}
-    }
-    return {
-      ...INITIAL_STATE,
-      ...parsed,
-      settings: {
-        ...INITIAL_STATE.settings,
-        ...(parsed.settings || {}),
-        globalTheme: parsed.settings?.globalTheme || INITIAL_STATE.settings.globalTheme,
-      },
-      planConfigs: { ...INITIAL_STATE.planConfigs, ...(parsed.planConfigs || {}) },
-    };
-  } catch {
-    return INITIAL_STATE;
+  } catch (e) {
+    console.warn('[Storage] Estado principal corrompido — mantendo apenas a sessão:', e);
+    parsed = {};
   }
+
+  return {
+    ...INITIAL_STATE,
+    ...parsed,
+    // A sessão isolada SEMPRE vence; só cai pro estado/null se ela não existir.
+    currentUser: sessionUser ?? parsed.currentUser ?? null,
+    settings: {
+      ...INITIAL_STATE.settings,
+      ...(parsed.settings || {}),
+      globalTheme: parsed.settings?.globalTheme || INITIAL_STATE.settings.globalTheme,
+    },
+    planConfigs: { ...INITIAL_STATE.planConfigs, ...(parsed.planConfigs || {}) },
+  };
 };
 
 // ─── Salvar no localStorage ───────────────────────────────────────────────────
