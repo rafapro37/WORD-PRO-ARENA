@@ -177,12 +177,15 @@ const OrganizerSettings: React.FC<OrganizerSettingsProps> = ({
                                               type="file" 
                                               hidden 
                                               accept="image/*" 
-                                              onChange={(e) => {
+                                              onChange={async (e) => {
                                                   const file = e.target.files?.[0];
                                                   if (file) {
-                                                      const reader = new FileReader();
-                                                      reader.onloadend = () => setOrgLogo(reader.result as string);
-                                                      reader.readAsDataURL(file);
+                                                      try {
+                                                          const url = await uploadFile('arena-assets', `org-logos/${user.id}_${Date.now()}`, file);
+                                                          setOrgLogo(url);
+                                                          toast.success('Logo enviado!');
+                                                      } catch (err: any) { toast.error('Falha no envio: ' + (err?.message || 'erro')); }
+                                                      e.target.value = '';
                                                   }
                                               }} 
                                           />

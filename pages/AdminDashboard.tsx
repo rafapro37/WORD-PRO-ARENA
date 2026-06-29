@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from '../src/lib/toast';
+import { uploadFile } from '../services/supabase';
 import { User, PlanType, PlanConfig, Advertisement, NewsItem, MarketPlayer, SocialLink, UserRole, UserStatus, MarketStatus, PlanStatus } from '../types';
 import { marketService } from '../src/services/marketService';
 import { calculateMarketValue } from '../services/playerService';
@@ -194,6 +195,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setPendingSettings({});
       setEditingPlans({});
       setHasChanges(false);
+      setPreviewTheme(null); // Clear preview on save
       setShowSuccess(true);
 
       setTimeout(() => setShowSuccess(false), 3000);
@@ -294,25 +296,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       updateLocalSetting('socialLinks', currentLinks);
   };
 
-  const handleProjectLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProjectLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            updateLocalSetting('loginLogoUrl', reader.result as string);
-        };
-        reader.readAsDataURL(file);
+        try {
+          const url = await uploadFile('arena-assets', `branding/login-logo_${Date.now()}`, file);
+          updateLocalSetting('loginLogoUrl', url);
+          toast.success('Logo enviado!');
+        } catch (err: any) { toast.error('Falha no envio: ' + (err?.message || 'erro')); }
+        e.target.value = '';
     }
   };
 
-  const handleAdImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAdImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setAdImage(reader.result as string);
-        };
-        reader.readAsDataURL(file);
+        try {
+          const url = await uploadFile('arena-assets', `ads/ad_${Date.now()}`, file);
+          setAdImage(url);
+          toast.success('Imagem enviada!');
+        } catch (err: any) { toast.error('Falha no envio: ' + (err?.message || 'erro')); }
+        e.target.value = '';
     }
   };
 
