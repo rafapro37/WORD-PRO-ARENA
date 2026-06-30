@@ -78,7 +78,6 @@ import Landing from "./Landing";
 import FederationPublic from "./FederationPublic";
 import OrganizerDashboard from "./OrganizerDashboard";
 import { NotificationCenter } from "../src/components/NotificationCenter";
-import { InstallAppBanner } from "../src/components/InstallAppBanner";
 import { usePaymentGateway } from "../src/components/PaymentGateway";
 import { Gamepad2, Menu, X } from "../components/Icons";
 
@@ -2175,12 +2174,6 @@ const App: React.FC = () => {
           {/* Gateway de pagamento — abre quando inscrição é paga */}
           {PaymentModal}
 
-          {/* Banner de instalação do app (PWA) */}
-          <InstallAppBanner
-            logoUrl={state.settings.globalImages?.logo || state.settings.loginLogoUrl}
-            systemName={state.settings.brandingTextPrimary ? `${state.settings.brandingTextPrimary} ${state.settings.brandingTextSecondary || ''}`.trim() : 'PRO WORLD ARENA'}
-          />
-
           <main
             className={`flex-1 overflow-auto transition-all duration-300 ${(!state.currentUser || isSidebarRetracted) ? "ml-0" : "ml-0"}`}
             style={state.settings.globalImages?.homeBg ? { 
@@ -2452,7 +2445,7 @@ const App: React.FC = () => {
                   setState((prev) => ({
                     ...prev,
                     tournaments: prev.tournaments.map((t) =>
-                      t.id === id ? { ...t, ...updates, updatedAt: Date.now() } : t,
+                      t.id === id ? { ...t, ...updates } : t,
                     ),
                   }))
                 } // Add social handler
