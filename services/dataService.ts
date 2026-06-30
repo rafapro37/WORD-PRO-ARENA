@@ -82,22 +82,6 @@ const TABLE_COLUMNS: Record<string, string[]> = {
   convites_liga: ['id','organizadorId','ligaId','senderId','receiverId','status','createdAt'],
 };
 
-// Remove imagens base64 pesadas (> ~5KB) de qualquer campo. URLs (http) e textos
-// curtos passam intactos. Garante que nenhum registro vá "gordo" demais pro
-// Supabase e derrube o upsert (o que zerava campos como o fundo do chaveamento).
-const stripHeavyImages = (obj: any): any => {
-  if (typeof obj === 'string') {
-    return (obj.startsWith('data:') && obj.length > 5000) ? '' : obj;
-  }
-  if (Array.isArray(obj)) return obj.map(stripHeavyImages);
-  if (obj && typeof obj === 'object') {
-    const out: any = {};
-    for (const k in obj) out[k] = stripHeavyImages(obj[k]);
-    return out;
-  }
-  return obj;
-};
-
 // Remove campos que não existem na tabela e valores undefined
 const sanitizeForTable = (table: string, row: any): any => {
   const cols = TABLE_COLUMNS[table];
