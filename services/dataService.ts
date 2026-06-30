@@ -108,13 +108,24 @@ export const syncToSupabase = async (table: string, data: any[]) => {
     if (error) {
       console.warn(`[Sync] Aviso em ${table}:`, error.message);
       // Se falhar em lote, tenta linha por linha para não perder tudo
+      let lastRowError = '';
       for (const row of sanitized) {
         const { error: rowError } = await supabase.from(table).upsert([row], { onConflict: 'id' });
-        if (rowError) console.warn(`[Sync] Linha rejeitada em ${table} (id=${row.id}):`, rowError.message);
+        if (rowError) {
+          lastRowError = rowError.message;
+          console.warn(`[Sync] Linha rejeitada em ${table} (id=${row.id}):`, rowError.message);
+        }
       }
+      // Diagnóstico VISÍVEL só para campeonatos (some sozinho)
+      if (table === 'campeonatos' && lastRowError) {
+        toast.error('Sync campeonato falhou: ' + lastRowError, 9000);
+      }
+    } else if (table === 'campeonatos') {
+      toast.success('Campeonato sincronizado ✓', 2500);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`[Sync] Falha em ${table}:`, error);
+    if (table === 'campeonatos') toast.error('Erro de sync: ' + (error?.message || error), 9000);
   }
 };
 
