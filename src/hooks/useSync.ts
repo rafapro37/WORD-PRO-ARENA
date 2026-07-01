@@ -27,6 +27,7 @@ export function useSync(state: AppState) {
       u: state.users.length,
       t: state.tournaments.map(t => t.id + lightSig(t)).join(),
       tm: state.teams.map(t => t.id + lightSig(t)).join(),
+      r: state.registrations.map(x => x.id + lightSig(x)).join(),
       m: state.matches.length,
       l: state.leagues.length,
       cu: state.currentUser.id,
@@ -103,6 +104,11 @@ export function useSync(state: AppState) {
           const myTeam = state.teams.filter(t => t.ownerId === userId || t.managerId === userId);
           if (myTeam.length > 0) await syncToSupabase('times', myTeam);
         }
+
+        // Todo usuário sincroniza as PRÓPRIAS inscrições (inclui a escalação que ele monta
+        // por campeonato). Sem isto, o roster do jogador de X1 não chegaria ao servidor.
+        const myOwnRegs = state.registrations.filter(r => r.teamOwnerId === userId || r.userId === userId);
+        if (myOwnRegs.length > 0) await syncToSupabase('participantes', myOwnRegs);
       } catch (error) {
         console.error('[useSync] Erro:', error);
       }

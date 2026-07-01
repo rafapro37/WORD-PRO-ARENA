@@ -2694,6 +2694,14 @@ const App: React.FC = () => {
                   allTeams={filteredTeams}
                   registrations={state.registrations}
                   onRequestRegistration={inscreverMeuTime}
+                  onSaveLineup={(regId, roster) =>
+                    setState((prev) => ({
+                      ...prev,
+                      registrations: prev.registrations.map((r) =>
+                        r.id === regId ? { ...r, roster } : r,
+                      ),
+                    }))
+                  }
                   onTransferirManual={handleTransferirManual}
                   showMarket={false}
                 />

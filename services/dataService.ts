@@ -75,7 +75,7 @@ const TABLE_COLUMNS: Record<string, string[]> = {
   times: ['id','name','organizadorId','tournamentId','ligaId','groupId','ownerId','managerId','roster','played','won','drawn','lost','goalsFor','goalsAgainst','points','logoUrl'],
   partidas: ['id','organizadorId','tournamentId','homeTeamId','awayTeamId','homeScore','awayScore','isFinished','stage','groupId','round','scheduledAt','createdAt','locked'],
   jogadores: ['id','organizadorId','tournamentId','teamId','name','position','goals','assists','yellowCards','redCards','photoUrl'],
-  participantes: ['id','organizadorId','tournamentId','teamOwnerId','teamName','teamLogoUrl','status','timestamp','userId'],
+  participantes: ['id','organizadorId','tournamentId','teamOwnerId','teamName','teamLogoUrl','status','timestamp','userId','roster'],
   federacoes: ['id','organizadorId','name','slug','logoUrl','bannerUrl','entranceType','type','experienceType','primaryColor','createdAt'],
   noticias: ['id','organizadorId','title','content','imageUrl','createdAt'],
   anuncios: ['id','organizadorId','title','imageUrl','linkUrl','createdAt'],

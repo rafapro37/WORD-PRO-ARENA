@@ -7,6 +7,7 @@ import { uploadFile } from '../services/supabase';
 import { POSITIONS_ALL, POSITIONS_VIRTUAL, POSITIONS_REAL } from '../constants';
 import { validatePasswordStrength } from '../services/authService';
 import UltimateCard from '../components/UltimateCard';
+import LineupModal from './LineupModal';
 
 interface PlayerDashboardProps {
   user: User;
@@ -33,6 +34,7 @@ interface PlayerDashboardProps {
   onRequestRegistration: (tournament: Tournament) => void;
   onKickPlayer?: (playerId: string) => void;
   onViewTournament?: (id: string) => void;
+  onSaveLineup?: (regId: string, roster: ClubPlayer[]) => void;
   onTransferirManual?: (manualPlayerId: string, fromTeamId: string | null, toTeamId: string) => void;
   showMarket?: boolean;
 }
@@ -115,7 +117,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
     onRespondInvite, leagueInvitations = [], onRespondLeagueInvitation, 
     allLeagues = [], propostas = [], onResponderProposta, teamData, 
     allTournaments = [], allTeams, registrations = [], allMatches = [],
-    onRequestRegistration, onKickPlayer, onViewTournament, onTransferirManual,
+    onRequestRegistration, onKickPlayer, onViewTournament, onSaveLineup, onTransferirManual,
     showMarket = true 
 }) => {
   
@@ -127,6 +129,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
   const isTeamManager = user.role === UserRole.TEAM_MANAGER;
   const [activeTab, setActiveTab] = useState<'overview' | 'profile_edit' | 'roster' | 'tactics' | 'competitions' | 'explore' | 'admin' | 'gallery' | 'security'>('overview');
   const [exploreSearch, setExploreSearch] = useState('');
+  const [lineupReg, setLineupReg] = useState<TournamentRegistration | null>(null);
   
   const [transferringManualPlayer, setTransferringManualPlayer] = useState<ClubPlayer | null>(null);
   const [transferTargetTeamId, setTransferTargetTeamId] = useState<string>('');
@@ -1364,12 +1367,22 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                                  <p className="text-[10px] font-black text-white uppercase">Finalizada</p>
                               </div>
                            </div>
-                           <button 
-                             onClick={() => onViewTournament?.(tournament.id)}
-                             className="w-full bg-white/5 hover:bg-brand-primary text-white font-black py-3 rounded-xl text-xs uppercase transition-all flex items-center justify-center gap-2 border border-white/10 hover:border-brand-primary shadow-xl"
-                           >
-                             <Eye size={16} /> Acessar Competição
-                           </button>
+                           <div className="space-y-2">
+                             {registration && (
+                               <button
+                                 onClick={() => setLineupReg(registration)}
+                                 className="w-full bg-brand-primary/10 hover:bg-brand-primary text-brand-primary hover:text-white font-black py-3 rounded-xl text-xs uppercase transition-all flex items-center justify-center gap-2 border border-brand-primary/30"
+                               >
+                                 <Users size={16} /> Montar Escalação{registration.roster?.length ? ` (${registration.roster.length})` : ''}
+                               </button>
+                             )}
+                             <button 
+                               onClick={() => onViewTournament?.(tournament.id)}
+                               className="w-full bg-white/5 hover:bg-brand-primary text-white font-black py-3 rounded-xl text-xs uppercase transition-all flex items-center justify-center gap-2 border border-white/10 hover:border-brand-primary shadow-xl"
+                             >
+                               <Eye size={16} /> Acessar Competição
+                             </button>
+                           </div>
                         </div>
                       </motion.div>
                      );
@@ -1805,6 +1818,15 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
           )}
         </div>
       </div>
+
+      {lineupReg && (
+        <LineupModal
+          registration={lineupReg}
+          tournamentName={allTournaments.find(t => t.id === lineupReg.tournamentId)?.name || 'Campeonato'}
+          onSave={(roster) => onSaveLineup?.(lineupReg.id, roster)}
+          onClose={() => setLineupReg(null)}
+        />
+      )}
     </div>
   );
 };
