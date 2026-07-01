@@ -126,6 +126,7 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
 
   const isTeamManager = user.role === UserRole.TEAM_MANAGER;
   const [activeTab, setActiveTab] = useState<'overview' | 'profile_edit' | 'roster' | 'tactics' | 'competitions' | 'explore' | 'admin' | 'gallery' | 'security'>('overview');
+  const [exploreSearch, setExploreSearch] = useState('');
   
   const [transferringManualPlayer, setTransferringManualPlayer] = useState<ClubPlayer | null>(null);
   const [transferTargetTeamId, setTransferTargetTeamId] = useState<string>('');
@@ -1408,6 +1409,8 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-textMuted" size={20} />
                       <input 
                         type="text" 
+                        value={exploreSearch}
+                        onChange={e => setExploreSearch(e.target.value)}
                         placeholder="Pesquisar campeonatos, ligas ou federações..." 
                         className="w-full bg-brand-surface border border-brand-border rounded-2xl py-4 pl-12 pr-6 text-white font-bold outline-none focus:border-brand-primary transition-all shadow-xl"
                       />
@@ -1423,7 +1426,11 @@ const PlayerDashboard: React.FC<PlayerDashboardProps> = ({
                    {/* Destaques de Campeonatos Disponíveis */}
                    {allTournaments
                       .filter(t => !registrations.some(r => r.tournamentId === t.id && (r.teamId === profile.teamId || r.userId === user.id)))
-                      .slice(0, 6)
+                      .filter(t => {
+                        const q = exploreSearch.trim().toLowerCase();
+                        return !q || (t.name || '').toLowerCase().includes(q);
+                      })
+                      .slice(0, exploreSearch.trim() ? 50 : 6)
                       .map(tournament => (
                          <motion.div 
                           key={`explore-tourn-${tournament.id}`} 
