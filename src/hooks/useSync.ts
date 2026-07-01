@@ -1,8 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { AppState, UserRole } from '../../types';
 import { saveState, syncToSupabase, syncSettingsToSupabase } from '../../services/dataService';
+import { toast } from '../lib/toast';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'ERROR';
+
+// Detecta QUALQUER mudança no objeto (inclusive troca de imagem/cor/fonte),
+// truncando textos longos pra não pesar. Sem isto, editar um campeonato não
+// disparava o sync (a detecção antiga olhava só o updatedAt).
+const lightSig = (obj: any) => JSON.stringify(obj, (_k, v) =>
+  (typeof v === 'string' && v.length > 200) ? (v.slice(0, 40) + v.length + v.slice(-40)) : v
+);
 
 export function useSync(state: AppState) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -17,8 +25,8 @@ export function useSync(state: AppState) {
     // Criar uma assinatura dos dados sincronizáveis para evitar sync repetido
     const signature = JSON.stringify({
       u: state.users.length,
-      t: state.tournaments.map(t => t.id + (t as any).updatedAt).join(),
-      tm: state.teams.length,
+      t: state.tournaments.map(t => t.id + lightSig(t)).join(),
+      tm: state.teams.map(t => t.id + lightSig(t)).join(),
       m: state.matches.length,
       l: state.leagues.length,
       cu: state.currentUser.id,
@@ -74,6 +82,14 @@ export function useSync(state: AppState) {
           const myAds           = state.ads.filter(a => a.organizadorId === userId);
 
           if (myTournaments.length   > 0) await syncToSupabase('campeonatos',   myTournaments);
+          else if (state.tournaments.length > 0) {
+            const ex = state.tournaments[0] as any;
+            toast.error(
+              `Sync bloqueado: ${state.tournaments.length} campeonato(s) na tela, mas 0 são seus. ` +
+              `Seu ID=${String(userId).slice(0, 8)} / dono do 1º=${String(ex.organizadorId || 'VAZIO').slice(0, 8)}`,
+              12000,
+            );
+          }
           if (myTeams.length         > 0) await syncToSupabase('times',         myTeams);
           if (myMatches.length       > 0) await syncToSupabase('partidas',      myMatches);
           if (myPlayers.length       > 0) await syncToSupabase('jogadores',     myPlayers);
